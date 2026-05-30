@@ -41,17 +41,17 @@ export default function LoginPage() {
       <div className="grid min-h-screen md:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)]">
         <section className="relative min-h-[44vh] overflow-hidden bg-[#111111] md:min-h-screen">
           <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/images/training-hero.png')" }}
+            className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
+            style={{ backgroundImage: "url('/images/mysun-login-hero.jpg')" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent md:bg-gradient-to-r" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/78 md:via-black/18" />
           <div className="relative flex min-h-[44vh] flex-col justify-end p-5 text-white md:min-h-screen md:p-10">
-            <p className="text-sm font-medium uppercase text-white/75">Mysun Fit Log</p>
-            <h1 className="mt-4 max-w-3xl text-[54px] font-black uppercase leading-[0.88] md:text-[104px]">
-              Run the day.
+            <p className="text-sm font-medium uppercase text-white/75">For Mysun</p>
+            <h1 className="mt-4 max-w-3xl text-[52px] font-black uppercase leading-[0.88] md:text-[96px]">
+              Ready when you are.
             </h1>
             <p className="mt-5 max-w-md text-base leading-7 text-white/78">
-              Sign up or log in with one email link. Every workout is saved to Supabase under your account.
+              A tiny doorway for your workouts, guarded by your favorite travel buddy.
             </p>
           </div>
         </section>
