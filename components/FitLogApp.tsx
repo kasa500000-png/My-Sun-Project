@@ -58,6 +58,35 @@ type FitLogAppProps = {
   userEmail?: string | null;
 };
 
+type MuscleIconKey =
+  | "chest"
+  | "back"
+  | "shoulders"
+  | "arms"
+  | "core"
+  | "quads"
+  | "glutes"
+  | "hamstrings"
+  | "calves"
+  | "cardio"
+  | "lower"
+  | "upper";
+
+const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }> = {
+  chest: { col: 0, row: 0 },
+  back: { col: 1, row: 0 },
+  shoulders: { col: 2, row: 0 },
+  arms: { col: 3, row: 0 },
+  core: { col: 0, row: 1 },
+  quads: { col: 1, row: 1 },
+  glutes: { col: 2, row: 1 },
+  hamstrings: { col: 3, row: 1 },
+  calves: { col: 0, row: 2 },
+  cardio: { col: 1, row: 2 },
+  lower: { col: 2, row: 2 },
+  upper: { col: 3, row: 2 },
+};
+
 const MUSCLES: Muscle[] = [
   { id: "chest", name: "가슴", group: "상체", color: "#111111" },
   { id: "back", name: "등", group: "상체", color: "#39393b" },
@@ -326,6 +355,14 @@ function defaultDraft(routineLabel = ROUTINES[0].label): DraftSet[] {
 
 function routineNote(label: string) {
   return ROUTINES.find(item => item.label === label)?.note || "오늘 컨디션에 맞춰 가볍게 시작해요.";
+}
+
+function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
+  if (muscleId === "biceps" || muscleId === "triceps") return "arms";
+  if (muscleId in MUSCLE_ICON_POSITIONS) return muscleId as MuscleIconKey;
+  if (group === "하체") return "lower";
+  if (group === "상체") return "upper";
+  return "cardio";
 }
 
 export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
@@ -972,35 +1009,46 @@ function ProfileView({ userEmail, sessionCount, onSignOut }: { userEmail?: strin
 }
 
 function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
-  const scoreMap = new Map(scores.map(item => [item.id, item.score]));
-  const max = Math.max(...scores.map(item => item.score), 1);
-  const intensity = (ids: string[]) => {
-    const value = ids.reduce((sum, id) => sum + (scoreMap.get(id) || 0), 0);
-    return Math.min(1, value / max);
-  };
-  const color = (ids: string[]) => {
-    const v = intensity(ids);
-    if (v <= 0) return "#e5e5e5";
-    if (v < 0.25) return "#9e9ea0";
-    if (v < 0.55) return "#707072";
-    if (v < 0.8) return "#39393b";
-    return "#111111";
-  };
+  const activeScores = scores.filter(item => item.score > 0);
+  const displayScores = activeScores.length ? activeScores.slice(0, 6) : MUSCLES.slice(0, 6).map(item => ({ ...item, score: 0 }));
+  const max = Math.max(...displayScores.map(item => item.score), 1);
 
   return (
-    <div className="grid gap-6 md:grid-cols-[150px_1fr] md:items-center">
-      <div className="relative mx-auto h-60 w-32">
-        <div className="absolute left-1/2 top-0 h-12 w-12 -translate-x-1/2 rounded-full bg-[#cacacb]" />
-        <div className="absolute left-1/2 top-14 h-24 w-20 -translate-x-1/2 rounded-[36px]" style={{ background: color(["chest", "back", "core"]) }} />
-        <div className="absolute left-[7px] top-[76px] h-24 w-7 rotate-12 rounded-full" style={{ background: color(["shoulders", "biceps", "triceps"]) }} />
-        <div className="absolute right-[7px] top-[76px] h-24 w-7 -rotate-12 rounded-full" style={{ background: color(["shoulders", "biceps", "triceps"]) }} />
-        <div className="absolute left-[37px] top-[132px] h-28 w-8 rotate-3 rounded-full" style={{ background: color(["quads", "hamstrings", "glutes"]) }} />
-        <div className="absolute right-[37px] top-[132px] h-28 w-8 -rotate-3 rounded-full" style={{ background: color(["quads", "hamstrings", "glutes"]) }} />
+    <div className="grid gap-5">
+      <div className="grid grid-cols-3 gap-3">
+        {displayScores.map(item => (
+          <MuscleImageCard key={item.id} item={item} max={max} muted={!activeScores.length || item.score === 0} />
+        ))}
       </div>
       <div className="grid gap-4">
-        {scores.slice(0, 5).map((item, index) => <MuscleRow key={item.id} item={item} max={max} index={index} />)}
-        {scores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 근육 자극 지도가 채워집니다.</p>}
+        {activeScores.slice(0, 5).map((item, index) => <MuscleRow key={item.id} item={item} max={max} index={index} />)}
+        {activeScores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 부위별 근육 이미지가 채워집니다.</p>}
       </div>
+    </div>
+  );
+}
+
+function MuscleImageCard({ item, max, muted }: { item: Muscle & { score: number }; max: number; muted: boolean }) {
+  const key = muscleIconKey(item.id, item.group);
+  const position = MUSCLE_ICON_POSITIONS[key];
+  const intensity = Math.max(0.08, item.score / Math.max(max, 1));
+  const colPosition = `${(position.col / 3) * 100}%`;
+  const rowPosition = `${(position.row / 2) * 100}%`;
+
+  return (
+    <div className={`min-w-0 bg-[#f5f5f5] p-2 text-center ${muted ? "opacity-55" : ""}`}>
+      <div
+        className="mx-auto aspect-square w-full max-w-[104px] rounded-full border-2 bg-white bg-no-repeat"
+        style={{
+          backgroundImage: "url('/images/muscle-focus-sheet.png')",
+          backgroundSize: "400% 300%",
+          backgroundPosition: `${colPosition} ${rowPosition}`,
+          borderColor: muted ? "#e5e5e5" : item.color,
+          boxShadow: muted ? "none" : `inset 0 0 0 ${Math.round(2 + intensity * 4)}px rgba(17,17,17,0.08)`,
+        }}
+      />
+      <p className="mt-2 truncate text-xs font-semibold text-[#111111]">{item.name}</p>
+      <p className="text-[11px] font-medium text-[#707072]">{item.score ? item.score : "대기"}</p>
     </div>
   );
 }
