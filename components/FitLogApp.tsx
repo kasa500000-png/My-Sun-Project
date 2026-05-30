@@ -443,12 +443,12 @@ function formatDate(date: string) {
   }).format(parsed);
 }
 
-function defaultDraft(routineLabel = ROUTINES[0].label): DraftSet[] {
-  const routine = ROUTINES.find(item => item.label === routineLabel) || ROUTINES[0];
-  return routine.exercises.flatMap(exerciseId => [
-    { exerciseId, weight: "", reps: "", memo: "" },
-    { exerciseId, weight: "", reps: "", memo: "" },
-  ]);
+function defaultDraft(): DraftSet[] {
+  return [];
+}
+
+function defaultExerciseForRoutine(routineLabel = ROUTINES[0].label) {
+  return ROUTINES.find(item => item.label === routineLabel)?.exercises[0] || EXERCISES[0].id;
 }
 
 function routineNote(label: string) {
@@ -481,9 +481,8 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }, [userId]);
 
   useEffect(() => {
-    const next = defaultDraft(routineName);
-    setDraftSets(next);
-    setSelectedExercise(next[0]?.exerciseId || EXERCISES[0].id);
+    setDraftSets(defaultDraft());
+    setSelectedExercise(defaultExerciseForRoutine(routineName));
   }, [routineName]);
 
   useEffect(() => {
@@ -613,7 +612,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       if (!res.ok) throw new Error(data.error || "운동 기록 저장에 실패했어요.");
       setSessions(items => [data.session, ...items]);
       setDraftMemo("");
-      setDraftSets(defaultDraft(routineName));
+      setDraftSets(defaultDraft());
       setActiveTab("balance");
       setToast("운동 기록을 저장했어요.");
     } catch (error) {
@@ -1141,7 +1140,7 @@ function WorkoutView({
             <Field label="날짜">
               <input className="nike-input" type="date" value={draftDate} onChange={event => setDraftDate(event.target.value)} />
             </Field>
-            <Field label="시간">
+            <Field label="운동 시간(분)">
               <input className="nike-input" inputMode="numeric" value={draftDuration} onChange={event => setDraftDuration(event.target.value)} />
             </Field>
           </div>
@@ -1202,9 +1201,6 @@ function WorkoutView({
       </div>
 
       <aside className="grid gap-6 self-start">
-        <FlatPanel title="예상 자극" kicker="입력 중">
-          <BodyMap scores={currentDraftScores} />
-        </FlatPanel>
         <div className="bg-[#f5f5f5] p-5">
           <Field label="메모">
             <textarea className="nike-input min-h-28 resize-none bg-white" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요." />
@@ -1213,6 +1209,9 @@ function WorkoutView({
             {saving ? "저장 중..." : "운동 저장"}
           </button>
         </div>
+        <FlatPanel title="예상 자극" kicker="입력 중">
+          <BodyMap scores={currentDraftScores} />
+        </FlatPanel>
       </aside>
     </section>
   );
