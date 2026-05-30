@@ -609,8 +609,9 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       <TopBar userEmail={userEmail} onSignOut={signOut} setActiveTab={setActiveTab} />
 
       {activeTab === "home" && (
-        <HomeView
+        <HomeDashboard
           loading={loadingSessions}
+          sessions={sortedSessions}
           weekStats={weekStats}
           recent={sortedSessions[0]}
           topToday={topToday}
@@ -701,6 +702,252 @@ function TopBar({
         </div>
       </div>
     </header>
+  );
+}
+
+type SummaryRange = "week" | "month" | "year";
+
+const summaryRangeLabels: Record<SummaryRange, string> = {
+  week: "이번 주",
+  month: "이번 달",
+  year: "올해",
+};
+
+function rangeStart(range: SummaryRange) {
+  const now = new Date();
+  if (range === "year") return `${now.getFullYear()}-01-01`;
+  if (range === "month") {
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${now.getFullYear()}-${month}-01`;
+  }
+
+  const day = new Date(now);
+  const weekday = now.getDay();
+  const daysFromMonday = weekday === 0 ? 6 : weekday - 1;
+  day.setDate(now.getDate() - daysFromMonday);
+  const offset = day.getTimezoneOffset() * 60000;
+  return new Date(day.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function workoutSummary(sessions: WorkoutSession[]) {
+  const minutes = sessions.reduce((sum, session) => sum + session.durationMinutes, 0);
+  const scores = scoreSessions(sessions);
+  const buckets = { upper: 0, lower: 0, core: 0 };
+
+  for (const item of scores) {
+    if (item.group === "하체") buckets.lower += item.score;
+    else if (item.group === "코어") buckets.core += item.score;
+    else if (item.group === "상체" || item.group === "팔") buckets.upper += item.score;
+  }
+
+  const total = buckets.upper + buckets.lower + buckets.core;
+  const percent = (value: number) => (total ? Math.round((value / total) * 100) : 0);
+
+  return {
+    count: sessions.length,
+    minutes,
+    balance: {
+      upper: percent(buckets.upper),
+      lower: percent(buckets.lower),
+      core: percent(buckets.core),
+    },
+  };
+}
+
+function HomeDashboard({
+  loading,
+  sessions,
+  recent,
+  topToday,
+  topWeek,
+  recommendedRoutine,
+  onStart,
+  onAnalyze,
+}: {
+  loading: boolean;
+  sessions: WorkoutSession[];
+  weekStats: { count: number; sets: number; minutes: number; volume: number };
+  recent?: WorkoutSession;
+  topToday: Array<Muscle & { score: number }>;
+  topWeek: Array<Muscle & { score: number }>;
+  recommendedRoutine: string;
+  onStart: () => void;
+  onAnalyze: () => void;
+}) {
+  const [range, setRange] = useState<SummaryRange>("week");
+  const [modalOpen, setModalOpen] = useState(false);
+  const start = rangeStart(range);
+  const rangedSessions = useMemo(() => sessions.filter(session => session.date >= start), [sessions, start]);
+  const summary = useMemo(() => workoutSummary(rangedSessions), [rangedSessions]);
+
+  return (
+    <>
+      <section className="relative min-h-[64svh] overflow-hidden bg-[#111111] md:min-h-[680px]">
+        <div
+          className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
+          style={{ backgroundImage: "url('/images/mysun-home-hero.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/72 md:via-black/22" />
+        <div className="relative mx-auto flex min-h-[64svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-white md:min-h-[680px] md:px-8 md:pb-14">
+          <p className="text-sm font-semibold text-white/80">오늘도 천천히, 꾸준히</p>
+          <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
+            마이썬 운동일지
+          </h1>
+          <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
+            <button className="h-12 rounded-full bg-white px-6 text-base font-medium text-[#111111]" onClick={onStart}>
+              운동 기록
+            </button>
+            <button className="h-12 rounded-full bg-[#111111] px-6 text-base font-medium text-white ring-1 ring-white/35" onClick={onAnalyze}>
+              운동 분석
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[1fr_1fr] md:px-8 md:py-10">
+        <div>
+          <div className="mb-6 flex items-end justify-between gap-3">
+            <SectionTitle kicker={summaryRangeLabels[range]} title="운동 요약" />
+            <div className="mb-1 flex rounded-full bg-[#f5f5f5] p-1">
+              {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
+                <button
+                  key={item}
+                  className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#111111] text-white" : "text-[#111111]"}`}
+                  onClick={() => setRange(item)}
+                >
+                  {summaryRangeLabels[item]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <button className="bg-[#f5f5f5] p-5 text-left" onClick={() => setModalOpen(true)}>
+              <p className="text-sm font-medium text-[#707072]">운동 횟수</p>
+              <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.count}회`}</p>
+            </button>
+            <button className="bg-[#f5f5f5] p-5 text-left" onClick={() => setModalOpen(true)}>
+              <p className="text-sm font-medium text-[#707072]">운동 시간</p>
+              <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.minutes}분`}</p>
+            </button>
+            <button className="bg-[#f5f5f5] p-5 text-left" onClick={() => setModalOpen(true)}>
+              <p className="text-sm font-medium text-[#707072]">운동 밸런스</p>
+              <BalanceBars balance={summary.balance} />
+            </button>
+          </div>
+
+          <div className="mt-7 border-t border-[#cacacb] pt-5">
+            <p className="text-sm font-medium text-[#707072]">추천 루틴</p>
+            <h2 className="mt-2 text-2xl font-semibold">{recommendedRoutine}</h2>
+            <p className="mt-2 text-sm leading-6 text-[#39393b]">{routineNote(recommendedRoutine)}</p>
+            <button className="mt-5 h-12 w-full rounded-full bg-[#111111] px-8 text-base font-medium text-white md:w-auto" onClick={onStart}>
+              이 루틴으로 시작
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-7">
+          <FlatPanel title={recent ? recent.routineName : "아직 기록이 없어요"} kicker="최근 기록">
+            {recent ? (
+              <div>
+                <p className="text-sm font-medium text-[#707072]">{formatDate(recent.date)}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <SmallStudioStat label="세트" value={`${sessionStats(recent).totalSets}`} />
+                  <SmallStudioStat label="운동" value={`${sessionStats(recent).exercises}`} />
+                  <SmallStudioStat label="시간" value={`${recent.durationMinutes}`} />
+                </div>
+              </div>
+            ) : (
+              <EmptyState text="첫 운동을 기록하면 이곳에 최근 일지가 표시됩니다." action="첫 운동 기록" onClick={onStart} />
+            )}
+          </FlatPanel>
+          <FlatPanel title={topToday.length ? "오늘의 자극" : "이번 주 자극"} kicker="근육 지도">
+            <BodyMap scores={topToday.length ? topToday : topWeek} />
+          </FlatPanel>
+        </div>
+      </section>
+
+      {modalOpen && (
+        <WorkoutSummaryModal
+          rangeLabel={summaryRangeLabels[range]}
+          sessions={rangedSessions}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function BalanceBars({ balance }: { balance: { upper: number; lower: number; core: number } }) {
+  const rows = [
+    { label: "상체", value: balance.upper },
+    { label: "하체", value: balance.lower },
+    { label: "코어", value: balance.core },
+  ];
+
+  return (
+    <div className="mt-4 grid gap-3">
+      {rows.map(row => (
+        <div key={row.label}>
+          <div className="mb-1 flex justify-between text-sm font-semibold">
+            <span>{row.label}</span>
+            <span>{row.value}%</span>
+          </div>
+          <div className="h-2 bg-white">
+            <div className="h-2 bg-[#111111]" style={{ width: `${row.value}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WorkoutSummaryModal({
+  rangeLabel,
+  sessions,
+  onClose,
+}: {
+  rangeLabel: string;
+  sessions: WorkoutSession[];
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/45 px-4 py-8" role="dialog" aria-modal="true">
+      <div className="mx-auto flex max-h-[86svh] max-w-md flex-col bg-white">
+        <div className="flex items-center justify-between border-b border-[#e5e5e5] p-5">
+          <div>
+            <p className="text-sm font-medium text-[#707072]">{rangeLabel}</p>
+            <h2 className="text-2xl font-semibold">운동 기록</h2>
+          </div>
+          <button className="h-10 w-10 rounded-full bg-[#f5f5f5] text-lg font-semibold" onClick={onClose} aria-label="닫기">
+            X
+          </button>
+        </div>
+        <div className="overflow-y-auto p-5">
+          {sessions.length === 0 ? (
+            <p className="bg-[#f5f5f5] p-5 text-sm leading-6 text-[#707072]">선택한 기간에 등록된 운동 기록이 없습니다.</p>
+          ) : (
+            <div className="grid gap-3">
+              {sessions.map(session => {
+                const stats = sessionStats(session);
+                return (
+                  <article key={session.id} className="border-t border-[#cacacb] pt-4">
+                    <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
+                    <h3 className="mt-1 text-xl font-semibold">{session.routineName}</h3>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
+                      <SmallStudioStat label="운동" value={`${stats.exercises}`} />
+                      <SmallStudioStat label="시간" value={`${session.durationMinutes}`} />
+                    </div>
+                    {session.memo && <p className="mt-3 text-sm leading-6 text-[#39393b]">{session.memo}</p>}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
