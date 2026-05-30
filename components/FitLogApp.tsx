@@ -81,6 +81,12 @@ type MuscleZone = {
   rotate?: number;
 };
 
+type MuscleCallout = {
+  x: number;
+  y: number;
+  size?: number;
+};
+
 const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }> = {
   chest: { col: 0, row: 0 },
   back: { col: 1, row: 0 },
@@ -145,6 +151,20 @@ const MUSCLE_BODY_ZONES: Record<string, MuscleZone[]> = {
     { x: 17.2, y: 18.8, w: 23.1, h: 70.8, r: 48 },
     { x: 61.8, y: 18.8, w: 24.4, h: 70.8, r: 48 },
   ],
+};
+
+const MUSCLE_CALLOUT_POSITIONS: Record<string, MuscleCallout> = {
+  chest: { x: 24, y: 25, size: 19 },
+  back: { x: 70, y: 28, size: 19 },
+  shoulders: { x: 52, y: 23, size: 17 },
+  biceps: { x: 42, y: 35, size: 16 },
+  triceps: { x: 88, y: 35, size: 16 },
+  core: { x: 25, y: 41, size: 18 },
+  quads: { x: 25, y: 58, size: 18 },
+  glutes: { x: 71, y: 51, size: 17 },
+  hamstrings: { x: 76, y: 64, size: 17 },
+  calves: { x: 72, y: 78, size: 16 },
+  cardio: { x: 50, y: 82, size: 17 },
 };
 
 const MUSCLES: Muscle[] = [
@@ -1318,6 +1338,7 @@ function ProfileView({ userEmail, sessionCount, onSignOut }: { userEmail?: strin
 function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
   const activeScores = scores.filter(item => item.score > 0);
   const max = Math.max(...activeScores.map(item => item.score), 1);
+  const total = activeScores.reduce((sum, item) => sum + item.score, 0) || 1;
 
   return (
     <div className="grid gap-5">
@@ -1332,6 +1353,9 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
           {activeScores.map(item => (
             <MuscleBodyOverlay key={item.id} item={item} max={max} />
           ))}
+          {activeScores.map(item => (
+            <MuscleDetailCallout key={`detail-${item.id}`} item={item} max={max} total={total} />
+          ))}
           {activeScores.length === 0 && (
             <div className="absolute inset-x-5 bottom-5 rounded-full bg-white/90 px-4 py-3 text-center text-sm font-semibold text-[#707072]">
               기록하면 자극 부위가 표시돼요
@@ -1339,9 +1363,12 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
           )}
         </div>
       </div>
-      <div className="grid gap-4">
-        {activeScores.slice(0, 5).map((item, index) => <MuscleRow key={item.id} item={item} max={max} index={index} />)}
-        {activeScores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 전체 신체 이미지 위에 자극 부위가 표시됩니다.</p>}
+      <div>
+        <p className="mb-3 text-xs font-semibold text-[#707072]">전체 자극 대비 비율</p>
+        <div className="grid gap-4">
+          {activeScores.slice(0, 5).map((item, index) => <MuscleRow key={item.id} item={item} total={total} index={index} />)}
+          {activeScores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 전체 신체 이미지 위에 자극 부위가 표시됩니다.</p>}
+        </div>
       </div>
     </div>
   );
@@ -1350,8 +1377,7 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
 function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
   const zones = MUSCLE_BODY_ZONES[item.id] || MUSCLE_BODY_ZONES[muscleIconKey(item.id, item.group)] || [];
   const ratio = Math.min(1, item.score / Math.max(max, 1));
-  const opacity = 0.28 + ratio * 0.42;
-  const blur = ratio > 0.66 ? 0 : 0.2;
+  const opacity = 0.14 + ratio * 0.28;
 
   return (
     <>
@@ -1359,7 +1385,7 @@ function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; ma
         <span
           key={`${item.id}-${index}`}
           className="pointer-events-none absolute bg-[#d30005] mix-blend-multiply"
-          title={`${item.name} ${item.score}`}
+          title={item.name}
           style={{
             left: `${zone.x}%`,
             top: `${zone.y}%`,
@@ -1367,13 +1393,48 @@ function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; ma
             height: `${zone.h}%`,
             borderRadius: `${zone.r ?? 45}%`,
             opacity,
-            filter: `blur(${blur}px)`,
+            filter: "blur(0.2px)",
             transform: zone.rotate ? `rotate(${zone.rotate}deg)` : undefined,
-            boxShadow: `0 0 ${Math.round(8 + ratio * 14)}px rgba(211,0,5,${0.18 + ratio * 0.14})`,
           }}
         />
       ))}
     </>
+  );
+}
+
+function MuscleDetailCallout({ item, max, total }: { item: Muscle & { score: number }; max: number; total: number }) {
+  const position = MUSCLE_CALLOUT_POSITIONS[item.id] || MUSCLE_CALLOUT_POSITIONS[muscleIconKey(item.id, item.group)];
+  if (!position) return null;
+
+  const iconPosition = MUSCLE_ICON_POSITIONS[muscleIconKey(item.id, item.group)];
+  const intensity = Math.min(1, item.score / Math.max(max, 1));
+  const percent = Math.round((item.score / total) * 100);
+  const size = position.size ?? 17;
+
+  return (
+    <div
+      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow-[0_0_0_1px_rgba(17,17,17,0.16)]"
+      title={`${item.name} ${percent}%`}
+      style={{
+        left: `${position.x}%`,
+        top: `${position.y}%`,
+        width: `${size}%`,
+        aspectRatio: "1 / 1",
+        opacity: 0.82 + intensity * 0.18,
+      }}
+    >
+      <div
+        className="h-full w-full rounded-full bg-cover bg-no-repeat"
+        style={{
+          backgroundImage: "url('/images/muscle-focus-sheet.png')",
+          backgroundSize: "400% 300%",
+          backgroundPosition: `${(iconPosition.col / 3) * 100}% ${(iconPosition.row / 2) * 100}%`,
+        }}
+      />
+      <span className="absolute -right-1 -top-1 rounded-full bg-[#111111] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+        {percent}%
+      </span>
+    </div>
   );
 }
 
@@ -1402,30 +1463,34 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
 }
 
 function BarRanking({ data }: { data: Array<Muscle & { score: number }> }) {
-  const max = Math.max(...data.map(item => item.score), 1);
+  const total = data.reduce((sum, item) => sum + item.score, 0) || 1;
   if (data.length === 0) return <p className="mt-4 text-base leading-7 text-[#707072]">운동을 저장하면 주간 순위가 표시됩니다.</p>;
   return (
     <div className="mt-6 grid gap-4">
-      {data.map(item => (
-        <div key={item.id} className="grid grid-cols-[76px_1fr_44px] items-center gap-3">
-          <span className="truncate text-sm font-medium text-[#39393b]">{item.name}</span>
-          <div className="h-7 bg-[#f5f5f5]">
-            <div className="h-7 bg-[#111111]" style={{ width: `${Math.max(7, (item.score / max) * 100)}%` }} />
+      {data.map(item => {
+        const percent = Math.round((item.score / total) * 100);
+        return (
+          <div key={item.id} className="grid grid-cols-[76px_1fr_44px] items-center gap-3">
+            <span className="truncate text-sm font-medium text-[#39393b]">{item.name}</span>
+            <div className="h-7 bg-[#f5f5f5]">
+              <div className="h-7 bg-[#111111]" style={{ width: `${Math.max(7, percent)}%` }} />
+            </div>
+            <span className="text-right text-sm font-medium text-[#707072]">{percent}%</span>
           </div>
-          <span className="text-right text-sm font-medium text-[#707072]">{item.score}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-function MuscleRow({ item, max, index }: { item: Muscle & { score: number }; max: number; index: number }) {
-  const width = `${Math.max(8, (item.score / Math.max(max, 1)) * 100)}%`;
+function MuscleRow({ item, total, index }: { item: Muscle & { score: number }; total: number; index: number }) {
+  const percent = Math.round((item.score / total) * 100);
+  const width = `${Math.max(6, percent)}%`;
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="text-sm font-medium">{index + 1}. {item.name}</span>
-        <span className="text-sm font-medium text-[#707072]">{item.score}</span>
+        <span className="text-sm font-medium text-[#707072]">{percent}%</span>
       </div>
       <div className="h-2 bg-[#f5f5f5]">
         <div className="h-2 bg-[#111111]" style={{ width }} />
