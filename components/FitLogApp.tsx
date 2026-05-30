@@ -108,13 +108,6 @@ const MUSCLE_OVERLAY_IMAGES: Record<string, string> = {
   cardio: "/images/muscles/cardio.png",
 };
 
-const MUSCLE_OVERLAY_ADJUSTMENTS: Record<string, { x?: number; y?: number; scale?: number }> = {
-  core: { y: -1.4, scale: 0.98 },
-  quads: { y: -0.8 },
-  glutes: { y: -3.2 },
-  hamstrings: { y: -1.5 },
-};
-
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
     {
@@ -1396,21 +1389,19 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
 
 function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
   const src = MUSCLE_OVERLAY_IMAGES[item.id] || MUSCLE_OVERLAY_IMAGES[muscleIconKey(item.id, item.group)];
-  const adjustment = MUSCLE_OVERLAY_ADJUSTMENTS[item.id] || MUSCLE_OVERLAY_ADJUSTMENTS[muscleIconKey(item.id, item.group)] || {};
   const ratio = Math.min(1, item.score / Math.max(max, 1));
   const opacity = 0.52 + ratio * 0.38;
-  const transform = `translate(${adjustment.x ?? 0}%, ${adjustment.y ?? 0}%) scale(${adjustment.scale ?? 1})`;
 
   if (!src) return null;
 
   return (
     <img
-      className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain mix-blend-multiply"
+      className="pointer-events-none absolute inset-0 h-full w-full select-none mix-blend-multiply"
       src={src}
       alt=""
       aria-hidden="true"
       draggable={false}
-      style={{ opacity, transform }}
+      style={{ opacity }}
     />
   );
 }
