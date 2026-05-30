@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { normalizeSupabaseUrl } from "@/lib/supabase-url";
 
 export function getSupabaseServiceEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -9,5 +10,5 @@ export function getSupabaseServiceEnv() {
 
 export function getServiceClient(): SupabaseClient {
   const { url, key } = getSupabaseServiceEnv();
-  return createClient(url, key, { auth: { persistSession: false } });
+  return createClient(normalizeSupabaseUrl(url), key, { auth: { persistSession: false } });
 }

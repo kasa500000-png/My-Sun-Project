@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { normalizeSupabaseUrl } from "@/lib/supabase-url";
 
 type CookieToSet = {
   name: string;
@@ -16,7 +17,7 @@ export async function createSupabaseServer() {
     throw new Error("Supabase public environment variables are missing.");
   }
 
-  return createServerClient(url, key, {
+  return createServerClient(normalizeSupabaseUrl(url), key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
