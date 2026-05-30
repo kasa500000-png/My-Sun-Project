@@ -1376,8 +1376,10 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
 function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
   const shapes = MUSCLE_DETAIL_SHAPES[item.id] || MUSCLE_DETAIL_SHAPES[muscleIconKey(item.id, item.group)] || [];
   const ratio = Math.min(1, item.score / Math.max(max, 1));
-  const opacity = 0.3 + ratio * 0.42;
-  const strokeOpacity = 0.22 + ratio * 0.28;
+  const opacity = 0.48 + ratio * 0.36;
+  const strokeOpacity = 0.28 + ratio * 0.34;
+  const textureKey = muscleIconKey(item.id, item.group);
+  const texturePosition = MUSCLE_ICON_POSITIONS[textureKey];
 
   if (shapes.length === 0) return null;
 
@@ -1389,9 +1391,42 @@ function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; ma
       aria-hidden="true"
     >
       <title>{item.name}</title>
+      <defs>
+        {shapes.map((shape, index) => {
+          const bounds = muscleShapeBounds(shape.d, 1.2);
+          return (
+            <pattern
+              key={`${item.id}-pattern-${index}`}
+              id={`muscle-texture-${item.id}-${index}`}
+              patternUnits="userSpaceOnUse"
+              x={bounds.x}
+              y={bounds.y}
+              width={bounds.w}
+              height={bounds.h}
+            >
+              <image
+                href="/images/muscle-focus-sheet.png"
+                x={bounds.x - texturePosition.col * bounds.w}
+                y={bounds.y - texturePosition.row * bounds.h}
+                width={bounds.w * 4}
+                height={bounds.h * 3}
+                preserveAspectRatio="none"
+              />
+            </pattern>
+          );
+        })}
+      </defs>
       {shapes.map((shape, index) => (
         <g key={`${item.id}-${index}`} opacity={(shape.opacity ?? 1) * opacity}>
-          <path d={shape.d} fill="#d30005" stroke="#8a0003" strokeLinejoin="round" strokeWidth="0.22" />
+          <path d={shape.d} fill="#d30005" opacity="0.32" />
+          <path
+            d={shape.d}
+            fill={`url(#muscle-texture-${item.id}-${index})`}
+            opacity="0.9"
+            stroke="#8a0003"
+            strokeLinejoin="round"
+            strokeWidth="0.2"
+          />
           {shape.fibers?.map((fiber, fiberIndex) => (
             <path
               key={`${item.id}-${index}-${fiberIndex}`}
@@ -1408,6 +1443,29 @@ function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; ma
       ))}
     </svg>
   );
+}
+
+function muscleShapeBounds(pathData: string, padding = 0) {
+  const values = pathData.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const xs: number[] = [];
+  const ys: number[] = [];
+
+  for (let index = 0; index < values.length - 1; index += 2) {
+    xs.push(values[index]);
+    ys.push(values[index + 1]);
+  }
+
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return {
+    x: minX - padding,
+    y: minY - padding,
+    w: Math.max(1, maxX - minX + padding * 2),
+    h: Math.max(1, maxY - minY + padding * 2),
+  };
 }
 
 function DonutChart({ data }: { data: Array<{ name: string; score: number; color: string }> }) {
