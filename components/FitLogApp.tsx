@@ -59,24 +59,24 @@ type FitLogAppProps = {
 };
 
 const MUSCLES: Muscle[] = [
-  { id: "chest", name: "Chest", group: "Upper", color: "#111111" },
-  { id: "back", name: "Back", group: "Upper", color: "#39393b" },
-  { id: "shoulders", name: "Shoulders", group: "Upper", color: "#707072" },
-  { id: "biceps", name: "Biceps", group: "Arms", color: "#9e9ea0" },
-  { id: "triceps", name: "Triceps", group: "Arms", color: "#4b4b4d" },
-  { id: "core", name: "Core", group: "Core", color: "#007d48" },
-  { id: "quads", name: "Quads", group: "Lower", color: "#111111" },
-  { id: "glutes", name: "Glutes", group: "Lower", color: "#d30005" },
-  { id: "hamstrings", name: "Hamstrings", group: "Lower", color: "#39393b" },
-  { id: "calves", name: "Calves", group: "Lower", color: "#707072" },
-  { id: "cardio", name: "Cardio", group: "Cardio", color: "#1151ff" },
+  { id: "chest", name: "가슴", group: "상체", color: "#111111" },
+  { id: "back", name: "등", group: "상체", color: "#39393b" },
+  { id: "shoulders", name: "어깨", group: "상체", color: "#707072" },
+  { id: "biceps", name: "이두", group: "팔", color: "#9e9ea0" },
+  { id: "triceps", name: "삼두", group: "팔", color: "#4b4b4d" },
+  { id: "core", name: "코어", group: "코어", color: "#007d48" },
+  { id: "quads", name: "앞허벅지", group: "하체", color: "#111111" },
+  { id: "glutes", name: "둔근", group: "하체", color: "#d30005" },
+  { id: "hamstrings", name: "햄스트링", group: "하체", color: "#39393b" },
+  { id: "calves", name: "종아리", group: "하체", color: "#707072" },
+  { id: "cardio", name: "유산소", group: "전신", color: "#1151ff" },
 ];
 
 const EXERCISES: Exercise[] = [
   {
     id: "squat",
-    name: "Squat",
-    category: "Lower",
+    name: "스쿼트",
+    category: "하체",
     type: "weight",
     defaultRestSeconds: 90,
     impacts: [
@@ -88,8 +88,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "leg-press",
-    name: "Leg Press",
-    category: "Lower",
+    name: "레그 프레스",
+    category: "하체",
     type: "weight",
     defaultRestSeconds: 90,
     impacts: [
@@ -100,8 +100,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "hip-thrust",
-    name: "Hip Thrust",
-    category: "Lower",
+    name: "힙 쓰러스트",
+    category: "하체",
     type: "weight",
     defaultRestSeconds: 90,
     impacts: [
@@ -112,8 +112,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "lat-pulldown",
-    name: "Lat Pulldown",
-    category: "Back",
+    name: "랫 풀다운",
+    category: "등",
     type: "weight",
     defaultRestSeconds: 75,
     impacts: [
@@ -125,8 +125,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "seated-row",
-    name: "Seated Row",
-    category: "Back",
+    name: "시티드 로우",
+    category: "등",
     type: "weight",
     defaultRestSeconds: 75,
     impacts: [
@@ -138,8 +138,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "bench-press",
-    name: "Bench Press",
-    category: "Chest",
+    name: "벤치 프레스",
+    category: "가슴",
     type: "weight",
     defaultRestSeconds: 90,
     impacts: [
@@ -150,8 +150,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "push-up",
-    name: "Push-Up",
-    category: "Chest",
+    name: "푸시업",
+    category: "가슴",
     type: "bodyweight",
     defaultRestSeconds: 60,
     impacts: [
@@ -163,8 +163,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "shoulder-press",
-    name: "Shoulder Press",
-    category: "Shoulders",
+    name: "숄더 프레스",
+    category: "어깨",
     type: "weight",
     defaultRestSeconds: 75,
     impacts: [
@@ -175,16 +175,16 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "lateral-raise",
-    name: "Lateral Raise",
-    category: "Shoulders",
+    name: "사이드 레터럴 레이즈",
+    category: "어깨",
     type: "weight",
     defaultRestSeconds: 45,
     impacts: [{ muscleId: "shoulders", impactRatio: 1 }],
   },
   {
     id: "plank",
-    name: "Plank",
-    category: "Core",
+    name: "플랭크",
+    category: "코어",
     type: "time",
     defaultRestSeconds: 45,
     impacts: [
@@ -195,8 +195,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "running",
-    name: "Running",
-    category: "Cardio",
+    name: "러닝",
+    category: "유산소",
     type: "time",
     defaultRestSeconds: 0,
     impacts: [
@@ -209,8 +209,8 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "stair-climber",
-    name: "Stair Climber",
-    category: "Cardio",
+    name: "천국의 계단",
+    category: "유산소",
     type: "time",
     defaultRestSeconds: 0,
     impacts: [
@@ -225,30 +225,30 @@ const EXERCISES: Exercise[] = [
 const ROUTINES = [
   {
     name: "LOWER BODY",
-    label: "Lower Body",
-    note: "Glute, quad, and hamstring strength.",
+    label: "하체 집중",
+    note: "둔근, 허벅지, 유산소까지 가볍게.",
     exercises: ["squat", "leg-press", "hip-thrust", "stair-climber"],
   },
   {
     name: "UPPER BALANCE",
-    label: "Upper Balance",
-    note: "Back, chest, and shoulder balance.",
+    label: "상체 밸런스",
+    note: "등, 가슴, 어깨를 균형 있게.",
     exercises: ["lat-pulldown", "seated-row", "bench-press", "shoulder-press"],
   },
   {
     name: "CORE RESET",
-    label: "Core Reset",
-    note: "Core stability with easy conditioning.",
+    label: "코어 리셋",
+    note: "코어 안정감과 가벼운 전신 운동.",
     exercises: ["plank", "push-up", "running"],
   },
 ];
 
 const tabItems: Array<{ id: Tab; label: string }> = [
-  { id: "home", label: "Home" },
-  { id: "train", label: "Train" },
-  { id: "log", label: "Log" },
-  { id: "balance", label: "Balance" },
-  { id: "member", label: "Member" },
+  { id: "home", label: "홈" },
+  { id: "train", label: "기록" },
+  { id: "log", label: "일지" },
+  { id: "balance", label: "분석" },
+  { id: "member", label: "내정보" },
 ];
 
 function today() {
@@ -309,8 +309,8 @@ function sessionStats(session: WorkoutSession) {
 
 function formatDate(date: string) {
   const parsed = new Date(`${date}T00:00:00`);
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
     day: "numeric",
     weekday: "short",
   }).format(parsed);
@@ -322,6 +322,10 @@ function defaultDraft(routineLabel = ROUTINES[0].label): DraftSet[] {
     { exerciseId, weight: "", reps: "", memo: "" },
     { exerciseId, weight: "", reps: "", memo: "" },
   ]);
+}
+
+function routineNote(label: string) {
+  return ROUTINES.find(item => item.label === label)?.note || "오늘 컨디션에 맞춰 가볍게 시작해요.";
 }
 
 export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
@@ -358,10 +362,10 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     try {
       const res = await fetch(`/api/fit-log?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not load training logs.");
+      if (!res.ok) throw new Error(data.error || "운동 기록을 불러오지 못했어요.");
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Could not load training logs.");
+      setToast(error instanceof Error ? error.message : "운동 기록을 불러오지 못했어요.");
       setSessions([]);
     } finally {
       setLoadingSessions(false);
@@ -415,9 +419,9 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   const recommendedRoutine = useMemo(() => {
     const groupData = groupScores(weeklyScores);
     const lowGroups = [...groupData].sort((a, b) => a.score - b.score).slice(0, 2).map(item => item.name);
-    if (lowGroups.includes("Upper")) return "Upper Balance";
-    if (lowGroups.includes("Core")) return "Core Reset";
-    return "Lower Body";
+    if (lowGroups.includes("상체")) return "상체 밸런스";
+    if (lowGroups.includes("코어")) return "코어 리셋";
+    return "하체 집중";
   }, [weeklyScores]);
 
   function updateDraftSet(index: number, patch: Partial<DraftSet>) {
@@ -450,7 +454,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       .filter(set => (set.durationSeconds || 0) > 0 || (set.reps || 0) > 0);
 
     if (validSets.length === 0) {
-      setToast("Enter at least one set before saving.");
+      setToast("저장할 세트를 하나 이상 입력해 주세요.");
       return;
     }
 
@@ -471,14 +475,14 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
         body: JSON.stringify({ ...nextSession, user_id: userId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not save this workout.");
+      if (!res.ok) throw new Error(data.error || "운동 기록 저장에 실패했어요.");
       setSessions(items => [data.session, ...items]);
       setDraftMemo("");
       setDraftSets(defaultDraft(routineName));
       setActiveTab("balance");
-      setToast("Workout saved to Supabase.");
+      setToast("운동 기록을 저장했어요.");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Could not save this workout.");
+      setToast(error instanceof Error ? error.message : "운동 기록 저장에 실패했어요.");
     } finally {
       setSaving(false);
     }
@@ -490,11 +494,11 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setToast(data.error || "Could not delete this log.");
+      setToast(data.error || "기록 삭제에 실패했어요.");
       return;
     }
     setSessions(items => items.filter(item => item.id !== id));
-    setToast("Training log deleted.");
+    setToast("기록을 삭제했어요.");
   }
 
   async function signOut() {
@@ -505,8 +509,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
   return (
     <main className="min-h-screen bg-white text-[#111111]">
-      <UtilityBar userEmail={userEmail} onSignOut={signOut} />
-      <PrimaryNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TopBar userEmail={userEmail} onSignOut={signOut} setActiveTab={setActiveTab} />
 
       {activeTab === "home" && (
         <HomeView
@@ -575,40 +578,30 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   );
 }
 
-function UtilityBar({ userEmail, onSignOut }: { userEmail?: string | null; onSignOut: () => void }) {
+function TopBar({
+  userEmail,
+  onSignOut,
+  setActiveTab,
+}: {
+  userEmail?: string | null;
+  onSignOut: () => void;
+  setActiveTab: (tab: Tab) => void;
+}) {
   return (
-    <div className="hidden h-9 items-center justify-between bg-[#f5f5f5] px-8 text-xs font-medium text-[#111111] md:flex">
-      <span>MYSUN FIT LOG</span>
-      <div className="flex items-center gap-4">
-        <span className="max-w-[260px] truncate">{userEmail || "SIGNED IN"}</span>
-        <button className="underline underline-offset-4" onClick={onSignOut}>Sign Out</button>
-      </div>
-    </div>
-  );
-}
-
-function PrimaryNav({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: (tab: Tab) => void }) {
-  return (
-    <header className="sticky top-0 z-30 border-b border-[#e5e5e5] bg-white">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-8">
-        <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f5f5f5] text-sm font-medium md:hidden" onClick={() => setActiveTab("home")}>
-          MS
+    <header className="sticky top-0 z-30 border-b border-[#e5e5e5] bg-white/95 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 md:h-16 md:px-8">
+        <button className="text-base font-black md:text-xl" onClick={() => setActiveTab("home")}>
+          마이썬 운동일지
         </button>
-        <button className="hidden text-xl font-black md:block" onClick={() => setActiveTab("home")}>MYSUN</button>
-        <nav className="hidden items-center gap-7 md:flex">
-          {tabItems.map(tab => (
-            <button
-              key={tab.id}
-              className={`h-16 border-b-2 text-base font-medium ${activeTab === tab.id ? "border-[#111111]" : "border-transparent"}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-        <button className="rounded-full bg-[#111111] px-5 py-2 text-sm font-medium text-white" onClick={() => setActiveTab("train")}>
-          Start
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="hidden max-w-[220px] truncate text-xs font-medium text-[#707072] md:inline">{userEmail}</span>
+          <button className="h-9 rounded-full bg-[#111111] px-4 text-sm font-medium text-white" onClick={() => setActiveTab("train")}>
+            기록
+          </button>
+          <button className="hidden h-9 rounded-full bg-[#f5f5f5] px-4 text-sm font-medium text-[#111111] md:inline" onClick={onSignOut}>
+            로그아웃
+          </button>
+        </div>
       </div>
     </header>
   );
@@ -635,67 +628,68 @@ function HomeView({
 }) {
   return (
     <>
-      <section className="relative min-h-[560px] overflow-hidden bg-[#111111] md:min-h-[680px]">
+      <section className="relative min-h-[72svh] overflow-hidden bg-[#111111] md:min-h-[680px]">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-90"
-          style={{ backgroundImage: "url('/images/training-hero.png')" }}
+          className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
+          style={{ backgroundImage: "url('/images/mysun-home-hero.jpg')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/72 via-black/28 to-transparent" />
-        <div className="relative mx-auto flex min-h-[560px] max-w-[1440px] flex-col justify-end px-4 pb-10 text-white md:min-h-[680px] md:px-8 md:pb-16">
-          <p className="text-sm font-medium uppercase text-white/75">Supabase synced training diary</p>
-          <h1 className="mt-4 max-w-4xl text-[58px] font-black uppercase leading-[0.88] md:text-[108px]">
-            Train. Log. Balance.
+        <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/72 md:via-black/22" />
+        <div className="relative mx-auto flex min-h-[72svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-white md:min-h-[680px] md:px-8 md:pb-14">
+          <p className="text-sm font-semibold text-white/80">오늘도 천천히, 꾸준히</p>
+          <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
+            마이썬 운동일지
           </h1>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button className="h-12 rounded-full bg-white px-8 text-base font-medium text-[#111111]" onClick={onStart}>
-              Start Session
+          <p className="mt-4 max-w-sm text-base leading-7 text-white/80">
+            운동을 기록하고, 이번 주 몸의 밸런스를 한눈에 확인해요.
+          </p>
+          <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
+            <button className="h-12 rounded-full bg-white px-6 text-base font-medium text-[#111111]" onClick={onStart}>
+              운동 기록
             </button>
-            <button className="h-12 rounded-full bg-[#111111] px-8 text-base font-medium text-white ring-1 ring-white/40" onClick={onAnalyze}>
-              View Balance
+            <button className="h-12 rounded-full bg-[#111111] px-6 text-base font-medium text-white ring-1 ring-white/35" onClick={onAnalyze}>
+              밸런스 보기
             </button>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-[1440px] gap-8 px-4 py-10 pb-24 md:grid-cols-[1fr_1fr] md:px-8">
+      <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[1fr_1fr] md:px-8 md:py-10">
         <div>
-          <SectionTitle kicker="THIS WEEK" title="Member Training" />
+          <SectionTitle kicker="이번 주" title="운동 요약" />
           <MetricGrid
             items={[
-              { label: "Sessions", value: loading ? "-" : `${weekStats.count}` },
-              { label: "Sets", value: loading ? "-" : `${weekStats.sets}` },
-              { label: "Minutes", value: loading ? "-" : `${weekStats.minutes}` },
-              { label: "Load", value: loading ? "-" : `${Math.round(weekStats.volume)}` },
+              { label: "운동", value: loading ? "-" : `${weekStats.count}` },
+              { label: "세트", value: loading ? "-" : `${weekStats.sets}` },
+              { label: "시간", value: loading ? "-" : `${weekStats.minutes}분` },
+              { label: "부하", value: loading ? "-" : `${Math.round(weekStats.volume)}` },
             ]}
           />
-          <div className="mt-8 border-t border-[#cacacb] pt-5">
-            <p className="text-sm font-medium uppercase text-[#707072]">Recommended next</p>
-            <h2 className="mt-2 text-3xl font-medium">{recommendedRoutine}</h2>
-            <p className="mt-3 max-w-xl leading-7 text-[#39393b]">
-              Built from the least-loaded muscle groups in the last seven days, then saved only to your Supabase account.
-            </p>
-            <button className="mt-6 h-12 rounded-full bg-[#111111] px-8 text-base font-medium text-white" onClick={onStart}>
-              Train This
+          <div className="mt-7 border-t border-[#cacacb] pt-5">
+            <p className="text-sm font-medium text-[#707072]">추천 루틴</p>
+            <h2 className="mt-2 text-2xl font-semibold">{recommendedRoutine}</h2>
+            <p className="mt-2 text-sm leading-6 text-[#39393b]">{routineNote(recommendedRoutine)}</p>
+            <button className="mt-5 h-12 w-full rounded-full bg-[#111111] px-8 text-base font-medium text-white md:w-auto" onClick={onStart}>
+              이 루틴으로 시작
             </button>
           </div>
         </div>
 
-        <div className="grid gap-8">
-          <FlatPanel title={recent ? recent.routineName : "No logs yet"} kicker="LATEST">
+        <div className="grid gap-7">
+          <FlatPanel title={recent ? recent.routineName : "아직 기록이 없어요"} kicker="최근 기록">
             {recent ? (
               <div>
                 <p className="text-sm font-medium text-[#707072]">{formatDate(recent.date)}</p>
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  <SmallStudioStat label="Sets" value={`${sessionStats(recent).totalSets}`} />
-                  <SmallStudioStat label="Moves" value={`${sessionStats(recent).exercises}`} />
-                  <SmallStudioStat label="Min" value={`${recent.durationMinutes}`} />
+                  <SmallStudioStat label="세트" value={`${sessionStats(recent).totalSets}`} />
+                  <SmallStudioStat label="운동" value={`${sessionStats(recent).exercises}`} />
+                  <SmallStudioStat label="시간" value={`${recent.durationMinutes}`} />
                 </div>
               </div>
             ) : (
-              <EmptyState text="Create the first training record to light up the archive and muscle balance map." action="Record First Workout" onClick={onStart} />
+              <EmptyState text="첫 운동을 기록하면 이곳에 최근 일지가 표시됩니다." action="첫 운동 기록" onClick={onStart} />
             )}
           </FlatPanel>
-          <FlatPanel title={topToday.length ? "Today Load" : "Week Load"} kicker="BODY MAP">
+          <FlatPanel title={topToday.length ? "오늘의 자극" : "이번 주 자극"} kicker="근육 지도">
             <BodyMap scores={topToday.length ? topToday : topWeek} />
           </FlatPanel>
         </div>
@@ -745,54 +739,58 @@ function WorkoutView({
     const map = new Map<string, Array<{ set: DraftSet; index: number }>>();
     draftSets.forEach((set, index) => {
       const exercise = exerciseById.get(set.exerciseId);
-      const name = exercise?.name || "Exercise";
+      const name = exercise?.name || "운동";
       map.set(name, [...(map.get(name) || []), { set, index }]);
     });
     return Array.from(map.entries());
   }, [draftSets]);
 
   return (
-    <section className="mx-auto grid max-w-[1440px] gap-8 px-4 py-10 pb-24 md:grid-cols-[minmax(0,1fr)_360px] md:px-8">
+    <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[minmax(0,1fr)_360px] md:px-8 md:py-10">
       <div>
-        <SectionTitle kicker="TRAIN" title="Record Session" />
-        <div className="mb-8 grid gap-3 md:grid-cols-3">
-          <Field label="Routine">
+        <SectionTitle kicker="운동 기록" title="오늘 운동" />
+        <div className="mb-6 grid gap-3">
+          <Field label="루틴">
             <select className="nike-input" value={routineName} onChange={event => setRoutineName(event.target.value)}>
               {ROUTINES.map(routine => <option key={routine.label}>{routine.label}</option>)}
             </select>
           </Field>
-          <Field label="Date">
-            <input className="nike-input" type="date" value={draftDate} onChange={event => setDraftDate(event.target.value)} />
-          </Field>
-          <Field label="Minutes">
-            <input className="nike-input" inputMode="numeric" value={draftDuration} onChange={event => setDraftDuration(event.target.value)} />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="날짜">
+              <input className="nike-input" type="date" value={draftDate} onChange={event => setDraftDate(event.target.value)} />
+            </Field>
+            <Field label="시간">
+              <input className="nike-input" inputMode="numeric" value={draftDuration} onChange={event => setDraftDuration(event.target.value)} />
+            </Field>
+          </div>
         </div>
 
         <div className="border-y border-[#cacacb]">
-          <div className="flex flex-col gap-3 border-b border-[#e5e5e5] py-6 md:flex-row md:items-center md:justify-between">
+          <div className="grid gap-3 border-b border-[#e5e5e5] py-5">
             <div>
-              <p className="text-sm font-medium uppercase text-[#707072]">Set Entry</p>
-              <h2 className="text-3xl font-medium">{routineName}</h2>
+              <p className="text-sm font-medium text-[#707072]">세트 입력</p>
+              <h2 className="text-2xl font-semibold">{routineName}</h2>
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-[1fr_auto] gap-2">
               <select className="nike-input h-12 min-w-0" value={selectedExercise} onChange={event => setSelectedExercise(event.target.value)}>
                 {EXERCISES.map(exercise => <option key={exercise.id} value={exercise.id}>{exercise.name}</option>)}
               </select>
-              <button className="nike-secondary h-12 px-5" onClick={() => addSet()}>Add Set</button>
+              <button className="h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white" onClick={() => addSet()}>
+                추가
+              </button>
             </div>
           </div>
 
           {grouped.map(([exerciseName, sets]) => {
             const exercise = exerciseById.get(sets[0]?.set.exerciseId || "");
             return (
-              <div key={exerciseName} className="border-b border-[#e5e5e5] py-6 last:border-b-0">
+              <div key={exerciseName} className="border-b border-[#e5e5e5] py-5 last:border-b-0">
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-medium">{exerciseName}</h3>
-                    <p className="text-sm font-medium text-[#707072]">{exercise?.category} / Rest {exercise?.defaultRestSeconds || 0}s</p>
+                    <h3 className="text-xl font-semibold">{exerciseName}</h3>
+                    <p className="text-sm font-medium text-[#707072]">{exercise?.category} / 휴식 {exercise?.defaultRestSeconds || 0}초</p>
                   </div>
-                  <button className="h-10 rounded-full bg-[#111111] px-5 text-sm font-medium text-white" onClick={() => addSet(exercise?.id)}>
+                  <button className="h-10 rounded-full bg-[#111111] px-4 text-sm font-medium text-white" onClick={() => addSet(exercise?.id)}>
                     +1
                   </button>
                 </div>
@@ -800,15 +798,15 @@ function WorkoutView({
                   {sets.map(({ set, index }, visibleIndex) => {
                     const isTime = exercise?.type === "time";
                     return (
-                      <div key={`${set.exerciseId}-${index}`} className="grid grid-cols-[48px_1fr_1fr_44px] items-end gap-2 bg-[#f5f5f5] p-2 md:grid-cols-[72px_1fr_1fr_44px]">
+                      <div key={`${set.exerciseId}-${index}`} className="grid grid-cols-[34px_1fr_1fr_40px] items-end gap-2 bg-[#f5f5f5] p-2">
                         <div className="pb-3 text-center text-sm font-medium text-[#707072]">{visibleIndex + 1}</div>
-                        <Field label={isTime ? "Effort" : "KG"} compact>
-                          <input className="nike-input bg-white" inputMode="decimal" value={set.weight} onChange={event => updateDraftSet(index, { weight: event.target.value })} placeholder={isTime ? "Easy" : "0"} />
+                        <Field label={isTime ? "강도" : "KG"} compact>
+                          <input className="nike-input bg-white px-3" inputMode="decimal" value={set.weight} onChange={event => updateDraftSet(index, { weight: event.target.value })} placeholder={isTime ? "보통" : "0"} />
                         </Field>
-                        <Field label={isTime ? "Min" : "Reps"} compact>
-                          <input className="nike-input bg-white" inputMode="numeric" value={set.reps} onChange={event => updateDraftSet(index, { reps: event.target.value })} placeholder={isTime ? "10" : "12"} />
+                        <Field label={isTime ? "분" : "횟수"} compact>
+                          <input className="nike-input bg-white px-3" inputMode="numeric" value={set.reps} onChange={event => updateDraftSet(index, { reps: event.target.value })} placeholder={isTime ? "10" : "12"} />
                         </Field>
-                        <button className="mb-1 h-10 rounded-full bg-white text-sm font-medium text-[#d30005]" onClick={() => removeSet(index)} aria-label="Remove set">
+                        <button className="mb-1 h-10 rounded-full bg-white text-sm font-medium text-[#d30005]" onClick={() => removeSet(index)} aria-label="세트 삭제">
                           X
                         </button>
                       </div>
@@ -822,15 +820,15 @@ function WorkoutView({
       </div>
 
       <aside className="grid gap-6 self-start">
-        <FlatPanel title="Live Muscle Load" kicker="Draft">
+        <FlatPanel title="예상 자극" kicker="입력 중">
           <BodyMap scores={currentDraftScores} />
         </FlatPanel>
         <div className="bg-[#f5f5f5] p-5">
-          <Field label="Memo">
-            <textarea className="nike-input min-h-28 resize-none bg-white" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="Energy, soreness, or notes for next time." />
+          <Field label="메모">
+            <textarea className="nike-input min-h-28 resize-none bg-white" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요." />
           </Field>
           <button className="mt-5 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50" onClick={finishWorkout} disabled={saving}>
-            {saving ? "Saving..." : "Finish Workout"}
+            {saving ? "저장 중..." : "운동 저장"}
           </button>
         </div>
       </aside>
@@ -840,28 +838,28 @@ function WorkoutView({
 
 function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; sessions: WorkoutSession[]; deleteSession: (id: string) => void }) {
   return (
-    <section className="mx-auto max-w-[1440px] px-4 py-10 pb-24 md:px-8">
-      <SectionTitle kicker="LOG" title="Training Archive" />
+    <section className="mx-auto max-w-[1440px] px-4 py-7 pb-28 md:px-8 md:py-10">
+      <SectionTitle kicker="운동 일지" title="기록 모아보기" />
       {loading ? (
-        <EmptyState text="Loading your Supabase training logs." />
+        <EmptyState text="운동 기록을 불러오는 중입니다." />
       ) : sessions.length === 0 ? (
-        <EmptyState text="No saved workouts yet. Record the first session to build your archive." />
+        <EmptyState text="아직 저장된 운동 기록이 없어요. 첫 운동을 기록해 보세요." />
       ) : (
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
           {sessions.map(session => {
             const stats = sessionStats(session);
             const scores = scoreSessions([session]).filter(item => item.score > 0).slice(0, 3);
             return (
               <article key={session.id} className="border-t border-[#cacacb] pt-5">
-                <div className="aspect-square bg-[#f5f5f5] p-5">
+                <div className="bg-[#f5f5f5] p-5">
                   <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
-                  <h3 className="mt-2 text-2xl font-medium">{session.routineName}</h3>
-                  <div className="mt-8 grid grid-cols-3 gap-2">
-                    <SmallStudioStat label="Sets" value={`${stats.totalSets}`} />
-                    <SmallStudioStat label="Moves" value={`${stats.exercises}`} />
-                    <SmallStudioStat label="Min" value={`${session.durationMinutes}`} />
+                  <h3 className="mt-2 text-2xl font-semibold">{session.routineName}</h3>
+                  <div className="mt-6 grid grid-cols-3 gap-2">
+                    <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
+                    <SmallStudioStat label="운동" value={`${stats.exercises}`} />
+                    <SmallStudioStat label="시간" value={`${session.durationMinutes}`} />
                   </div>
-                  {session.memo && <p className="mt-6 line-clamp-3 text-sm leading-6 text-[#39393b]">{session.memo}</p>}
+                  {session.memo && <p className="mt-5 line-clamp-3 text-sm leading-6 text-[#39393b]">{session.memo}</p>}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {scores.map(score => (
@@ -871,7 +869,7 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                   ))}
                 </div>
                 <button className="mt-4 text-sm font-medium text-[#d30005] underline underline-offset-4" onClick={() => deleteSession(session.id)}>
-                  Delete
+                  삭제
                 </button>
               </article>
             );
@@ -898,36 +896,36 @@ function AnalysisView({
   const topWeek = weeklyScores.filter(item => item.score > 0);
   const topToday = todayScores.filter(item => item.score > 0);
   const missing = weeklyScores.filter(item => item.score === 0).slice(0, 3);
-  const pieData = groupBalance.length ? groupBalance : [{ name: "No logs", score: 1, color: "#cacacb" }];
+  const pieData = groupBalance.length ? groupBalance : [{ name: "기록 없음", score: 1, color: "#cacacb" }];
 
   return (
-    <section className="mx-auto grid max-w-[1440px] gap-8 px-4 py-10 pb-24 md:grid-cols-[0.9fr_1.1fr] md:px-8">
-      <div className="grid gap-8 self-start">
-        <FlatPanel title={topToday.length ? "Today Load" : "Week Load"} kicker="Body Map">
+    <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[0.9fr_1.1fr] md:px-8 md:py-10">
+      <div className="grid gap-7 self-start">
+        <FlatPanel title={topToday.length ? "오늘 자극" : "이번 주 자극"} kicker="근육 지도">
           <BodyMap scores={topToday.length ? topToday : topWeek} />
         </FlatPanel>
-        <div className="bg-[#111111] p-6 text-white md:p-8">
-          <p className="text-sm font-medium uppercase text-[#9e9ea0]">Coach Note</p>
-          <h2 className="mt-3 text-3xl font-medium leading-tight">
-            {groupBalance[0]?.name || "Training"} carries the highest load this week.
+        <div className="bg-[#111111] p-6 text-white">
+          <p className="text-sm font-medium text-[#9e9ea0]">코치 메모</p>
+          <h2 className="mt-3 text-2xl font-semibold leading-tight">
+            이번 주는 {groupBalance[0]?.name || "운동 기록"} 비중이 가장 높아요.
           </h2>
-          <p className="mt-4 leading-7 text-white/75">
-            A good next session is {recommendedRoutine}.
-            {missing.length > 0 && ` Still untouched: ${missing.map(item => item.name).join(", ")}.`}
+          <p className="mt-4 text-sm leading-6 text-white/75">
+            다음 운동은 {recommendedRoutine} 루틴을 추천해요.
+            {missing.length > 0 && ` 아직 부족한 부위는 ${missing.map(item => item.name).join(", ")}입니다.`}
           </p>
         </div>
       </div>
 
-      <div className="grid gap-8">
+      <div className="grid gap-7">
         <MetricGrid
           items={[
-            { label: "Sessions", value: `${weekStats.count}` },
-            { label: "Sets", value: `${weekStats.sets}` },
-            { label: "Minutes", value: `${weekStats.minutes}` },
-            { label: "Load", value: `${Math.round(weekStats.volume)}` },
+            { label: "운동", value: `${weekStats.count}` },
+            { label: "세트", value: `${weekStats.sets}` },
+            { label: "시간", value: `${weekStats.minutes}분` },
+            { label: "부하", value: `${Math.round(weekStats.volume)}` },
           ]}
         />
-        <FlatPanel title="Part Balance" kicker="This Week">
+        <FlatPanel title="부위 밸런스" kicker="이번 주">
           <DonutChart data={pieData} />
           <div className="mt-8 grid gap-2">
             {groupBalance.map(item => (
@@ -941,7 +939,7 @@ function AnalysisView({
             ))}
           </div>
         </FlatPanel>
-        <FlatPanel title="Muscle Ranking" kicker="Top Load">
+        <FlatPanel title="근육 순위" kicker="자극량">
           <BarRanking data={topWeek.slice(0, 8)} />
         </FlatPanel>
       </div>
@@ -951,21 +949,21 @@ function AnalysisView({
 
 function ProfileView({ userEmail, sessionCount, onSignOut }: { userEmail?: string | null; sessionCount: number; onSignOut: () => void }) {
   return (
-    <section className="mx-auto max-w-[960px] px-4 py-10 pb-24 md:px-8">
-      <SectionTitle kicker="MEMBER" title="Account" />
-      <div className="grid gap-8 md:grid-cols-2">
+    <section className="mx-auto max-w-[960px] px-4 py-7 pb-28 md:px-8 md:py-10">
+      <SectionTitle kicker="내 정보" title="계정" />
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="bg-[#f5f5f5] p-6">
-          <p className="text-sm font-medium uppercase text-[#707072]">Signed in</p>
-          <h2 className="mt-2 break-all text-2xl font-medium">{userEmail || "Supabase Account"}</h2>
-          <p className="mt-4 leading-7 text-[#39393b]">
-            Every workout is tied to this Supabase user. The app no longer stores backup workout data in local browser storage.
+          <p className="text-sm font-medium text-[#707072]">로그인 계정</p>
+          <h2 className="mt-2 break-all text-2xl font-semibold">{userEmail || "내 계정"}</h2>
+          <p className="mt-4 text-sm leading-6 text-[#39393b]">
+            운동 기록은 이 계정의 클라우드 데이터로 저장됩니다.
           </p>
         </div>
         <div className="bg-[#111111] p-6 text-white">
-          <p className="text-sm font-medium uppercase text-[#9e9ea0]">Saved Sessions</p>
-          <p className="mt-3 text-7xl font-black leading-none">{sessionCount}</p>
-          <button className="mt-8 h-12 rounded-full bg-white px-8 text-base font-medium text-[#111111]" onClick={onSignOut}>
-            Sign Out
+          <p className="text-sm font-medium text-[#9e9ea0]">저장된 운동</p>
+          <p className="mt-3 text-6xl font-black leading-none">{sessionCount}</p>
+          <button className="mt-8 h-12 w-full rounded-full bg-white px-8 text-base font-medium text-[#111111]" onClick={onSignOut}>
+            로그아웃
           </button>
         </div>
       </div>
@@ -990,8 +988,8 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
   };
 
   return (
-    <div className="grid gap-8 md:grid-cols-[150px_1fr] md:items-center">
-      <div className="relative mx-auto h-64 w-32">
+    <div className="grid gap-6 md:grid-cols-[150px_1fr] md:items-center">
+      <div className="relative mx-auto h-60 w-32">
         <div className="absolute left-1/2 top-0 h-12 w-12 -translate-x-1/2 rounded-full bg-[#cacacb]" />
         <div className="absolute left-1/2 top-14 h-24 w-20 -translate-x-1/2 rounded-[36px]" style={{ background: color(["chest", "back", "core"]) }} />
         <div className="absolute left-[7px] top-[76px] h-24 w-7 rotate-12 rounded-full" style={{ background: color(["shoulders", "biceps", "triceps"]) }} />
@@ -1001,7 +999,7 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
       </div>
       <div className="grid gap-4">
         {scores.slice(0, 5).map((item, index) => <MuscleRow key={item.id} item={item} max={max} index={index} />)}
-        {scores.length === 0 && <p className="text-base leading-7 text-[#707072]">Save a workout and the muscle map will fill in here.</p>}
+        {scores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 근육 자극 지도가 채워집니다.</p>}
       </div>
     </div>
   );
@@ -1019,10 +1017,10 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
 
   return (
     <div className="mt-6 grid place-items-center">
-      <div className="grid h-56 w-56 place-items-center rounded-full" style={{ background: `conic-gradient(${stops})` }}>
+        <div className="grid h-52 w-52 place-items-center rounded-full" style={{ background: `conic-gradient(${stops})` }}>
         <div className="grid h-32 w-32 place-items-center rounded-full bg-white text-center">
           <div>
-            <p className="text-sm font-medium text-[#707072]">Total</p>
+            <p className="text-sm font-medium text-[#707072]">합계</p>
             <p className="text-3xl font-medium">{Math.round(total)}</p>
           </div>
         </div>
@@ -1033,11 +1031,11 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
 
 function BarRanking({ data }: { data: Array<Muscle & { score: number }> }) {
   const max = Math.max(...data.map(item => item.score), 1);
-  if (data.length === 0) return <p className="mt-4 text-base leading-7 text-[#707072]">Save workouts and the weekly ranking will appear here.</p>;
+  if (data.length === 0) return <p className="mt-4 text-base leading-7 text-[#707072]">운동을 저장하면 주간 순위가 표시됩니다.</p>;
   return (
     <div className="mt-6 grid gap-4">
       {data.map(item => (
-        <div key={item.id} className="grid grid-cols-[92px_1fr_48px] items-center gap-3">
+        <div key={item.id} className="grid grid-cols-[76px_1fr_44px] items-center gap-3">
           <span className="truncate text-sm font-medium text-[#39393b]">{item.name}</span>
           <div className="h-7 bg-[#f5f5f5]">
             <div className="h-7 bg-[#111111]" style={{ width: `${Math.max(7, (item.score / max) * 100)}%` }} />
@@ -1068,9 +1066,9 @@ function MetricGrid({ items }: { items: Array<{ label: string; value: string }> 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
       {items.map(item => (
-        <div key={item.label} className="bg-[#f5f5f5] p-5">
+        <div key={item.label} className="bg-[#f5f5f5] p-4">
           <p className="text-sm font-medium text-[#707072]">{item.label}</p>
-          <p className="mt-4 text-4xl font-medium leading-none">{item.value}</p>
+          <p className="mt-4 text-3xl font-semibold leading-none">{item.value}</p>
         </div>
       ))}
     </div>
@@ -1080,18 +1078,18 @@ function MetricGrid({ items }: { items: Array<{ label: string; value: string }> 
 function FlatPanel({ title, kicker, children }: { title: string; kicker: string; children: React.ReactNode }) {
   return (
     <section className="border-t border-[#cacacb] pt-5">
-      <p className="text-sm font-medium uppercase text-[#707072]">{kicker}</p>
-      <h2 className="mt-1 text-3xl font-medium">{title}</h2>
-      <div className="mt-6">{children}</div>
+      <p className="text-sm font-medium text-[#707072]">{kicker}</p>
+      <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
+      <div className="mt-5">{children}</div>
     </section>
   );
 }
 
 function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
-    <div className="mb-8">
-      <p className="text-sm font-medium uppercase text-[#707072]">{kicker}</p>
-      <h1 className="mt-1 text-5xl font-black uppercase leading-[0.9] md:text-7xl">{title}</h1>
+    <div className="mb-6">
+      <p className="text-sm font-medium text-[#707072]">{kicker}</p>
+      <h1 className="mt-1 text-4xl font-black leading-tight md:text-6xl">{title}</h1>
     </div>
   );
 }
@@ -1099,7 +1097,7 @@ function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
 function Field({ label, children }: { label: string; children: React.ReactNode; compact?: boolean }) {
   return (
     <label className="grid gap-2">
-      <span className="text-xs font-medium uppercase text-[#707072]">{label}</span>
+      <span className="text-xs font-medium text-[#707072]">{label}</span>
       {children}
     </label>
   );
@@ -1107,10 +1105,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode; 
 
 function EmptyState({ text, action, onClick }: { text: string; action?: string; onClick?: () => void }) {
   return (
-    <div className="bg-[#f5f5f5] p-8">
+    <div className="bg-[#f5f5f5] p-6">
       <p className="max-w-md text-base leading-7 text-[#39393b]">{text}</p>
       {action && onClick && (
-        <button className="mt-6 h-12 rounded-full bg-[#111111] px-8 text-base font-medium text-white" onClick={onClick}>
+        <button className="mt-6 h-12 w-full rounded-full bg-[#111111] px-8 text-base font-medium text-white md:w-auto" onClick={onClick}>
           {action}
         </button>
       )}
@@ -1121,8 +1119,8 @@ function EmptyState({ text, action, onClick }: { text: string; action?: string; 
 function SmallStudioStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white p-3">
-      <p className="text-xs font-medium uppercase text-[#707072]">{label}</p>
-      <p className="mt-2 text-2xl font-medium">{value}</p>
+      <p className="text-xs font-medium text-[#707072]">{label}</p>
+      <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>
   );
 }
