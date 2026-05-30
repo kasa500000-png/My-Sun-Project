@@ -108,6 +108,8 @@ const MUSCLE_OVERLAY_IMAGES: Record<string, string> = {
   cardio: "/images/muscles/cardio.png",
 };
 
+const MUSCLE_OVERLAY_VERSION = "20260531-align2";
+
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
     {
@@ -1397,7 +1399,7 @@ function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; ma
   return (
     <img
       className="pointer-events-none absolute inset-0 h-full w-full select-none mix-blend-multiply"
-      src={src}
+      src={`${src}?v=${MUSCLE_OVERLAY_VERSION}`}
       alt=""
       aria-hidden="true"
       draggable={false}
