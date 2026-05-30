@@ -72,6 +72,15 @@ type MuscleIconKey =
   | "lower"
   | "upper";
 
+type MuscleZone = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  r?: number;
+  rotate?: number;
+};
+
 const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }> = {
   chest: { col: 0, row: 0 },
   back: { col: 1, row: 0 },
@@ -85,6 +94,57 @@ const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }>
   cardio: { col: 1, row: 2 },
   lower: { col: 2, row: 2 },
   upper: { col: 3, row: 2 },
+};
+
+const MUSCLE_BODY_ZONES: Record<string, MuscleZone[]> = {
+  chest: [
+    { x: 18.7, y: 25.7, w: 9.1, h: 6.5, r: 46, rotate: -8 },
+    { x: 29.4, y: 25.7, w: 9.1, h: 6.5, r: 46, rotate: 8 },
+  ],
+  back: [
+    { x: 62.7, y: 24.6, w: 9.7, h: 16.8, r: 40, rotate: 12 },
+    { x: 73.4, y: 24.6, w: 9.7, h: 16.8, r: 40, rotate: -12 },
+    { x: 67.7, y: 32.2, w: 10.8, h: 17.6, r: 42 },
+  ],
+  shoulders: [
+    { x: 13.2, y: 23.1, w: 7.5, h: 7, r: 50, rotate: -18 },
+    { x: 36.6, y: 23.1, w: 7.5, h: 7, r: 50, rotate: 18 },
+    { x: 58.1, y: 22.6, w: 7.5, h: 7.2, r: 50, rotate: -18 },
+    { x: 82.1, y: 22.6, w: 7.5, h: 7.2, r: 50, rotate: 18 },
+  ],
+  biceps: [
+    { x: 10.6, y: 32.2, w: 4.9, h: 14.5, r: 45, rotate: 9 },
+    { x: 42.2, y: 32.2, w: 4.9, h: 14.5, r: 45, rotate: -9 },
+  ],
+  triceps: [
+    { x: 55.6, y: 32.8, w: 4.8, h: 15.4, r: 45, rotate: -5 },
+    { x: 87.4, y: 32.8, w: 4.8, h: 15.4, r: 45, rotate: 5 },
+  ],
+  core: [
+    { x: 22.1, y: 34.8, w: 15.2, h: 18.7, r: 36 },
+  ],
+  quads: [
+    { x: 18.9, y: 55.2, w: 7.2, h: 19.4, r: 38, rotate: 4 },
+    { x: 31.1, y: 55.2, w: 7.2, h: 19.4, r: 38, rotate: -4 },
+  ],
+  glutes: [
+    { x: 65.2, y: 50.7, w: 9.5, h: 10.7, r: 48, rotate: -6 },
+    { x: 75.2, y: 50.7, w: 9.5, h: 10.7, r: 48, rotate: 6 },
+  ],
+  hamstrings: [
+    { x: 66.2, y: 60.2, w: 7.6, h: 19.8, r: 38, rotate: 5 },
+    { x: 76.2, y: 60.2, w: 7.6, h: 19.8, r: 38, rotate: -5 },
+  ],
+  calves: [
+    { x: 20.1, y: 75.3, w: 6.4, h: 14.2, r: 42, rotate: 4 },
+    { x: 31.3, y: 75.3, w: 6.4, h: 14.2, r: 42, rotate: -4 },
+    { x: 66.2, y: 77.4, w: 7.1, h: 12.6, r: 42, rotate: 2 },
+    { x: 76.4, y: 77.4, w: 7.1, h: 12.6, r: 42, rotate: -2 },
+  ],
+  cardio: [
+    { x: 17.2, y: 18.8, w: 23.1, h: 70.8, r: 48 },
+    { x: 61.8, y: 18.8, w: 24.4, h: 70.8, r: 48 },
+  ],
 };
 
 const MUSCLES: Muscle[] = [
@@ -1010,46 +1070,63 @@ function ProfileView({ userEmail, sessionCount, onSignOut }: { userEmail?: strin
 
 function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
   const activeScores = scores.filter(item => item.score > 0);
-  const displayScores = activeScores.length ? activeScores.slice(0, 6) : MUSCLES.slice(0, 6).map(item => ({ ...item, score: 0 }));
-  const max = Math.max(...displayScores.map(item => item.score), 1);
+  const max = Math.max(...activeScores.map(item => item.score), 1);
 
   return (
     <div className="grid gap-5">
-      <div className="grid grid-cols-3 gap-3">
-        {displayScores.map(item => (
-          <MuscleImageCard key={item.id} item={item} max={max} muted={!activeScores.length || item.score === 0} />
-        ))}
+      <div className="bg-[#f5f5f5] p-3">
+        <div className="relative mx-auto max-w-[360px] overflow-hidden bg-white">
+          <img
+            className="block w-full select-none"
+            src="/images/muscle-body-base.png"
+            alt="전체 신체 근육 지도"
+            draggable={false}
+          />
+          {activeScores.map(item => (
+            <MuscleBodyOverlay key={item.id} item={item} max={max} />
+          ))}
+          {activeScores.length === 0 && (
+            <div className="absolute inset-x-5 bottom-5 rounded-full bg-white/90 px-4 py-3 text-center text-sm font-semibold text-[#707072]">
+              기록하면 자극 부위가 표시돼요
+            </div>
+          )}
+        </div>
       </div>
       <div className="grid gap-4">
         {activeScores.slice(0, 5).map((item, index) => <MuscleRow key={item.id} item={item} max={max} index={index} />)}
-        {activeScores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 부위별 근육 이미지가 채워집니다.</p>}
+        {activeScores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 전체 신체 이미지 위에 자극 부위가 표시됩니다.</p>}
       </div>
     </div>
   );
 }
 
-function MuscleImageCard({ item, max, muted }: { item: Muscle & { score: number }; max: number; muted: boolean }) {
-  const key = muscleIconKey(item.id, item.group);
-  const position = MUSCLE_ICON_POSITIONS[key];
-  const intensity = Math.max(0.08, item.score / Math.max(max, 1));
-  const colPosition = `${(position.col / 3) * 100}%`;
-  const rowPosition = `${(position.row / 2) * 100}%`;
+function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
+  const zones = MUSCLE_BODY_ZONES[item.id] || MUSCLE_BODY_ZONES[muscleIconKey(item.id, item.group)] || [];
+  const ratio = Math.min(1, item.score / Math.max(max, 1));
+  const opacity = 0.28 + ratio * 0.42;
+  const blur = ratio > 0.66 ? 0 : 0.2;
 
   return (
-    <div className={`min-w-0 bg-[#f5f5f5] p-2 text-center ${muted ? "opacity-55" : ""}`}>
-      <div
-        className="mx-auto aspect-square w-full max-w-[104px] rounded-full border-2 bg-white bg-no-repeat"
-        style={{
-          backgroundImage: "url('/images/muscle-focus-sheet.png')",
-          backgroundSize: "400% 300%",
-          backgroundPosition: `${colPosition} ${rowPosition}`,
-          borderColor: muted ? "#e5e5e5" : item.color,
-          boxShadow: muted ? "none" : `inset 0 0 0 ${Math.round(2 + intensity * 4)}px rgba(17,17,17,0.08)`,
-        }}
-      />
-      <p className="mt-2 truncate text-xs font-semibold text-[#111111]">{item.name}</p>
-      <p className="text-[11px] font-medium text-[#707072]">{item.score ? item.score : "대기"}</p>
-    </div>
+    <>
+      {zones.map((zone, index) => (
+        <span
+          key={`${item.id}-${index}`}
+          className="pointer-events-none absolute bg-[#d30005] mix-blend-multiply"
+          title={`${item.name} ${item.score}`}
+          style={{
+            left: `${zone.x}%`,
+            top: `${zone.y}%`,
+            width: `${zone.w}%`,
+            height: `${zone.h}%`,
+            borderRadius: `${zone.r ?? 45}%`,
+            opacity,
+            filter: `blur(${blur}px)`,
+            transform: zone.rotate ? `rotate(${zone.rotate}deg)` : undefined,
+            boxShadow: `0 0 ${Math.round(8 + ratio * 14)}px rgba(211,0,5,${0.18 + ratio * 0.14})`,
+          }}
+        />
+      ))}
+    </>
   );
 }
 
