@@ -94,6 +94,20 @@ const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }>
   upper: { col: 3, row: 2 },
 };
 
+const MUSCLE_OVERLAY_IMAGES: Record<string, string> = {
+  chest: "/images/muscles/chest.png",
+  back: "/images/muscles/back.png",
+  shoulders: "/images/muscles/shoulders.png",
+  biceps: "/images/muscles/biceps.png",
+  triceps: "/images/muscles/triceps.png",
+  core: "/images/muscles/core.png",
+  quads: "/images/muscles/quads.png",
+  glutes: "/images/muscles/glutes.png",
+  hamstrings: "/images/muscles/hamstrings.png",
+  calves: "/images/muscles/calves.png",
+  cardio: "/images/muscles/cardio.png",
+};
+
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
     {
@@ -1374,74 +1388,21 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
 }
 
 function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
-  const shapes = MUSCLE_DETAIL_SHAPES[item.id] || MUSCLE_DETAIL_SHAPES[muscleIconKey(item.id, item.group)] || [];
+  const src = MUSCLE_OVERLAY_IMAGES[item.id] || MUSCLE_OVERLAY_IMAGES[muscleIconKey(item.id, item.group)];
   const ratio = Math.min(1, item.score / Math.max(max, 1));
-  const opacity = 0.48 + ratio * 0.36;
-  const strokeOpacity = 0.28 + ratio * 0.34;
-  const textureKey = muscleIconKey(item.id, item.group);
-  const texturePosition = MUSCLE_ICON_POSITIONS[textureKey];
+  const opacity = 0.52 + ratio * 0.38;
 
-  if (shapes.length === 0) return null;
+  if (!src) return null;
 
   return (
-    <svg
-      className="pointer-events-none absolute inset-0 h-full w-full mix-blend-multiply"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
+    <img
+      className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain mix-blend-multiply"
+      src={src}
+      alt=""
       aria-hidden="true"
-    >
-      <title>{item.name}</title>
-      <defs>
-        {shapes.map((shape, index) => {
-          const bounds = muscleShapeBounds(shape.d, 1.2);
-          return (
-            <pattern
-              key={`${item.id}-pattern-${index}`}
-              id={`muscle-texture-${item.id}-${index}`}
-              patternUnits="userSpaceOnUse"
-              x={bounds.x}
-              y={bounds.y}
-              width={bounds.w}
-              height={bounds.h}
-            >
-              <image
-                href="/images/muscle-focus-sheet.png"
-                x={bounds.x - texturePosition.col * bounds.w}
-                y={bounds.y - texturePosition.row * bounds.h}
-                width={bounds.w * 4}
-                height={bounds.h * 3}
-                preserveAspectRatio="none"
-              />
-            </pattern>
-          );
-        })}
-      </defs>
-      {shapes.map((shape, index) => (
-        <g key={`${item.id}-${index}`} opacity={(shape.opacity ?? 1) * opacity}>
-          <path d={shape.d} fill="#d30005" opacity="0.32" />
-          <path
-            d={shape.d}
-            fill={`url(#muscle-texture-${item.id}-${index})`}
-            opacity="0.9"
-            stroke="#8a0003"
-            strokeLinejoin="round"
-            strokeWidth="0.2"
-          />
-          {shape.fibers?.map((fiber, fiberIndex) => (
-            <path
-              key={`${item.id}-${index}-${fiberIndex}`}
-              d={fiber}
-              fill="none"
-              stroke="#4f0002"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeOpacity={strokeOpacity}
-              strokeWidth={shape.strokeWidth ?? 0.18}
-            />
-          ))}
-        </g>
-      ))}
-    </svg>
+      draggable={false}
+      style={{ opacity }}
+    />
   );
 }
 
