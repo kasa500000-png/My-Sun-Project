@@ -3,8 +3,22 @@
 import { FormEvent, useEffect, useState } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
+type AuthMode = "login" | "signup";
+
+function authMessage(message: string) {
+  const lower = message.toLowerCase();
+  if (lower.includes("invalid login credentials")) return "아이디 또는 비밀번호가 올바르지 않습니다.";
+  if (lower.includes("user already registered")) return "이미 가입된 아이디입니다. 로그인으로 진행해 주세요.";
+  if (lower.includes("password")) return "비밀번호는 6자 이상으로 입력해 주세요.";
+  if (lower.includes("rate")) return "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.";
+  return message || "처리 중 문제가 발생했습니다.";
+}
+
 export default function LoginPage() {
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -16,68 +30,164 @@ export default function LoginPage() {
     });
   }, []);
 
+  function switchMode(nextMode: AuthMode) {
+    setMode(nextMode);
+    setMessage("");
+    setPassword("");
+    setPasswordConfirm("");
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setMessage("");
     const supabase = createSupabaseBrowser();
     if (!supabase) {
-      setMessage("Supabase environment variables are not configured.");
+      setMessage("Supabase 환경변수가 설정되지 않았습니다.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setMessage("비밀번호는 6자 이상으로 입력해 주세요.");
+      return;
+    }
+
+    if (mode === "signup" && password !== passwordConfirm) {
+      setMessage("비밀번호 확인이 일치하지 않습니다.");
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
+
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      setLoading(false);
+
+      if (error) {
+        setMessage(authMessage(error.message));
+        return;
+      }
+
+      window.location.href = "/";
+      return;
+    }
+
+    const signupRes = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const signupData = await signupRes.json().catch(() => ({}));
+
+    if (!signupRes.ok) {
+      setLoading(false);
+      setMessage(signupData.error || "회원가입 처리 중 문제가 발생했습니다.");
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      password,
     });
     setLoading(false);
-    setMessage(error ? error.message : "Check your email for the secure login link.");
+
+    if (error) {
+      setMessage(authMessage(error.message));
+      return;
+    }
+
+    window.location.href = "/";
   }
 
   return (
     <main className="min-h-screen bg-white text-[#111111]">
-      <div className="grid min-h-screen md:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)]">
-        <section className="relative min-h-[44vh] overflow-hidden bg-[#111111] md:min-h-screen">
+      <div className="grid min-h-screen md:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
+        <section className="relative min-h-[36vh] overflow-hidden bg-[#111111] md:min-h-screen">
           <div
             className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
             style={{ backgroundImage: "url('/images/mysun-login-hero.jpg')" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/78 md:via-black/18" />
-          <div className="relative flex min-h-[44vh] flex-col justify-end p-5 text-white md:min-h-screen md:p-10">
-            <p className="text-sm font-medium uppercase text-white/75">For Mysun</p>
-            <h1 className="mt-4 max-w-3xl text-[52px] font-black uppercase leading-[0.88] md:text-[96px]">
-              Ready when you are.
-            </h1>
-            <p className="mt-5 max-w-md text-base leading-7 text-white/78">
-              A tiny doorway for your workouts, guarded by your favorite travel buddy.
-            </p>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent md:bg-gradient-to-r md:from-black/64 md:via-black/10" />
+          <div className="relative flex min-h-[36vh] flex-col justify-end p-6 text-white md:min-h-screen md:p-10">
+            <p className="text-base font-semibold text-white">For mysun</p>
           </div>
         </section>
 
         <section className="flex items-center px-5 py-10 md:px-10">
           <form className="w-full max-w-md" onSubmit={submit}>
-            <p className="text-sm font-medium uppercase text-[#707072]">Member Access</p>
-            <h2 className="mt-2 text-4xl font-medium leading-tight">Sign up or log in</h2>
-            <p className="mt-4 leading-7 text-[#39393b]">
-              Enter an email address and Supabase will send a secure magic link. First-time users are created automatically.
-            </p>
+            <div className="mb-8">
+              <p className="text-sm font-medium text-[#707072]">마이썬 운동 일지</p>
+              <h1 className="mt-2 text-4xl font-semibold leading-tight">
+                {mode === "login" ? "로그인" : "회원가입"}
+              </h1>
+            </div>
 
-            <label className="mt-8 grid gap-2">
-              <span className="text-xs font-medium uppercase text-[#707072]">Email</span>
-              <input
-                className="nike-input h-14"
-                type="email"
-                value={email}
-                onChange={event => setEmail(event.target.value)}
-                placeholder="name@example.com"
-                required
-              />
-            </label>
+            <div className="grid grid-cols-2 rounded-full bg-[#f5f5f5] p-1">
+              <button
+                type="button"
+                className={`h-11 rounded-full text-sm font-medium ${mode === "login" ? "bg-[#111111] text-white" : "text-[#111111]"}`}
+                onClick={() => switchMode("login")}
+              >
+                로그인
+              </button>
+              <button
+                type="button"
+                className={`h-11 rounded-full text-sm font-medium ${mode === "signup" ? "bg-[#111111] text-white" : "text-[#111111]"}`}
+                onClick={() => switchMode("signup")}
+              >
+                회원가입
+              </button>
+            </div>
 
-            <button className="mt-4 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50" disabled={loading}>
-              {loading ? "Sending..." : "Continue"}
+            <div className="mt-8 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-[#39393b]">아이디</span>
+                <input
+                  className="nike-input h-14"
+                  type="email"
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
+                  placeholder="이메일 주소"
+                  autoComplete="email"
+                  required
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-[#39393b]">비밀번호</span>
+                <input
+                  className="nike-input h-14"
+                  type="password"
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                  placeholder="6자 이상"
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  required
+                  minLength={6}
+                />
+              </label>
+
+              {mode === "signup" && (
+                <label className="grid gap-2">
+                  <span className="text-sm font-medium text-[#39393b]">비밀번호 확인</span>
+                  <input
+                    className="nike-input h-14"
+                    type="password"
+                    value={passwordConfirm}
+                    onChange={event => setPasswordConfirm(event.target.value)}
+                    placeholder="비밀번호를 한 번 더 입력"
+                    autoComplete="new-password"
+                    required
+                    minLength={6}
+                  />
+                </label>
+              )}
+            </div>
+
+            <button className="mt-6 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50" disabled={loading}>
+              {loading ? "처리 중..." : mode === "login" ? "로그인" : "회원가입"}
             </button>
 
             {message && (
@@ -86,11 +196,9 @@ export default function LoginPage() {
               </p>
             )}
 
-            <div className="mt-8 border-t border-[#cacacb] pt-5">
-              <p className="text-sm leading-6 text-[#707072]">
-                No local workout storage is used. Your browser only keeps the Supabase auth session cookie.
-              </p>
-            </div>
+            <p className="mt-6 text-center text-sm leading-6 text-[#707072]">
+              {mode === "login" ? "아직 계정이 없다면 회원가입을 선택해 주세요." : "가입 후 바로 운동 일지를 시작할 수 있습니다."}
+            </p>
           </form>
         </section>
       </div>

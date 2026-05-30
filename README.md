@@ -4,7 +4,7 @@ A mobile-first workout diary for Mysun, built with Next.js, Supabase, and Vercel
 
 ## Features
 
-- Supabase email magic-link signup and login
+- Supabase email and password signup/login
 - Auth-gated first page
 - Workout routine and set logging
 - Weekly muscle balance scoring
