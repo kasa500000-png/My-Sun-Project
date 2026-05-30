@@ -72,19 +72,11 @@ type MuscleIconKey =
   | "lower"
   | "upper";
 
-type MuscleZone = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  r?: number;
-  rotate?: number;
-};
-
-type MuscleCallout = {
-  x: number;
-  y: number;
-  size?: number;
+type MuscleDetailShape = {
+  d: string;
+  fibers?: string[];
+  opacity?: number;
+  strokeWidth?: number;
 };
 
 const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }> = {
@@ -102,69 +94,79 @@ const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }>
   upper: { col: 3, row: 2 },
 };
 
-const MUSCLE_BODY_ZONES: Record<string, MuscleZone[]> = {
+const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
-    { x: 18.7, y: 25.7, w: 9.1, h: 6.5, r: 46, rotate: -8 },
-    { x: 29.4, y: 25.7, w: 9.1, h: 6.5, r: 46, rotate: 8 },
+    {
+      d: "M18.4 25.7 C19.7 22.9 24.1 22.5 27.3 25.4 C26.6 29.5 22.4 31.2 18.5 28.9 Z",
+      fibers: ["M19.4 27.2 C21.8 25.7 24.5 25.8 26.7 27.2", "M20.2 28.7 C22.2 27.8 24.1 27.9 26.1 28.8"],
+    },
+    {
+      d: "M29.1 25.4 C32.3 22.5 36.7 22.9 38 25.7 L37.9 28.9 C34 31.2 29.8 29.5 29.1 25.4 Z",
+      fibers: ["M29.7 27.2 C32 25.8 34.7 25.7 37 27.2", "M30.3 28.8 C32.3 27.9 34.3 27.8 36.3 28.7"],
+    },
   ],
   back: [
-    { x: 62.7, y: 24.6, w: 9.7, h: 16.8, r: 40, rotate: 12 },
-    { x: 73.4, y: 24.6, w: 9.7, h: 16.8, r: 40, rotate: -12 },
-    { x: 67.7, y: 32.2, w: 10.8, h: 17.6, r: 42 },
+    {
+      d: "M62.4 24.8 C66.7 26.3 68.4 31.2 68.8 43.2 C65.6 40.9 63.1 35.4 61.5 29.4 Z",
+      fibers: ["M63.4 27.1 C65.7 31.2 66.7 35.4 67.4 40.2", "M65.1 27.8 C66 32 66.4 35.5 66.5 38.4"],
+    },
+    {
+      d: "M77.4 24.8 C73.1 26.3 71.4 31.2 71 43.2 C74.2 40.9 76.7 35.4 78.3 29.4 Z",
+      fibers: ["M76.4 27.1 C74.1 31.2 73.1 35.4 72.4 40.2", "M74.7 27.8 C73.8 32 73.4 35.5 73.3 38.4"],
+    },
+    {
+      d: "M68.9 27.1 C69.5 27.6 70.3 27.6 70.9 27.1 L70.6 46.6 C70.1 47.5 69.6 47.5 69.1 46.6 Z",
+      opacity: 0.78,
+    },
   ],
   shoulders: [
-    { x: 13.2, y: 23.1, w: 7.5, h: 7, r: 50, rotate: -18 },
-    { x: 36.6, y: 23.1, w: 7.5, h: 7, r: 50, rotate: 18 },
-    { x: 58.1, y: 22.6, w: 7.5, h: 7.2, r: 50, rotate: -18 },
-    { x: 82.1, y: 22.6, w: 7.5, h: 7.2, r: 50, rotate: 18 },
+    { d: "M12.8 23.4 C15.5 20.4 19 21.6 20.6 24.7 C18.4 28.7 15.4 29.3 12.8 27.5 Z", fibers: ["M14 24.2 C15.6 25 17.1 25.2 19.3 24.7"] },
+    { d: "M36.5 23.4 C33.8 20.4 30.3 21.6 28.7 24.7 C30.9 28.7 33.9 29.3 36.5 27.5 Z", fibers: ["M35.3 24.2 C33.7 25 32.2 25.2 30 24.7"] },
+    { d: "M58 22.9 C60.9 20.5 64.4 21.7 65.7 25.1 C63.8 28.9 60.5 29.2 58 27.3 Z", fibers: ["M59.3 23.9 C61 24.9 62.7 25.1 64.4 24.7"] },
+    { d: "M82.2 22.9 C79.3 20.5 75.8 21.7 74.5 25.1 C76.4 28.9 79.7 29.2 82.2 27.3 Z", fibers: ["M80.9 23.9 C79.2 24.9 77.5 25.1 75.8 24.7"] },
   ],
   biceps: [
-    { x: 10.6, y: 32.2, w: 4.9, h: 14.5, r: 45, rotate: 9 },
-    { x: 42.2, y: 32.2, w: 4.9, h: 14.5, r: 45, rotate: -9 },
+    { d: "M10.7 32.1 C12.8 34.5 13 42.1 11.1 46.7 C9.4 42.4 9.1 35.5 10.7 32.1 Z", fibers: ["M11.1 34 C11.8 37.6 11.7 41.7 10.8 45"] },
+    { d: "M42.1 32.1 C40 34.5 39.8 42.1 41.7 46.7 C43.4 42.4 43.7 35.5 42.1 32.1 Z", fibers: ["M41.7 34 C41 37.6 41.1 41.7 42 45"] },
   ],
   triceps: [
-    { x: 55.6, y: 32.8, w: 4.8, h: 15.4, r: 45, rotate: -5 },
-    { x: 87.4, y: 32.8, w: 4.8, h: 15.4, r: 45, rotate: 5 },
+    { d: "M56 32.4 C58.1 35.1 58.3 43.4 56.1 48 C54.5 43.2 54.3 36.2 56 32.4 Z", fibers: ["M56.3 34.5 C57.1 38.5 57 42.8 56.1 46.2"] },
+    { d: "M87.1 32.4 C85 35.1 84.8 43.4 87 48 C88.6 43.2 88.8 36.2 87.1 32.4 Z", fibers: ["M86.8 34.5 C86 38.5 86.1 42.8 87 46.2"] },
   ],
   core: [
-    { x: 22.1, y: 34.8, w: 15.2, h: 18.7, r: 36 },
+    { d: "M22.3 35.1 C24.1 34 26.1 34 27.8 35.1 L27.4 39.4 C25.6 40.1 24.4 40.1 22.7 39.4 Z", fibers: ["M24.9 35.4 L24.9 39.4"] },
+    { d: "M29.1 35.1 C30.8 34 32.8 34 34.6 35.1 L34.2 39.4 C32.5 40.1 31.2 40.1 29.5 39.4 Z", fibers: ["M31.9 35.4 L31.9 39.4"] },
+    { d: "M22.6 40.5 C24.2 39.8 25.9 39.8 27.3 40.5 L27 44.6 C25.4 45.3 24.5 45.3 22.9 44.6 Z" },
+    { d: "M29.6 40.5 C31 39.8 32.7 39.8 34.3 40.5 L34 44.6 C32.4 45.3 31.5 45.3 29.9 44.6 Z" },
+    { d: "M23 45.6 C24.6 45 25.9 45 27.1 45.6 L26.8 49.8 C25.4 50.5 24.7 50.5 23.3 49.8 Z" },
+    { d: "M29.8 45.6 C31 45 32.4 45 33.9 45.6 L33.6 49.8 C32.2 50.5 31.5 50.5 30.1 49.8 Z" },
+    { d: "M18.9 36.6 C20.9 41.2 21.2 46.7 20.1 52.8 C17.4 48 16.5 41.2 18.9 36.6 Z", opacity: 0.72 },
+    { d: "M38.1 36.6 C36.1 41.2 35.8 46.7 36.9 52.8 C39.6 48 40.5 41.2 38.1 36.6 Z", opacity: 0.72 },
   ],
   quads: [
-    { x: 18.9, y: 55.2, w: 7.2, h: 19.4, r: 38, rotate: 4 },
-    { x: 31.1, y: 55.2, w: 7.2, h: 19.4, r: 38, rotate: -4 },
+    { d: "M18.8 55.4 C22.6 58.4 23.2 68.2 20.4 75.1 C17.5 68.8 16.9 60.1 18.8 55.4 Z", fibers: ["M19.5 58.5 C20.9 63.1 20.7 68.4 19.9 72.9"] },
+    { d: "M31.3 55.4 C27.5 58.4 26.9 68.2 29.7 75.1 C32.6 68.8 33.2 60.1 31.3 55.4 Z", fibers: ["M30.6 58.5 C29.2 63.1 29.4 68.4 30.2 72.9"] },
+    { d: "M23.6 56.2 C25.3 60.4 25.3 66.2 24 72.4 C22.3 66.8 22 60.8 23.6 56.2 Z", opacity: 0.76 },
+    { d: "M26.7 56.2 C25 60.4 25 66.2 26.3 72.4 C28 66.8 28.3 60.8 26.7 56.2 Z", opacity: 0.76 },
   ],
   glutes: [
-    { x: 65.2, y: 50.7, w: 9.5, h: 10.7, r: 48, rotate: -6 },
-    { x: 75.2, y: 50.7, w: 9.5, h: 10.7, r: 48, rotate: 6 },
+    { d: "M64.8 51 C66.8 47.7 70.3 47.5 72.2 50.9 C71.8 55.5 68 57.4 64.7 55 Z", fibers: ["M65.8 52.7 C67.4 51.2 69.5 51 71.2 52.5"] },
+    { d: "M75.4 51 C73.4 47.7 69.9 47.5 68 50.9 C68.4 55.5 72.2 57.4 75.5 55 Z", fibers: ["M74.4 52.7 C72.8 51.2 70.7 51 69 52.5"] },
   ],
   hamstrings: [
-    { x: 66.2, y: 60.2, w: 7.6, h: 19.8, r: 38, rotate: 5 },
-    { x: 76.2, y: 60.2, w: 7.6, h: 19.8, r: 38, rotate: -5 },
+    { d: "M66.1 60.4 C69.3 64 69 73.3 66.8 80.1 C64.6 73.6 64.2 64.4 66.1 60.4 Z", fibers: ["M66.6 63.3 C67.4 68.4 67.2 73.7 66.5 78.1"] },
+    { d: "M76.4 60.4 C73.2 64 73.5 73.3 75.7 80.1 C77.9 73.6 78.3 64.4 76.4 60.4 Z", fibers: ["M75.9 63.3 C75.1 68.4 75.3 73.7 76 78.1"] },
   ],
   calves: [
-    { x: 20.1, y: 75.3, w: 6.4, h: 14.2, r: 42, rotate: 4 },
-    { x: 31.3, y: 75.3, w: 6.4, h: 14.2, r: 42, rotate: -4 },
-    { x: 66.2, y: 77.4, w: 7.1, h: 12.6, r: 42, rotate: 2 },
-    { x: 76.4, y: 77.4, w: 7.1, h: 12.6, r: 42, rotate: -2 },
+    { d: "M20 75.2 C22.9 78 22.5 85.8 20.3 89.3 C18.2 85.4 17.8 79.1 20 75.2 Z", fibers: ["M20.4 78.3 C21.1 82 20.8 85.4 20.1 88"] },
+    { d: "M31.5 75.2 C28.6 78 29 85.8 31.2 89.3 C33.3 85.4 33.7 79.1 31.5 75.2 Z", fibers: ["M31.1 78.3 C30.4 82 30.7 85.4 31.4 88"] },
+    { d: "M66.1 77.2 C68.9 80.1 68.5 86.5 66.5 90.3 C64.2 86.5 63.9 80.4 66.1 77.2 Z" },
+    { d: "M76.5 77.2 C73.7 80.1 74.1 86.5 76.1 90.3 C78.4 86.5 78.7 80.4 76.5 77.2 Z" },
   ],
   cardio: [
-    { x: 17.2, y: 18.8, w: 23.1, h: 70.8, r: 48 },
-    { x: 61.8, y: 18.8, w: 24.4, h: 70.8, r: 48 },
+    { d: "M15.8 20.5 C23 16.9 35.1 17.2 41 21.4 L38.8 87.5 C32.4 90.1 22.9 90.1 16.6 87.5 Z", opacity: 0.36 },
+    { d: "M59.5 20.5 C66.7 16.9 78.8 17.2 84.7 21.4 L82.5 87.5 C76.1 90.1 66.6 90.1 60.3 87.5 Z", opacity: 0.36 },
   ],
-};
-
-const MUSCLE_CALLOUT_POSITIONS: Record<string, MuscleCallout> = {
-  chest: { x: 24, y: 25, size: 19 },
-  back: { x: 70, y: 28, size: 19 },
-  shoulders: { x: 52, y: 23, size: 17 },
-  biceps: { x: 42, y: 35, size: 16 },
-  triceps: { x: 88, y: 35, size: 16 },
-  core: { x: 25, y: 41, size: 18 },
-  quads: { x: 25, y: 58, size: 18 },
-  glutes: { x: 71, y: 51, size: 17 },
-  hamstrings: { x: 76, y: 64, size: 17 },
-  calves: { x: 72, y: 78, size: 16 },
-  cardio: { x: 50, y: 82, size: 17 },
 };
 
 const MUSCLES: Muscle[] = [
@@ -1353,9 +1355,6 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
           {activeScores.map(item => (
             <MuscleBodyOverlay key={item.id} item={item} max={max} />
           ))}
-          {activeScores.map(item => (
-            <MuscleDetailCallout key={`detail-${item.id}`} item={item} max={max} total={total} />
-          ))}
           {activeScores.length === 0 && (
             <div className="absolute inset-x-5 bottom-5 rounded-full bg-white/90 px-4 py-3 text-center text-sm font-semibold text-[#707072]">
               기록하면 자극 부위가 표시돼요
@@ -1375,66 +1374,39 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
 }
 
 function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
-  const zones = MUSCLE_BODY_ZONES[item.id] || MUSCLE_BODY_ZONES[muscleIconKey(item.id, item.group)] || [];
+  const shapes = MUSCLE_DETAIL_SHAPES[item.id] || MUSCLE_DETAIL_SHAPES[muscleIconKey(item.id, item.group)] || [];
   const ratio = Math.min(1, item.score / Math.max(max, 1));
-  const opacity = 0.14 + ratio * 0.28;
+  const opacity = 0.3 + ratio * 0.42;
+  const strokeOpacity = 0.22 + ratio * 0.28;
+
+  if (shapes.length === 0) return null;
 
   return (
-    <>
-      {zones.map((zone, index) => (
-        <span
-          key={`${item.id}-${index}`}
-          className="pointer-events-none absolute bg-[#d30005] mix-blend-multiply"
-          title={item.name}
-          style={{
-            left: `${zone.x}%`,
-            top: `${zone.y}%`,
-            width: `${zone.w}%`,
-            height: `${zone.h}%`,
-            borderRadius: `${zone.r ?? 45}%`,
-            opacity,
-            filter: "blur(0.2px)",
-            transform: zone.rotate ? `rotate(${zone.rotate}deg)` : undefined,
-          }}
-        />
-      ))}
-    </>
-  );
-}
-
-function MuscleDetailCallout({ item, max, total }: { item: Muscle & { score: number }; max: number; total: number }) {
-  const position = MUSCLE_CALLOUT_POSITIONS[item.id] || MUSCLE_CALLOUT_POSITIONS[muscleIconKey(item.id, item.group)];
-  if (!position) return null;
-
-  const iconPosition = MUSCLE_ICON_POSITIONS[muscleIconKey(item.id, item.group)];
-  const intensity = Math.min(1, item.score / Math.max(max, 1));
-  const percent = Math.round((item.score / total) * 100);
-  const size = position.size ?? 17;
-
-  return (
-    <div
-      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow-[0_0_0_1px_rgba(17,17,17,0.16)]"
-      title={`${item.name} ${percent}%`}
-      style={{
-        left: `${position.x}%`,
-        top: `${position.y}%`,
-        width: `${size}%`,
-        aspectRatio: "1 / 1",
-        opacity: 0.82 + intensity * 0.18,
-      }}
+    <svg
+      className="pointer-events-none absolute inset-0 h-full w-full mix-blend-multiply"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
     >
-      <div
-        className="h-full w-full rounded-full bg-cover bg-no-repeat"
-        style={{
-          backgroundImage: "url('/images/muscle-focus-sheet.png')",
-          backgroundSize: "400% 300%",
-          backgroundPosition: `${(iconPosition.col / 3) * 100}% ${(iconPosition.row / 2) * 100}%`,
-        }}
-      />
-      <span className="absolute -right-1 -top-1 rounded-full bg-[#111111] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
-        {percent}%
-      </span>
-    </div>
+      <title>{item.name}</title>
+      {shapes.map((shape, index) => (
+        <g key={`${item.id}-${index}`} opacity={(shape.opacity ?? 1) * opacity}>
+          <path d={shape.d} fill="#d30005" stroke="#8a0003" strokeLinejoin="round" strokeWidth="0.22" />
+          {shape.fibers?.map((fiber, fiberIndex) => (
+            <path
+              key={`${item.id}-${index}-${fiberIndex}`}
+              d={fiber}
+              fill="none"
+              stroke="#4f0002"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeOpacity={strokeOpacity}
+              strokeWidth={shape.strokeWidth ?? 0.18}
+            />
+          ))}
+        </g>
+      ))}
+    </svg>
   );
 }
 
