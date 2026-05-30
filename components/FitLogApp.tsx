@@ -94,21 +94,21 @@ const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }>
   upper: { col: 3, row: 2 },
 };
 
-const MUSCLE_OVERLAY_IMAGES: Record<string, string> = {
-  chest: "/images/muscles/chest.png",
-  back: "/images/muscles/back.png",
-  shoulders: "/images/muscles/shoulders.png",
-  biceps: "/images/muscles/biceps.png",
-  triceps: "/images/muscles/triceps.png",
-  core: "/images/muscles/core.png",
-  quads: "/images/muscles/quads.png",
-  glutes: "/images/muscles/glutes.png",
-  hamstrings: "/images/muscles/hamstrings.png",
-  calves: "/images/muscles/calves.png",
-  cardio: "/images/muscles/cardio.png",
+const MUSCLE_PLATE_IMAGES: Record<string, string> = {
+  chest: "/images/muscle-plates/chest.jpg",
+  back: "/images/muscle-plates/back.jpg",
+  shoulders: "/images/muscle-plates/shoulders.jpg",
+  biceps: "/images/muscle-plates/biceps.jpg",
+  triceps: "/images/muscle-plates/triceps.jpg",
+  core: "/images/muscle-plates/core.jpg",
+  quads: "/images/muscle-plates/quads.jpg",
+  glutes: "/images/muscle-plates/glutes.jpg",
+  hamstrings: "/images/muscle-plates/hamstrings.jpg",
+  calves: "/images/muscle-plates/calves.jpg",
+  cardio: "/images/muscle-plates/cardio.jpg",
 };
 
-const MUSCLE_OVERLAY_VERSION = "20260531-align2";
+const MUSCLE_PLATE_VERSION = "20260531-plate1";
 
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
@@ -1360,22 +1360,27 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
   return (
     <div className="grid gap-5">
       <div className="bg-[#f5f5f5] p-3">
-        <div className="relative mx-auto max-w-[360px] overflow-hidden bg-white">
-          <img
-            className="block w-full select-none"
-            src="/images/muscle-body-base.png"
-            alt="전체 신체 근육 지도"
-            draggable={false}
-          />
-          {activeScores.map(item => (
-            <MuscleBodyOverlay key={item.id} item={item} max={max} />
-          ))}
-          {activeScores.length === 0 && (
+        {activeScores.length > 0 ? (
+          <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory gap-3">
+              {activeScores.map(item => (
+                <MusclePlate key={item.id} item={item} max={max} total={total} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="relative mx-auto max-w-[360px] overflow-hidden bg-white">
+            <img
+              className="block w-full select-none"
+              src="/images/muscle-body-base.png"
+              alt="전체 신체 근육 지도"
+              draggable={false}
+            />
             <div className="absolute inset-x-5 bottom-5 rounded-full bg-white/90 px-4 py-3 text-center text-sm font-semibold text-[#707072]">
               기록하면 자극 부위가 표시돼요
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       <div>
         <p className="mb-3 text-xs font-semibold text-[#707072]">전체 자극 대비 비율</p>
@@ -1388,22 +1393,31 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
   );
 }
 
-function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
-  const src = MUSCLE_OVERLAY_IMAGES[item.id] || MUSCLE_OVERLAY_IMAGES[muscleIconKey(item.id, item.group)];
+function MusclePlate({ item, max, total }: { item: Muscle & { score: number }; max: number; total: number }) {
+  const src = MUSCLE_PLATE_IMAGES[item.id] || MUSCLE_PLATE_IMAGES[muscleIconKey(item.id, item.group)];
   const ratio = Math.min(1, item.score / Math.max(max, 1));
-  const opacity = 0.52 + ratio * 0.38;
+  const percent = Math.round((item.score / total) * 100);
 
   if (!src) return null;
 
   return (
-    <img
-      className="pointer-events-none absolute inset-0 h-full w-full select-none mix-blend-multiply"
-      src={`${src}?v=${MUSCLE_OVERLAY_VERSION}`}
-      alt=""
-      aria-hidden="true"
-      draggable={false}
-      style={{ opacity }}
-    />
+    <div className="relative min-w-[84%] snap-center overflow-hidden bg-white sm:min-w-[360px]">
+      <img
+        className="block w-full select-none"
+        src={`${src}?v=${MUSCLE_PLATE_VERSION}`}
+        alt={`${item.name} 근육 자극 이미지`}
+        draggable={false}
+      />
+      <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-full bg-white/92 px-4 py-3 text-sm font-semibold text-[#111111]">
+        <span>{item.name}</span>
+        <span>{percent}%</span>
+      </div>
+      <div
+        className="absolute left-3 top-3 h-2 rounded-full bg-[#d30005]"
+        style={{ width: `${Math.max(18, ratio * 46)}%` }}
+        aria-hidden="true"
+      />
+    </div>
   );
 }
 
