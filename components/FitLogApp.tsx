@@ -67,7 +67,9 @@ type MuscleIconKey =
   | "arms"
   | "core"
   | "quads"
+  | "adductors"
   | "glutes"
+  | "abductors"
   | "hamstrings"
   | "calves"
   | "cardio"
@@ -88,7 +90,9 @@ const MUSCLE_FOCUS_IMAGES: Record<MuscleIconKey, string> = {
   arms: "/images/muscle-focus-cards/arms.png",
   core: "/images/muscle-focus-cards/core.png",
   quads: "/images/muscle-focus-cards/quads.png",
+  adductors: "/images/muscle-focus-cards/adductors.png",
   glutes: "/images/muscle-focus-cards/glutes.png",
+  abductors: "/images/muscle-focus-cards/abductors.png",
   hamstrings: "/images/muscle-focus-cards/hamstrings.png",
   calves: "/images/muscle-focus-cards/calves.png",
   cardio: "/images/muscle-focus-cards/cardio.png",
@@ -698,8 +702,6 @@ function routineNote(label: string) {
 
 function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
   if (muscleId === "biceps" || muscleId === "triceps") return "arms";
-  if (muscleId === "adductors") return "lower";
-  if (muscleId === "abductors") return "glutes";
   if (muscleId in MUSCLE_FOCUS_IMAGES) return muscleId as MuscleIconKey;
   if (group === "하체") return "lower";
   if (group === "상체") return "upper";
