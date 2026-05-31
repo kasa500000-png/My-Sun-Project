@@ -96,6 +96,10 @@ const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }>
   upper: { col: 3, row: 2 },
 };
 
+const MUSCLE_FOCUS_SHEET_COLUMNS = 4;
+const MUSCLE_FOCUS_SHEET_ROWS = 3;
+const MUSCLE_FOCUS_SHEET_ZOOM = 1.12;
+
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
     {
@@ -1818,16 +1822,16 @@ function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: numbe
   const key = muscleIconKey(item.id, item.group);
   const position = MUSCLE_ICON_POSITIONS[key] || MUSCLE_ICON_POSITIONS.upper;
   const percent = Math.round((item.score / total) * 100);
-  const backgroundPosition = `${(position.col / 3) * 100}% ${(position.row / 2) * 100}%`;
+  const backgroundPosition = `${spritePosition(position.col, MUSCLE_FOCUS_SHEET_COLUMNS)}% ${spritePosition(position.row, MUSCLE_FOCUS_SHEET_ROWS)}%`;
 
   return (
     <div className="bg-white p-3">
       <div
-        className="mx-auto aspect-square w-full max-w-[118px] rounded-full border border-[#e5e5e5] bg-white bg-no-repeat"
+        className="mx-auto aspect-square w-full max-w-[118px] overflow-hidden rounded-full border border-[#eef0f2] bg-white bg-no-repeat"
         style={{
           backgroundImage: "url('/images/muscle-focus-sheet.png')",
           backgroundPosition,
-          backgroundSize: "400% 300%",
+          backgroundSize: `${MUSCLE_FOCUS_SHEET_COLUMNS * MUSCLE_FOCUS_SHEET_ZOOM * 100}% ${MUSCLE_FOCUS_SHEET_ROWS * MUSCLE_FOCUS_SHEET_ZOOM * 100}%`,
         }}
         aria-hidden="true"
       />
@@ -1837,6 +1841,12 @@ function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: numbe
       </div>
     </div>
   );
+}
+
+function spritePosition(index: number, count: number) {
+  if (count <= 1) return 0;
+  const zoomedSpan = count * MUSCLE_FOCUS_SHEET_ZOOM - 1;
+  return (index * MUSCLE_FOCUS_SHEET_ZOOM / zoomedSpan) * 100;
 }
 
 function muscleShapeBounds(pathData: string, padding = 0) {
