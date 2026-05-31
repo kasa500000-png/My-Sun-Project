@@ -669,7 +669,7 @@ function expandDraftSets(draftSets: DraftSet[], idPrefix: string): SetLog[] {
       reps: isTime ? 1 : parseNumber(set.reps),
       durationSeconds: isTime ? parseNumber(set.reps) * 60 : undefined,
       memo: set.memo.trim() || undefined,
-    })).map((item, index, items) => item);
+    }));
   }).map((set, index) => ({ ...set, setNumber: index + 1 }));
 }
 
