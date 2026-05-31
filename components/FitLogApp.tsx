@@ -1645,7 +1645,7 @@ function WorkoutView({
                     <input
                       className="nike-input bg-white px-3 text-center"
                       inputMode="numeric"
-                      value={set.setCount || "1"}
+                      value={set.setCount}
                       onChange={event => updateDraftSet(index, { setCount: event.target.value })}
                       onBlur={() => updateDraftSet(index, { setCount: String(draftSetCount(set)) })}
                     />
