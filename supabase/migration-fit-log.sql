@@ -27,6 +27,14 @@ CREATE TABLE IF NOT EXISTS fit_set_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS fit_user_settings (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  weekly_goal INTEGER NOT NULL DEFAULT 3 CHECK (weekly_goal BETWEEN 1 AND 14),
+  favorite_exercise_ids TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_fit_sessions_user_date
   ON fit_workout_sessions(user_id, workout_date DESC);
 
@@ -35,6 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_fit_sets_session
 
 ALTER TABLE fit_workout_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fit_set_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fit_user_settings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS fit_sessions_select_own ON fit_workout_sessions;
 CREATE POLICY fit_sessions_select_own ON fit_workout_sessions
@@ -66,4 +75,20 @@ CREATE POLICY fit_sets_update_own ON fit_set_logs
 
 DROP POLICY IF EXISTS fit_sets_delete_own ON fit_set_logs;
 CREATE POLICY fit_sets_delete_own ON fit_set_logs
+  FOR DELETE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_settings_select_own ON fit_user_settings;
+CREATE POLICY fit_settings_select_own ON fit_user_settings
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_settings_insert_own ON fit_user_settings;
+CREATE POLICY fit_settings_insert_own ON fit_user_settings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_settings_update_own ON fit_user_settings;
+CREATE POLICY fit_settings_update_own ON fit_user_settings
+  FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_settings_delete_own ON fit_user_settings;
+CREATE POLICY fit_settings_delete_own ON fit_user_settings
   FOR DELETE USING (auth.uid() = user_id);

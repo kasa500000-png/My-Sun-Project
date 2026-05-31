@@ -49,6 +49,11 @@ type DraftSet = {
   memo: string;
 };
 
+type UserSettings = {
+  weeklyGoal: number;
+  favoriteExerciseIds: string[];
+};
+
 type Muscle = {
   id: string;
   name: string;
@@ -59,6 +64,11 @@ type Muscle = {
 type FitLogAppProps = {
   userId: string;
   userEmail?: string | null;
+};
+
+const DEFAULT_SETTINGS: UserSettings = {
+  weeklyGoal: 3,
+  favoriteExerciseIds: [],
 };
 
 type MuscleIconKey =
@@ -671,6 +681,17 @@ function parseNumber(value: string | number | undefined) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function clampWeeklyGoal(value: unknown) {
+  const goal = Math.floor(Number(value) || DEFAULT_SETTINGS.weeklyGoal);
+  return Math.min(Math.max(goal, 1), 14);
+}
+
+function sanitizeExerciseIds(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  const allowed = new Set(EXERCISES.map(exercise => exercise.id));
+  return Array.from(new Set(value.map(String).filter(id => allowed.has(id))));
+}
+
 function clampSetCount(value: string | number) {
   const count = Math.floor(Number(value) || 1);
   return Math.min(Math.max(count, 1), 20);
@@ -892,10 +913,13 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   const [draftMemo, setDraftMemo] = useState("");
   const [draftSets, setDraftSets] = useState<DraftSet[]>(() => defaultDraft());
   const [selectedExercise, setSelectedExercise] = useState(EXERCISES[0].id);
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [toast, setToast] = useState("");
 
   useEffect(() => {
     void loadSessions();
+    void loadSettings();
   }, [userId]);
 
   useEffect(() => {
@@ -956,6 +980,44 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
   function updateDraftSet(index: number, patch: Partial<DraftSet>) {
     setDraftSets(items => items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  }
+
+  async function loadSettings() {
+    try {
+      const res = await fetch(`/api/fit-settings?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "설정을 불러오지 못했어요.");
+      setSettings({
+        weeklyGoal: clampWeeklyGoal(data.settings?.weeklyGoal),
+        favoriteExerciseIds: sanitizeExerciseIds(data.settings?.favoriteExerciseIds),
+      });
+    } catch {
+      setSettings(DEFAULT_SETTINGS);
+    }
+  }
+
+  async function saveSettings(nextSettings: UserSettings) {
+    const normalized = {
+      weeklyGoal: clampWeeklyGoal(nextSettings.weeklyGoal),
+      favoriteExerciseIds: sanitizeExerciseIds(nextSettings.favoriteExerciseIds),
+    };
+
+    setSavingSettings(true);
+    try {
+      const res = await fetch("/api/fit-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, ...normalized }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "설정 저장에 실패했어요.");
+      setSettings(data.settings || normalized);
+      setToast("내 정보 설정을 저장했어요.");
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "설정 저장에 실패했어요.");
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   function saveDraftExercise(exerciseId: string, draft: Omit<DraftSet, "exerciseId">) {
@@ -1085,6 +1147,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
           topToday={topToday}
           topWeek={topWeek}
           recommendedRoutine={recommendedRoutine}
+          settings={settings}
           onStart={() => {
             setRoutineName(recommendedRoutine);
             setActiveTab("train");
@@ -1106,6 +1169,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
           draftSets={draftSets}
           removeSet={removeSet}
           saveDraftExercise={saveDraftExercise}
+          favoriteExerciseIds={settings.favoriteExerciseIds}
           finishWorkout={finishWorkout}
           editingSessionId={editingSessionId}
           lastSavedSession={lastSavedSession}
@@ -1130,7 +1194,13 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       )}
 
       {activeTab === "member" && (
-        <ProfileView userEmail={userEmail} sessionCount={sessions.length} onSignOut={signOut} />
+        <ProfileView
+          userEmail={userEmail}
+          settings={settings}
+          saving={savingSettings}
+          onSave={saveSettings}
+          onSignOut={signOut}
+        />
       )}
 
       <MobileTabBar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -1238,6 +1308,7 @@ function HomeDashboard({
   topToday,
   topWeek,
   recommendedRoutine,
+  settings,
   onStart,
   onAnalyze,
 }: {
@@ -1248,6 +1319,7 @@ function HomeDashboard({
   topToday: Array<Muscle & { score: number }>;
   topWeek: Array<Muscle & { score: number }>;
   recommendedRoutine: string;
+  settings: UserSettings;
   onStart: () => void;
   onAnalyze: () => void;
 }) {
@@ -1256,6 +1328,9 @@ function HomeDashboard({
   const rangedSessions = useMemo(() => sessionsForSummaryRange(sessions, range), [sessions, range]);
   const summary = useMemo(() => workoutSummary(rangedSessions), [rangedSessions]);
   const rangeScores = useMemo(() => scoreSessions(rangedSessions).filter(item => item.score > 0), [rangedSessions]);
+  const weekProgress = useMemo(() => sessionsForSummaryRange(sessions, "week").length, [sessions]);
+  const weeklyGoal = clampWeeklyGoal(settings.weeklyGoal);
+  const weeklyGoalPercent = Math.min(Math.round((weekProgress / weeklyGoal) * 100), 100);
 
   return (
     <>
@@ -1270,6 +1345,18 @@ function HomeDashboard({
           <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
             마이썬 운동일지
           </h1>
+          <div className="mt-5 max-w-md bg-white/12 p-4 backdrop-blur">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm font-semibold text-white/80">주간 운동 목표</p>
+              <p className="text-sm font-bold text-white">{weekProgress}/{weeklyGoal}회</p>
+            </div>
+            <div className="mt-3 h-2 bg-white/20">
+              <div className="h-full bg-white" style={{ width: `${weeklyGoalPercent}%` }} />
+            </div>
+            <p className="mt-3 text-xs font-medium text-white/75">
+              {weekProgress >= weeklyGoal ? "이번 주 목표를 달성했어요." : `${weeklyGoal - weekProgress}회만 더 기록하면 목표 달성입니다.`}
+            </p>
+          </div>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
             <button className="h-12 rounded-full bg-white px-6 text-base font-medium text-[#111111]" onClick={onStart}>
               운동 기록
@@ -1545,6 +1632,7 @@ function WorkoutEntryView({
   draftSets,
   removeSet,
   saveDraftExercise,
+  favoriteExerciseIds,
   finishWorkout,
   editingSessionId,
   lastSavedSession,
@@ -1562,6 +1650,7 @@ function WorkoutEntryView({
   draftSets: DraftSet[];
   removeSet: (index: number) => void;
   saveDraftExercise: (exerciseId: string, draft: Omit<DraftSet, "exerciseId">) => void;
+  favoriteExerciseIds: string[];
   finishWorkout: () => void | Promise<void>;
   editingSessionId: string | null;
   lastSavedSession: WorkoutSession | null;
@@ -1572,6 +1661,7 @@ function WorkoutEntryView({
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const currentRoutine = ROUTINE_TABS.find(routine => routine.value === routineName || routine.label === routineName) || ROUTINE_TABS[0];
   const searchQuery = normalizeSearchText(exerciseSearch);
+  const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
   const draftByExerciseId = useMemo(() => {
     const map = new Map<string, { draft: DraftSet; index: number }>();
     draftSets.forEach((draft, index) => map.set(draft.exerciseId, { draft, index }));
@@ -1581,8 +1671,9 @@ function WorkoutEntryView({
     const routineIds = new Set(currentRoutine.exercises);
     return EXERCISES
       .filter(exercise => routineIds.has(exercise.id))
-      .filter(exercise => !searchQuery || exerciseSearchText(exercise).includes(searchQuery));
-  }, [currentRoutine, searchQuery]);
+      .filter(exercise => !searchQuery || exerciseSearchText(exercise).includes(searchQuery))
+      .sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)) || a.name.localeCompare(b.name, "ko"));
+  }, [currentRoutine, favoriteSet, searchQuery]);
   const editingExercise = editingExerciseId ? exerciseById.get(editingExerciseId) : undefined;
   const editingDraft = editingExerciseId ? draftByExerciseId.get(editingExerciseId)?.draft : undefined;
 
@@ -1649,6 +1740,7 @@ function WorkoutEntryView({
 
               {visibleExercises.map(exercise => {
                 const saved = draftByExerciseId.get(exercise.id)?.draft;
+                const favorite = favoriteSet.has(exercise.id);
                 return (
                   <button
                     key={exercise.id}
@@ -1659,6 +1751,7 @@ function WorkoutEntryView({
                     <span className="min-w-0">
                       <span className="block truncate text-base font-semibold">{exercise.name}</span>
                       <span className="mt-1 block text-xs font-medium text-[#707072]">
+                        {favorite && <b className="mr-1 text-[#007d48]">즐겨찾기</b>}
                         {exercise.category} / 휴식 {exercise.defaultRestSeconds}초
                       </span>
                       {saved && <span className="mt-2 block text-xs font-semibold text-[#007d48]">{draftExerciseSummary(saved)}</span>}
@@ -2484,22 +2577,109 @@ function AnalysisView({
   );
 }
 
-function ProfileView({ userEmail, sessionCount, onSignOut }: { userEmail?: string | null; sessionCount: number; onSignOut: () => void }) {
+function ProfileView({
+  userEmail,
+  settings,
+  saving,
+  onSave,
+  onSignOut,
+}: {
+  userEmail?: string | null;
+  settings: UserSettings;
+  saving: boolean;
+  onSave: (settings: UserSettings) => void | Promise<void>;
+  onSignOut: () => void;
+}) {
+  const [weeklyGoal, setWeeklyGoal] = useState(String(settings.weeklyGoal));
+  const [favoriteExerciseIds, setFavoriteExerciseIds] = useState<string[]>(settings.favoriteExerciseIds);
+  const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
+
+  useEffect(() => {
+    setWeeklyGoal(String(settings.weeklyGoal));
+    setFavoriteExerciseIds(settings.favoriteExerciseIds);
+  }, [settings]);
+
+  function toggleFavorite(exerciseId: string) {
+    setFavoriteExerciseIds(items => (
+      items.includes(exerciseId)
+        ? items.filter(id => id !== exerciseId)
+        : [...items, exerciseId]
+    ));
+  }
+
+  function handleSave() {
+    void onSave({
+      weeklyGoal: clampWeeklyGoal(weeklyGoal),
+      favoriteExerciseIds,
+    });
+  }
+
   return (
     <section className="mx-auto max-w-[960px] px-4 py-7 pb-28 md:px-8 md:py-10">
-      <SectionTitle kicker="내 정보" title="계정" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="bg-[#f5f5f5] p-6">
-          <p className="text-sm font-medium text-[#707072]">로그인 계정</p>
-          <h2 className="mt-2 break-all text-2xl font-semibold">{userEmail || "내 계정"}</h2>
+      <SectionTitle kicker="내 정보" title="운동 설정" />
+      <div className="grid gap-5">
+        <div className="bg-[#111111] p-5 text-white">
+          <p className="text-sm font-medium text-white/60">로그인 계정</p>
+          <h2 className="mt-2 break-all text-xl font-semibold">{userEmail || "내 계정"}</h2>
+        </div>
+
+        <div className="bg-[#f5f5f5] p-5">
+          <p className="text-sm font-medium text-[#707072]">주간 운동 목표</p>
+          <h2 className="mt-1 text-2xl font-semibold">일주일에 몇 번 운동할까요?</h2>
+          <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
+            <input
+              className="nike-input bg-white text-center text-xl font-semibold"
+              inputMode="numeric"
+              value={weeklyGoal}
+              onChange={event => setWeeklyGoal(event.target.value)}
+              onBlur={() => setWeeklyGoal(String(clampWeeklyGoal(weeklyGoal)))}
+            />
+            <span className="grid h-12 place-items-center rounded-full bg-white px-5 text-sm font-semibold text-[#707072]">회 / 주</span>
+          </div>
           <p className="mt-4 text-sm leading-6 text-[#39393b]">
-            운동 기록은 이 계정의 클라우드 데이터로 저장됩니다.
+            저장하면 홈 화면 상단에서 이번 주 목표 진행률로 표시됩니다.
           </p>
         </div>
-        <div className="bg-[#111111] p-6 text-white">
-          <p className="text-sm font-medium text-[#9e9ea0]">저장된 운동</p>
-          <p className="mt-3 text-6xl font-black leading-none">{sessionCount}</p>
-          <button className="mt-8 h-12 w-full rounded-full bg-white px-8 text-base font-medium text-[#111111]" onClick={onSignOut}>
+
+        <div className="bg-[#f5f5f5] p-5">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-[#707072]">나의 루틴 운동 설정</p>
+              <h2 className="mt-1 text-2xl font-semibold">주로 하는 운동</h2>
+            </div>
+            <span className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#007d48]">{favoriteExerciseIds.length}개 선택</span>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[#39393b]">
+            선택한 운동은 기록 탭 운동 목록 상단에 고정되고 즐겨찾기 표시가 붙습니다.
+          </p>
+          <div className="mt-5 grid gap-2">
+            {EXERCISES.map(exercise => {
+              const selected = favoriteSet.has(exercise.id);
+              return (
+                <button
+                  key={exercise.id}
+                  type="button"
+                  className={`flex items-center justify-between gap-3 p-4 text-left ring-1 ${selected ? "bg-[#eaf8ef] ring-[#a9d8b8]" : "bg-white ring-transparent"}`}
+                  onClick={() => toggleFavorite(exercise.id)}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-base font-semibold">{exercise.name}</span>
+                    <span className="mt-1 block text-xs font-medium text-[#707072]">{exercise.category}</span>
+                  </span>
+                  <span className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selected ? "bg-white text-[#007d48]" : "bg-[#f5f5f5] text-[#707072]"}`}>
+                    {selected ? "즐겨찾기" : "선택"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid gap-3">
+          <button className="h-12 rounded-full bg-[#111111] px-8 text-base font-medium text-white disabled:opacity-50" onClick={handleSave} disabled={saving}>
+            {saving ? "저장 중..." : "설정 저장"}
+          </button>
+          <button className="h-12 rounded-full bg-[#f5f5f5] px-8 text-base font-medium text-[#111111]" onClick={onSignOut}>
             로그아웃
           </button>
         </div>
