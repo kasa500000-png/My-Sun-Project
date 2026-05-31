@@ -256,7 +256,9 @@ const MUSCLES: Muscle[] = [
   { id: "triceps", name: "삼두", group: "팔", color: "#4b4b4d" },
   { id: "core", name: "코어", group: "코어", color: "#007d48" },
   { id: "quads", name: "앞허벅지", group: "하체", color: "#111111" },
+  { id: "adductors", name: "내전근", group: "하체", color: "#707072" },
   { id: "glutes", name: "둔근", group: "하체", color: "#d30005" },
+  { id: "abductors", name: "중둔근", group: "하체", color: "#9e9ea0" },
   { id: "hamstrings", name: "햄스트링", group: "하체", color: "#39393b" },
   { id: "calves", name: "종아리", group: "하체", color: "#707072" },
   { id: "cardio", name: "유산소", group: "전신", color: "#1151ff" },
@@ -296,6 +298,43 @@ const EXERCISES: Exercise[] = [
     defaultRestSeconds: 90,
     impacts: [
       { muscleId: "glutes", impactRatio: 0.7 },
+      { muscleId: "hamstrings", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "hip-adduction",
+    name: "힙 어덕션",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 60,
+    impacts: [
+      { muscleId: "adductors", impactRatio: 0.8 },
+      { muscleId: "quads", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "hip-abduction",
+    name: "힙 어브덕션",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 60,
+    impacts: [
+      { muscleId: "abductors", impactRatio: 0.65 },
+      { muscleId: "glutes", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "bulgarian-split-squat",
+    name: "불가리안 스플릿 스쿼트",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 90,
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.35 },
+      { muscleId: "glutes", impactRatio: 0.35 },
       { muscleId: "hamstrings", impactRatio: 0.2 },
       { muscleId: "core", impactRatio: 0.1 },
     ],
@@ -417,7 +456,7 @@ const ROUTINES = [
     name: "LOWER BODY",
     label: "하체 집중",
     note: "둔근, 허벅지, 유산소까지 가볍게.",
-    exercises: ["squat", "leg-press", "hip-thrust", "stair-climber"],
+    exercises: ["squat", "leg-press", "hip-thrust", "hip-adduction", "hip-abduction", "bulgarian-split-squat", "stair-climber"],
   },
   {
     name: "UPPER BALANCE",
@@ -562,7 +601,7 @@ const exerciseById = byId(EXERCISES);
 
 const BODY_FILTER_MUSCLES: Record<Exclude<BodyFilter, "all">, string[]> = {
   upper: ["chest", "back", "shoulders", "biceps", "triceps"],
-  lower: ["quads", "glutes", "hamstrings", "calves"],
+  lower: ["quads", "adductors", "glutes", "abductors", "hamstrings", "calves"],
   core: ["core"],
 };
 
@@ -663,6 +702,8 @@ function routineNote(label: string) {
 
 function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
   if (muscleId === "biceps" || muscleId === "triceps") return "arms";
+  if (muscleId === "adductors") return "lower";
+  if (muscleId === "abductors") return "glutes";
   if (muscleId in MUSCLE_ICON_POSITIONS) return muscleId as MuscleIconKey;
   if (group === "하체") return "lower";
   if (group === "상체") return "upper";
