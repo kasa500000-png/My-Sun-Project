@@ -36,7 +36,13 @@ type VolumeType =
   | "carry_unilateral"
   | "carry_single"
   | "sled_push"
-  | "time_or_distance";
+  | "time_or_distance"
+  | "cardio_basic"
+  | "cardio_distance"
+  | "cardio_incline"
+  | "cardio_level"
+  | "cardio_interval"
+  | "cardio_recovery";
 type HistoryRange = "day" | "week" | "month" | "year";
 type BodyFilter = "all" | "upper" | "lower" | "core";
 
@@ -57,6 +63,8 @@ type Exercise = {
   recordLabel?: string;
   volumeType?: VolumeType;
   bodyweightFactor?: number;
+  defaultRpe?: number;
+  met?: number;
 };
 
 type SetLog = {
@@ -322,12 +330,14 @@ const MUSCLES: Muscle[] = [
   { id: "hamstrings", name: "햄스트링", group: "하체", color: "#39393b" },
   { id: "calves", name: "종아리", group: "하체", color: "#707072" },
   { id: "cardio", name: "유산소", group: "전신", color: "#1151ff" },
+  { id: "recovery", name: "회복", group: "전신", color: "#007d48" },
 ];
 
 const UPPER_SUB_TABS = ["전체", "Push", "Pull", "어깨", "팔", "체중운동"];
 const LOWER_SUB_TABS = ["전체", "대퇴사두", "햄스트링", "둔근/힙", "종아리", "체중운동", "머신"];
 const CORE_SUB_TABS = ["전체", "복직근", "복사근", "하복부", "코어 안정화", "허리/기립근", "시간형"];
 const FULL_BODY_SUB_TABS = ["전체", "맨몸", "덤벨/케틀벨", "고강도", "이동형", "힙/하체 중심", "상체/코어 중심"];
+const CARDIO_SUB_TABS = ["전체", "걷기/러닝", "실내기구", "고강도", "저강도", "인터벌", "회복"];
 
 const UPPER_EXERCISE_IDS = [
   "bench-press",
@@ -422,6 +432,29 @@ const FULL_BODY_EXERCISE_IDS = [
   "turkish-get-up",
 ];
 
+const CARDIO_EXERCISE_IDS = [
+  "walking",
+  "brisk-walking",
+  "running",
+  "treadmill-walking",
+  "treadmill-running",
+  "indoor-cycle",
+  "outdoor-bike",
+  "stepmill",
+  "elliptical",
+  "rowing-machine",
+  "stair-climber",
+  "jump-rope",
+  "interval-running",
+  "hiit",
+  "stair-climbing",
+  "hiking",
+  "swimming",
+  "dance-cardio",
+  "boxing-cardio",
+  "recovery-walking",
+];
+
 function isUpperRoutineTab(routine: { label: string; value: string }) {
   return routine.value === "상체 밸런스" || routine.label === "상체";
 }
@@ -438,11 +471,16 @@ function isFullBodyRoutineTab(routine: { label: string; value: string }) {
   return routine.value === "전신" || routine.label === "전신";
 }
 
+function isCardioRoutineTab(routine: { label: string; value: string }) {
+  return routine.value === "유산소" || routine.label === "유산소";
+}
+
 function routineSubTabs(routine: { label: string; value: string }) {
   if (isUpperRoutineTab(routine)) return UPPER_SUB_TABS;
   if (isLowerRoutineTab(routine)) return LOWER_SUB_TABS;
   if (isCoreRoutineTab(routine)) return CORE_SUB_TABS;
   if (isFullBodyRoutineTab(routine)) return FULL_BODY_SUB_TABS;
+  if (isCardioRoutineTab(routine)) return CARDIO_SUB_TABS;
   return [];
 }
 
@@ -1788,12 +1826,195 @@ const EXERCISES: Exercise[] = [
     category: "유산소",
     type: "time",
     defaultRestSeconds: 0,
+    subTabs: ["걷기/러닝", "고강도"],
+    detail: "러닝",
+    recordLabel: "시간 · 거리 · RPE",
+    volumeType: "cardio_distance",
+    defaultRpe: 7,
+    met: 8.3,
     impacts: [
-      { muscleId: "cardio", impactRatio: 0.45 },
-      { muscleId: "quads", impactRatio: 0.2 },
+      { muscleId: "cardio", impactRatio: 0.6 },
+      { muscleId: "quads", impactRatio: 0.13 },
+      { muscleId: "glutes", impactRatio: 0.12 },
+      { muscleId: "calves", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "walking",
+    name: "걷기",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["걷기/러닝", "저강도", "회복"],
+    detail: "저강도 유산소",
+    recordLabel: "시간 · 거리 · RPE",
+    volumeType: "cardio_basic",
+    defaultRpe: 3,
+    met: 3.5,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.5 },
+      { muscleId: "quads", impactRatio: 0.18 },
+      { muscleId: "hamstrings", impactRatio: 0.17 },
+      { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "brisk-walking",
+    name: "빠르게 걷기",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["걷기/러닝", "저강도"],
+    detail: "빠른 걷기",
+    recordLabel: "시간 · 거리 · 속도 · RPE",
+    volumeType: "cardio_basic",
+    defaultRpe: 4,
+    met: 4.3,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.55 },
+      { muscleId: "quads", impactRatio: 0.15 },
       { muscleId: "hamstrings", impactRatio: 0.15 },
       { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "treadmill-walking",
+    name: "트레드밀 걷기",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["걷기/러닝", "실내기구", "저강도", "회복"],
+    detail: "실내 걷기",
+    recordLabel: "시간 · 속도 · 경사 · RPE",
+    volumeType: "cardio_incline",
+    defaultRpe: 4,
+    met: 4,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.5 },
+      { muscleId: "quads", impactRatio: 0.15 },
+      { muscleId: "hamstrings", impactRatio: 0.15 },
+      { muscleId: "glutes", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "treadmill-running",
+    name: "트레드밀 러닝",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["걷기/러닝", "실내기구", "고강도"],
+    detail: "실내 러닝",
+    recordLabel: "시간 · 속도 · 경사 · RPE",
+    volumeType: "cardio_incline",
+    defaultRpe: 7,
+    met: 8.3,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.6 },
+      { muscleId: "quads", impactRatio: 0.13 },
+      { muscleId: "glutes", impactRatio: 0.12 },
       { muscleId: "calves", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "indoor-cycle",
+    name: "실내 사이클",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["실내기구", "저강도", "회복"],
+    detail: "사이클",
+    recordLabel: "시간 · 저항 · 거리 · RPE",
+    volumeType: "cardio_level",
+    defaultRpe: 5,
+    met: 6.8,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.55 },
+      { muscleId: "quads", impactRatio: 0.25 },
+      { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "hamstrings", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "outdoor-bike",
+    name: "야외 자전거",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["저강도", "고강도"],
+    detail: "자전거",
+    recordLabel: "시간 · 거리 · 속도 · RPE",
+    volumeType: "cardio_distance",
+    defaultRpe: 5,
+    met: 6.8,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.55 },
+      { muscleId: "quads", impactRatio: 0.25 },
+      { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "hamstrings", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "stepmill",
+    name: "스텝밀",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["실내기구", "고강도"],
+    detail: "스텝밀",
+    recordLabel: "시간 · 레벨 · RPE",
+    volumeType: "cardio_level",
+    defaultRpe: 7,
+    met: 9,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.5 },
+      { muscleId: "glutes", impactRatio: 0.25 },
+      { muscleId: "quads", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "elliptical",
+    name: "일립티컬",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["실내기구", "저강도", "회복"],
+    detail: "일립티컬",
+    recordLabel: "시간 · 레벨 · RPE",
+    volumeType: "cardio_level",
+    defaultRpe: 5,
+    met: 5,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.6 },
+      { muscleId: "quads", impactRatio: 0.13 },
+      { muscleId: "glutes", impactRatio: 0.12 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "rowing-machine",
+    name: "로잉머신",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["실내기구", "고강도"],
+    detail: "로잉",
+    recordLabel: "시간 · 거리 · 페이스 · RPE",
+    volumeType: "cardio_distance",
+    defaultRpe: 7,
+    met: 7,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.45 },
+      { muscleId: "back", impactRatio: 0.25 },
+      { muscleId: "quads", impactRatio: 0.1 },
+      { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.1 },
     ],
   },
   {
@@ -1802,11 +2023,195 @@ const EXERCISES: Exercise[] = [
     category: "유산소",
     type: "time",
     defaultRestSeconds: 0,
+    subTabs: ["실내기구", "고강도"],
+    detail: "계단 머신",
+    recordLabel: "시간 · 레벨 · RPE",
+    volumeType: "cardio_level",
+    defaultRpe: 7,
+    met: 9,
     impacts: [
-      { muscleId: "cardio", impactRatio: 0.35 },
+      { muscleId: "cardio", impactRatio: 0.5 },
       { muscleId: "glutes", impactRatio: 0.25 },
-      { muscleId: "quads", impactRatio: 0.25 },
-      { muscleId: "calves", impactRatio: 0.15 },
+      { muscleId: "quads", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "jump-rope",
+    name: "줄넘기",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["고강도", "인터벌"],
+    detail: "줄넘기",
+    recordLabel: "시간 · 횟수 · RPE",
+    volumeType: "cardio_basic",
+    defaultRpe: 8,
+    met: 11.8,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.55 },
+      { muscleId: "calves", impactRatio: 0.25 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "interval-running",
+    name: "인터벌 러닝",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["걷기/러닝", "인터벌", "고강도"],
+    detail: "인터벌",
+    recordLabel: "총 운동시간 · RPE · 인터벌 보정",
+    volumeType: "cardio_interval",
+    defaultRpe: 8,
+    met: 10,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.7 },
+      { muscleId: "quads", impactRatio: 0.1 },
+      { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "calves", impactRatio: 0.05 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "hiit",
+    name: "HIIT",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["고강도", "인터벌"],
+    detail: "고강도 인터벌",
+    recordLabel: "총 운동시간 · RPE · 인터벌 보정",
+    volumeType: "cardio_interval",
+    defaultRpe: 8,
+    met: 10,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.65 },
+      { muscleId: "quads", impactRatio: 0.08 },
+      { muscleId: "glutes", impactRatio: 0.08 },
+      { muscleId: "chest", impactRatio: 0.05 },
+      { muscleId: "shoulders", impactRatio: 0.04 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "stair-climbing",
+    name: "계단 오르기",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["고강도"],
+    detail: "계단",
+    recordLabel: "시간 · 층수 · RPE",
+    volumeType: "cardio_level",
+    defaultRpe: 7,
+    met: 8.8,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.5 },
+      { muscleId: "glutes", impactRatio: 0.25 },
+      { muscleId: "quads", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "hiking",
+    name: "등산",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["저강도", "고강도"],
+    detail: "등산",
+    recordLabel: "시간 · 거리 · 고도 · RPE",
+    volumeType: "cardio_distance",
+    defaultRpe: 6,
+    met: 6,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.5 },
+      { muscleId: "glutes", impactRatio: 0.2 },
+      { muscleId: "quads", impactRatio: 0.2 },
+      { muscleId: "calves", impactRatio: 0.05 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "swimming",
+    name: "수영",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["저강도", "고강도"],
+    detail: "수영",
+    recordLabel: "시간 · 거리 · RPE",
+    volumeType: "cardio_distance",
+    defaultRpe: 6,
+    met: 7,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.55 },
+      { muscleId: "back", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "dance-cardio",
+    name: "댄스 cardio",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["저강도", "고강도"],
+    detail: "댄스 유산소",
+    recordLabel: "시간 · RPE",
+    volumeType: "cardio_basic",
+    defaultRpe: 5,
+    met: 6,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.6 },
+      { muscleId: "quads", impactRatio: 0.1 },
+      { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.15 },
+      { muscleId: "shoulders", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "boxing-cardio",
+    name: "복싱 cardio",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["고강도", "인터벌"],
+    detail: "복싱 유산소",
+    recordLabel: "라운드 · 시간 · RPE",
+    volumeType: "cardio_interval",
+    defaultRpe: 8,
+    met: 9,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.55 },
+      { muscleId: "shoulders", impactRatio: 0.2 },
+      { muscleId: "biceps", impactRatio: 0.07 },
+      { muscleId: "triceps", impactRatio: 0.08 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "recovery-walking",
+    name: "저강도 회복 걷기",
+    category: "유산소",
+    type: "time",
+    defaultRestSeconds: 0,
+    subTabs: ["회복", "저강도", "걷기/러닝"],
+    detail: "회복 걷기",
+    recordLabel: "시간 · 거리 · RPE",
+    volumeType: "cardio_recovery",
+    defaultRpe: 2,
+    met: 2.8,
+    impacts: [
+      { muscleId: "cardio", impactRatio: 0.4 },
+      { muscleId: "quads", impactRatio: 0.15 },
+      { muscleId: "hamstrings", impactRatio: 0.15 },
+      { muscleId: "recovery", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.05 },
     ],
   },
 ];
@@ -1856,7 +2261,7 @@ const ROUTINE_TABS = [
   {
     label: "유산소",
     value: "유산소",
-    exercises: ["running", "stair-climber"],
+    exercises: CARDIO_EXERCISE_IDS,
   },
 ];
 
@@ -2037,6 +2442,15 @@ function intensityMultiplier(value: string | number | undefined) {
   return INTENSITY_LEVELS.find(level => level.value === numeric)?.multiplier || 1;
 }
 
+function isCardioExercise(exercise?: Exercise) {
+  return Boolean(exercise?.volumeType?.startsWith("cardio_"));
+}
+
+function cardioRpe(value: string | number | undefined, fallback = 5) {
+  const rpe = Math.round(Number(value || fallback) || fallback);
+  return Math.min(Math.max(rpe, 1), 10);
+}
+
 function draftSetCount(set: DraftSet) {
   return clampSetCount(set.setCount || 1);
 }
@@ -2049,7 +2463,7 @@ function expandDraftSets(draftSets: DraftSet[], idPrefix: string): SetLog[] {
       id: `${idPrefix}-${draftIndex}-${setIndex}`,
       exerciseId: set.exerciseId,
       setNumber: 0,
-      weight: isTime ? parseNumber(set.weight) || 2 : parseNumber(set.weight),
+      weight: isTime ? parseNumber(set.weight) || (isCardioExercise(exercise) ? exercise?.defaultRpe || 5 : 2) : parseNumber(set.weight),
       reps: isTime ? 1 : parseNumber(set.reps),
       durationSeconds: isTime ? parseNumber(set.reps) * 60 : undefined,
       memo: set.memo.trim() || undefined,
@@ -2060,6 +2474,22 @@ function expandDraftSets(draftSets: DraftSet[], idPrefix: string): SetLog[] {
 function setVolume(set: SetLog) {
   const exercise = exerciseById.get(set.exerciseId);
   if (exercise?.type === "time") {
+    if (isCardioExercise(exercise)) {
+      const minutes = Math.max(Number(set.durationSeconds || 0) / 60, 1);
+      const rpe = cardioRpe(set.weight, exercise.defaultRpe || 5);
+      const base = minutes * rpe;
+      switch (exercise.volumeType) {
+        case "cardio_interval":
+          return Math.round(base * 1.2);
+        case "cardio_recovery":
+          return Math.round(base * 0.8);
+        case "cardio_incline":
+        case "cardio_level":
+          return Math.round(base * 1.1);
+        default:
+          return Math.round(base);
+      }
+    }
     const base = Math.max(Number(set.durationSeconds || 0) / 60, 1) * 25 * intensityMultiplier(set.weight);
     return exercise.volumeType === "time_unilateral" ? base * 2 : base;
   }
@@ -2140,9 +2570,10 @@ function sessionExerciseSummaries(session: WorkoutSession) {
     const exercise = exerciseById.get(set.exerciseId);
     const name = exercise?.name || "운동";
     const category = exercise?.category || "운동";
+    const cardio = isCardioExercise(exercise);
     const intensity = INTENSITY_LEVELS.find(level => level.value === String(Number(set.weight || 2) || 2))?.label || "보통";
     const load = exercise?.type === "time"
-      ? `강도 ${intensity}`
+      ? cardio ? `RPE ${cardioRpe(set.weight, exercise?.defaultRpe || 5)}` : `강도 ${intensity}`
       : Number(set.weight || 0) > 0
         ? `${Number(set.weight)}KG`
         : exercise?.type === "bodyweight"
@@ -2999,7 +3430,7 @@ function draftExerciseSummary(set: DraftSet) {
   const exercise = exerciseById.get(set.exerciseId);
   const isTime = exercise?.type === "time";
   const intensity = INTENSITY_LEVELS.find(level => level.value === String(Number(set.weight || 2) || 2))?.label || "보통";
-  const load = isTime ? `강도 ${intensity}` : set.weight ? `${set.weight}KG` : exercise?.type === "bodyweight" ? "체중" : "무게 미입력";
+  const load = isTime ? isCardioExercise(exercise) ? `RPE ${cardioRpe(set.weight, exercise?.defaultRpe || 5)}` : `강도 ${intensity}` : set.weight ? `${set.weight}KG` : exercise?.type === "bodyweight" ? "체중" : "무게 미입력";
   const reps = isTime ? `${set.reps || 0}분` : `${set.reps || 0}회`;
   return `${draftSetCount(set)}세트 · ${load} · ${reps}`;
 }
@@ -3007,7 +3438,7 @@ function draftExerciseSummary(set: DraftSet) {
 function emptyDraftForExercise(exercise: Exercise): Omit<DraftSet, "exerciseId"> {
   return {
     setCount: "1",
-    weight: exercise.type === "time" ? "2" : "",
+    weight: exercise.type === "time" ? String(isCardioExercise(exercise) ? exercise.defaultRpe || 5 : 2) : "",
     reps: "",
     memo: "",
   };
@@ -3274,8 +3705,9 @@ function ExerciseEntryModal({
   const [weight, setWeight] = useState(initialDraft.weight);
   const [reps, setReps] = useState(initialDraft.reps);
   const isTime = exercise.type === "time";
+  const isCardio = isCardioExercise(exercise);
   const weightLabel = isTime
-    ? "강도"
+    ? isCardio ? "RPE" : "강도"
     : exercise.volumeType === "bodyweight_or_assist"
       ? "보조중량(KG)"
       : exercise.volumeType === "bodyweight_or_added" || exercise.volumeType === "bodyweight_factor_or_added"
@@ -3330,7 +3762,9 @@ function ExerciseEntryModal({
           </Field>
           <div className="grid grid-cols-2 gap-2">
             <Field label={weightLabel}>
-              {isTime ? (
+              {isTime && isCardio ? (
+                <RpePicker value={weight || String(exercise.defaultRpe || 5)} onChange={setWeight} />
+              ) : isTime ? (
                 <IntensityPicker value={weight || "2"} onChange={setWeight} />
               ) : (
                 <input className="nike-input bg-white px-3" inputMode="decimal" value={weight} onChange={event => setWeight(event.target.value)} placeholder="0" />
@@ -3634,6 +4068,23 @@ function IntensityPicker({ value, onChange }: { value: string; onChange: (value:
           onClick={() => onChange(level.value)}
         >
           {level.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RpePicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="grid grid-cols-5 gap-1">
+      {Array.from({ length: 10 }, (_, index) => String(index + 1)).map(level => (
+        <button
+          key={level}
+          type="button"
+          className={`h-9 rounded-full text-xs font-bold ${value === level ? "bg-[#111111] text-white" : "bg-white text-[#707072] ring-1 ring-[#e5e5e5]"}`}
+          onClick={() => onChange(level)}
+        >
+          {level}
         </button>
       ))}
     </div>
