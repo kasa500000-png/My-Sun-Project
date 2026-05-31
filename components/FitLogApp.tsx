@@ -3591,6 +3591,7 @@ function WorkoutEntryView({
   const editingDraft = editingExerciseId ? draftByExerciseId.get(editingExerciseId)?.draft : undefined;
   const savedFeedbackRef = useRef<HTMLDivElement | null>(null);
   const lastScrolledSavedId = useRef<string | null>(lastSavedSession?.id || null);
+  const [memoModalOpen, setMemoModalOpen] = useState(false);
 
   useEffect(() => {
     if (!lastSavedSession?.id) {
@@ -3632,22 +3633,31 @@ function WorkoutEntryView({
         </div>
 
         <div className="border-y border-[#cacacb] py-5">
-          <div className="mb-4">
-            <p className="text-sm font-medium text-[#707072]">세트 입력</p>
-            <h2 className="text-2xl font-semibold">운동 추가</h2>
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[#707072]">세트 입력</p>
+              <h2 className="text-2xl font-semibold">운동 추가</h2>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                className={`h-9 rounded-full px-3 text-xs font-semibold ${draftMemo.trim() ? "bg-[#eaf8ef] text-[#007d48]" : "bg-[#f5f5f5] text-[#111111]"}`}
+                onClick={() => setMemoModalOpen(true)}
+              >
+                {draftMemo.trim() ? "메모 수정" : "메모 추가"}
+              </button>
+              <button
+                type="button"
+                className="h-9 rounded-full bg-[#111111] px-4 text-xs font-semibold text-white disabled:opacity-50"
+                onClick={finishWorkout}
+                disabled={saving}
+              >
+                {saving ? "저장 중" : editingSessionId ? "수정 저장" : "운동 저장"}
+              </button>
+            </div>
           </div>
 
           <div className="grid gap-4">
-            <div className="md:hidden">
-              <WorkoutSaveBox
-                draftMemo={draftMemo}
-                setDraftMemo={setDraftMemo}
-                finishWorkout={finishWorkout}
-                editingSessionId={editingSessionId}
-                saving={saving}
-              />
-            </div>
-
             <Field label="검색">
               <input
                 className="nike-input h-12 min-w-0"
@@ -3766,13 +3776,6 @@ function WorkoutEntryView({
       </div>
 
       <aside className="hidden gap-6 self-start md:grid">
-        <WorkoutSaveBox
-          draftMemo={draftMemo}
-          setDraftMemo={setDraftMemo}
-          finishWorkout={finishWorkout}
-          editingSessionId={editingSessionId}
-          saving={saving}
-        />
         {lastSavedSession && (
           <SavedWorkoutPanel session={lastSavedSession} onEdit={() => onEditSession(lastSavedSession)} />
         )}
@@ -3800,36 +3803,60 @@ function WorkoutEntryView({
           }}
         />
       )}
+      {memoModalOpen && (
+        <MemoEntryModal
+          value={draftMemo}
+          onChange={setDraftMemo}
+          onClose={() => setMemoModalOpen(false)}
+        />
+      )}
     </section>
   );
 }
 
-function WorkoutSaveBox({
-  draftMemo,
-  setDraftMemo,
-  finishWorkout,
-  editingSessionId,
-  saving,
+function MemoEntryModal({
+  value,
+  onChange,
+  onClose,
 }: {
-  draftMemo: string;
-  setDraftMemo: (value: string) => void;
-  finishWorkout: () => void | Promise<void>;
-  editingSessionId: string | null;
-  saving: boolean;
+  value: string;
+  onChange: (value: string) => void;
+  onClose: () => void;
 }) {
   return (
-    <div className="bg-[#f5f5f5] p-4 md:p-5">
-      <Field label="메모">
-        <textarea
-          className="nike-input min-h-20 resize-none bg-white md:min-h-28"
-          value={draftMemo}
-          onChange={event => setDraftMemo(event.target.value)}
-          placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요."
-        />
-      </Field>
-      <button className="mt-4 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50 md:mt-5" onClick={finishWorkout} disabled={saving}>
-        {saving ? "저장 중..." : editingSessionId ? "수정 저장" : "운동 저장"}
-      </button>
+    <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+      <div className="w-full rounded-t-2xl bg-white p-5 shadow-2xl md:max-w-md md:rounded-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-[#707072]">운동 기록</p>
+            <h2 className="mt-1 text-2xl font-semibold">메모 추가</h2>
+          </div>
+          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f5f5f5] text-lg font-semibold" onClick={onClose} aria-label="닫기">
+            X
+          </button>
+        </div>
+        <div className="mt-5">
+          <Field label="메모">
+            <textarea
+              className="nike-input min-h-40 resize-none bg-white"
+              value={value}
+              onChange={event => onChange(event.target.value)}
+              placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요."
+              autoFocus
+            />
+          </Field>
+        </div>
+        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
+          <button className="h-12 rounded-full bg-[#111111] text-base font-medium text-white" onClick={onClose}>
+            완료
+          </button>
+          {value.trim() && (
+            <button className="h-12 rounded-full bg-[#f5f5f5] px-5 text-sm font-semibold text-[#d30005]" onClick={() => onChange("")}>
+              삭제
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
