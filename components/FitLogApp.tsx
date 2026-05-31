@@ -81,24 +81,20 @@ type MuscleDetailShape = {
   strokeWidth?: number;
 };
 
-const MUSCLE_ICON_POSITIONS: Record<MuscleIconKey, { col: number; row: number }> = {
-  chest: { col: 0, row: 0 },
-  back: { col: 1, row: 0 },
-  shoulders: { col: 2, row: 0 },
-  arms: { col: 3, row: 0 },
-  core: { col: 0, row: 1 },
-  quads: { col: 1, row: 1 },
-  glutes: { col: 2, row: 1 },
-  hamstrings: { col: 3, row: 1 },
-  calves: { col: 0, row: 2 },
-  cardio: { col: 1, row: 2 },
-  lower: { col: 2, row: 2 },
-  upper: { col: 3, row: 2 },
+const MUSCLE_FOCUS_IMAGES: Record<MuscleIconKey, string> = {
+  chest: "/images/muscle-focus-cards/chest.png",
+  back: "/images/muscle-focus-cards/back.png",
+  shoulders: "/images/muscle-focus-cards/shoulders.png",
+  arms: "/images/muscle-focus-cards/arms.png",
+  core: "/images/muscle-focus-cards/core.png",
+  quads: "/images/muscle-focus-cards/quads.png",
+  glutes: "/images/muscle-focus-cards/glutes.png",
+  hamstrings: "/images/muscle-focus-cards/hamstrings.png",
+  calves: "/images/muscle-focus-cards/calves.png",
+  cardio: "/images/muscle-focus-cards/cardio.png",
+  lower: "/images/muscle-focus-cards/lower.png",
+  upper: "/images/muscle-focus-cards/upper.png",
 };
-
-const MUSCLE_FOCUS_SHEET_COLUMNS = 4;
-const MUSCLE_FOCUS_SHEET_ROWS = 3;
-const MUSCLE_FOCUS_SHEET_ZOOM = 1.12;
 
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
@@ -704,7 +700,7 @@ function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
   if (muscleId === "biceps" || muscleId === "triceps") return "arms";
   if (muscleId === "adductors") return "lower";
   if (muscleId === "abductors") return "glutes";
-  if (muscleId in MUSCLE_ICON_POSITIONS) return muscleId as MuscleIconKey;
+  if (muscleId in MUSCLE_FOCUS_IMAGES) return muscleId as MuscleIconKey;
   if (group === "하체") return "lower";
   if (group === "상체") return "upper";
   return "cardio";
@@ -1861,19 +1857,15 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
 
 function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: number }; total: number; index: number }) {
   const key = muscleIconKey(item.id, item.group);
-  const position = MUSCLE_ICON_POSITIONS[key] || MUSCLE_ICON_POSITIONS.upper;
   const percent = Math.round((item.score / total) * 100);
-  const backgroundPosition = `${spritePosition(position.col, MUSCLE_FOCUS_SHEET_COLUMNS)}% ${spritePosition(position.row, MUSCLE_FOCUS_SHEET_ROWS)}%`;
+  const imageSrc = MUSCLE_FOCUS_IMAGES[key] || MUSCLE_FOCUS_IMAGES.upper;
 
   return (
     <div className="bg-white p-3">
-      <div
-        className="mx-auto aspect-square w-full max-w-[118px] overflow-hidden rounded-full border border-[#eef0f2] bg-white bg-no-repeat"
-        style={{
-          backgroundImage: "url('/images/muscle-focus-sheet.png')",
-          backgroundPosition,
-          backgroundSize: `${MUSCLE_FOCUS_SHEET_COLUMNS * MUSCLE_FOCUS_SHEET_ZOOM * 100}% ${MUSCLE_FOCUS_SHEET_ROWS * MUSCLE_FOCUS_SHEET_ZOOM * 100}%`,
-        }}
+      <img
+        className="mx-auto aspect-square w-full max-w-[118px] rounded-full border border-[#eef0f2] bg-white object-cover"
+        src={imageSrc}
+        alt=""
         aria-hidden="true"
       />
       <div className="mt-3 flex items-center justify-between gap-2">
@@ -1882,12 +1874,6 @@ function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: numbe
       </div>
     </div>
   );
-}
-
-function spritePosition(index: number, count: number) {
-  if (count <= 1) return 0;
-  const zoomedSpan = count * MUSCLE_FOCUS_SHEET_ZOOM - 1;
-  return (index * MUSCLE_FOCUS_SHEET_ZOOM / zoomedSpan) * 100;
 }
 
 function muscleShapeBounds(pathData: string, padding = 0) {
