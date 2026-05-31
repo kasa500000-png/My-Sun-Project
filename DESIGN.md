@@ -1,45 +1,51 @@
 ---
-version: beta
-name: Mysun-mobile-workout-design-system
+version: gamma
+name: Mysun-soft-mobile-workout-design-system
 description: |
-  A Nike-inspired mobile workout logging system for fast daily use. The interface keeps the Nike black, white, and soft-gray discipline, but adapts it from commerce to a high-frequency mobile utility: compact exercise rows, flat surfaces, pill actions, bottom-sheet modals, and photography-led motivation.
+  A soft mobile workout logging system for a woman in her 20s who uses the app frequently on a phone.
+  The product should feel calm, personal, and polished rather than aggressive or commercial.
+  It keeps quick workout logging as the first priority, but replaces stark Nike-style black/gray contrast
+  with warm neutrals, softer surfaces, compact controls, and gentle success states.
 
 colors:
-  ink: "#111111"
-  canvas: "#ffffff"
-  soft-cloud: "#f5f5f5"
-  charcoal: "#39393b"
-  mute: "#707072"
-  hairline: "#cacacb"
-  hairline-soft: "#e5e5e5"
-  success: "#007d48"
-  success-surface: "#eaf8ef"
-  danger: "#d30005"
+  ink: "#242124"
+  canvas: "#fffdfb"
+  warm-surface: "#faf4f1"
+  warm-surface-pressed: "#f2e8e3"
+  charcoal: "#4b4541"
+  mute: "#7a7470"
+  hairline: "#ded4cf"
+  hairline-soft: "#eadfda"
+  success: "#2f8c63"
+  success-surface: "#edf8f1"
+  danger: "#c84653"
+  blush: "#f7dde2"
+  blush-ink: "#8f4b5a"
 
 typography:
   screen-title:
-    fontSize: 40px
-    fontWeight: 900
-    lineHeight: 1.0
+    fontSize: 38px
+    fontWeight: 850
+    lineHeight: 1.02
     letterSpacing: 0
   section-title:
     fontSize: 24px
-    fontWeight: 700
-    lineHeight: 1.2
+    fontWeight: 760
+    lineHeight: 1.22
     letterSpacing: 0
   row-title:
     fontSize: 16px
-    fontWeight: 700
+    fontWeight: 720
     lineHeight: 1.35
     letterSpacing: 0
   body:
     fontSize: 14px
     fontWeight: 500
-    lineHeight: 1.5
+    lineHeight: 1.55
     letterSpacing: 0
   caption:
     fontSize: 12px
-    fontWeight: 600
+    fontWeight: 620
     lineHeight: 1.5
     letterSpacing: 0
 
@@ -53,10 +59,10 @@ spacing:
   mobile-section: 24px
 
 radius:
-  none: 0px
+  soft: 14px
   input: 24px
   pill: 9999px
-  sheet: 16px
+  sheet: 18px
 
 components:
   action-primary:
@@ -65,17 +71,17 @@ components:
     height: 48px
     borderRadius: "{radius.pill}"
   action-secondary:
-    backgroundColor: "{colors.soft-cloud}"
+    backgroundColor: "{colors.warm-surface}"
     textColor: "{colors.ink}"
     height: 40px
     borderRadius: "{radius.pill}"
   search-input:
-    backgroundColor: "{colors.soft-cloud}"
+    backgroundColor: "{colors.warm-surface}"
     textColor: "{colors.ink}"
     height: 48px
     borderRadius: "{radius.input}"
   routine-tabs:
-    backgroundColor: "{colors.soft-cloud}"
+    backgroundColor: "{colors.warm-surface}"
     height: 40px
     borderRadius: "{radius.pill}"
     behavior: horizontal-scroll
@@ -88,14 +94,14 @@ components:
     backgroundColor: "{colors.canvas}"
     border: "1px solid {colors.hairline-soft}"
     minHeight: 72px
-    borderRadius: "{radius.none}"
+    borderRadius: "{radius.soft}"
   exercise-row-selected:
     backgroundColor: "{colors.success-surface}"
-    border: "1px solid #a9d8b8"
+    border: "1px solid #b9dfc5"
     leftIndicator: "4px {colors.success}"
   bottom-sheet:
     backgroundColor: "{colors.canvas}"
-    borderRadius: "16px 16px 0 0"
+    borderRadius: "18px 18px 0 0"
     maxHeight: "92svh"
     footer: sticky
   bottom-nav:
@@ -106,28 +112,36 @@ components:
 
 ## Product Principle
 
-Mysun is a high-frequency mobile logging tool. The user should be able to open the record tab, find an exercise, enter numbers, and save without reading long descriptions in the list. The app uses Nike-inspired restraint: black primary actions, white canvas, soft gray staging surfaces, and strong typography. It does not copy Nike commerce cards directly because workout logging is a utility workflow, not a product grid.
+Mysun should feel like a personal workout companion, not a campaign page. The app is still fast and compact, but the visual tone is warmer: soft ivory background, warm-gray panels, rounded exercise rows, and muted status colors. The design should support repeated daily use without feeling harsh.
+
+## Tone Direction
+
+1. Avoid a pure black/white retail look as the default surface language.
+2. Use dark ink only for primary actions, selected tabs, and major contrast anchors.
+3. Use warm surfaces for cards, search, inactive tabs, and secondary controls.
+4. Use green only for completed or selected states.
+5. Avoid decorative pink overload. Blush is allowed only as a subtle accent, not the main UI color.
 
 ## Mobile Record Tab Rules
 
-1. The exercise list itself is the add interface. Do not wrap search, tabs, and rows in a large "운동 추가" card.
-2. Exercise rows must stay compact: exercise name, category/primary body part, selected state, and the input action. Record formula, impact ratio, rest time, and helper text belong in the input modal.
-3. Routine tabs use a horizontal pill rail. Sub-tabs use a smaller 32px rail with a bottom divider.
-4. Save and memo actions stay near the top while browsing, but the exercise input modal owns the final per-exercise save.
-5. Selected exercises use success green only as a state signal. Avoid using green as decoration.
+1. The exercise list is the add interface.
+2. Exercise rows should be compact but not rigid: 14px radius, warm border, enough vertical breathing room.
+3. Record formula, impact ratio, rest time, and helper text belong in the input modal, not the list.
+4. Memo and save actions stay near the exercise-add header so the user does not scroll to the bottom to save.
+5. Selected exercises use a soft green surface and a small left indicator.
 
 ## Modal Rules
 
-Input modals are bottom sheets on mobile. Header is fixed, content scrolls, and the save/delete footer is sticky at the bottom with safe-area padding. The save button should always be reachable without scrolling through helper text.
+Input and memo modals are bottom sheets on mobile. Header is fixed, content scrolls, and footer actions remain reachable. Modal corners can be slightly softer than flat cards because bottom sheets are transient surfaces.
 
 ## Card Rules
 
-Use flat cards. Avoid shadows except where a browser surface needs separation. Prefer hairline borders and soft-gray sections. Exercise list rows use square or very small radius geometry; pill shapes are reserved for buttons and chips.
+Cards should feel light and tactile. Use warm-gray fill, subtle borders, and 12-14px radius. Avoid heavy shadows, hard rectangles, and oversized black blocks. Large black panels should be rare and reserved for important summary or account states.
 
 ## Home / Log / Member Rules
 
-Home, log, and member cards should use the same flat panel language. A card should summarize one decision or one record. Avoid repeating totals when the child list already explains the session.
+Home should motivate without covering the photo. Goals appear as a thin progress strip above the summary tabs. Log and member pages use the same card rhythm: one card equals one decision. Do not duplicate totals when detailed lists already explain the record.
 
 ## Typography Rules
 
-Large titles are allowed only for screen titles such as "오늘 운동" and "운동 요약". Compact panels, rows, tabs, and bottom navigation use 12-16px typography. Do not use viewport-based font sizing.
+Screen titles can be strong, but not shouted. Keep headings slightly smaller and less heavy than the earlier Nike-style version. Compact panels, rows, tabs, and bottom navigation use 12-16px typography with 0 letter spacing.

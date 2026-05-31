@@ -4,19 +4,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 const UI = {
-  surface: "bg-[#f5f5f5]",
-  surfaceActive: "bg-[#eaf8ef]",
-  surfacePressed: "active:bg-[#eeeeee]",
-  card: "bg-white ring-1 ring-[#e5e5e5]",
-  border: "border-[#e5e5e5]",
-  divider: "border-[#cacacb]",
-  textMuted: "text-[#707072]",
-  textBody: "text-[#39393b]",
-  successText: "text-[#007d48]",
-  dangerText: "text-[#d30005]",
-  primaryButton: "rounded-full bg-[#111111] font-semibold text-white disabled:opacity-40",
-  secondaryButton: "rounded-full bg-[#f5f5f5] font-semibold text-[#111111]",
-  dangerButton: "rounded-full bg-[#f5f5f5] font-semibold text-[#d30005]",
+  surface: "bg-[#faf4f1]",
+  surfaceActive: "bg-[#edf8f1]",
+  surfacePressed: "active:bg-[#f2e8e3]",
+  card: "bg-[#fffdfb] ring-1 ring-[#eadfda]",
+  border: "border-[#eadfda]",
+  divider: "border-[#ded4cf]",
+  textMuted: "text-[#7a7470]",
+  textBody: "text-[#4b4541]",
+  successText: "text-[#2f8c63]",
+  dangerText: "text-[#c84653]",
+  primaryButton: "rounded-full bg-[#242124] font-semibold text-[#fffdfb] disabled:opacity-40",
+  secondaryButton: "rounded-full bg-[#faf4f1] font-semibold text-[#242124]",
+  dangerButton: "rounded-full bg-[#faf4f1] font-semibold text-[#c84653]",
   pill: "rounded-full px-3 py-2 text-sm font-semibold",
 };
 
@@ -348,26 +348,26 @@ const MUSCLE_BODY_SHAPES: Record<string, MuscleDetailShape[]> = {
 };
 
 const MUSCLES: Muscle[] = [
-  { id: "chest", name: "가슴", group: "상체", color: "#111111" },
-  { id: "back", name: "등", group: "상체", color: "#39393b" },
-  { id: "shoulders", name: "어깨", group: "상체", color: "#707072" },
+  { id: "chest", name: "가슴", group: "상체", color: "#242124" },
+  { id: "back", name: "등", group: "상체", color: "#4b4541" },
+  { id: "shoulders", name: "어깨", group: "상체", color: "#7a7470" },
   { id: "biceps", name: "이두", group: "팔", color: "#9e9ea0" },
   { id: "triceps", name: "삼두", group: "팔", color: "#4b4b4d" },
-  { id: "core", name: "코어", group: "코어", color: "#007d48" },
-  { id: "rectusAbs", name: "복직근", group: "코어", color: "#111111" },
-  { id: "obliques", name: "복사근", group: "코어", color: "#39393b" },
-  { id: "transverseAbs", name: "복횡근", group: "코어", color: "#007d48" },
+  { id: "core", name: "코어", group: "코어", color: "#2f8c63" },
+  { id: "rectusAbs", name: "복직근", group: "코어", color: "#242124" },
+  { id: "obliques", name: "복사근", group: "코어", color: "#4b4541" },
+  { id: "transverseAbs", name: "복횡근", group: "코어", color: "#2f8c63" },
   { id: "lowerAbs", name: "하복부", group: "코어", color: "#4b4b4d" },
-  { id: "hipFlexors", name: "고관절굴곡근", group: "코어", color: "#707072" },
+  { id: "hipFlexors", name: "고관절굴곡근", group: "코어", color: "#7a7470" },
   { id: "erectors", name: "척추기립근", group: "코어", color: "#9e9ea0" },
-  { id: "quads", name: "대퇴사두", group: "하체", color: "#111111" },
-  { id: "adductors", name: "내전근", group: "하체", color: "#707072" },
-  { id: "glutes", name: "둔근", group: "하체", color: "#d30005" },
+  { id: "quads", name: "대퇴사두", group: "하체", color: "#242124" },
+  { id: "adductors", name: "내전근", group: "하체", color: "#7a7470" },
+  { id: "glutes", name: "둔근", group: "하체", color: "#c84653" },
   { id: "abductors", name: "중둔근", group: "하체", color: "#9e9ea0" },
-  { id: "hamstrings", name: "햄스트링", group: "하체", color: "#39393b" },
-  { id: "calves", name: "종아리", group: "하체", color: "#707072" },
+  { id: "hamstrings", name: "햄스트링", group: "하체", color: "#4b4541" },
+  { id: "calves", name: "종아리", group: "하체", color: "#7a7470" },
   { id: "cardio", name: "유산소", group: "전신", color: "#1151ff" },
-  { id: "recovery", name: "회복", group: "전신", color: "#007d48" },
+  { id: "recovery", name: "회복", group: "전신", color: "#2f8c63" },
 ];
 
 const UPPER_SUB_TABS = ["전체", "Push", "Pull", "어깨", "팔", "체중운동"];
@@ -3058,7 +3058,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }
 
   return (
-    <main className="min-h-screen bg-white text-[#111111]">
+    <main className="min-h-screen bg-[#fffdfb] text-[#242124]">
       <TopBar userEmail={userEmail} onSignOut={signOut} setActiveTab={selectTab} />
 
       {activeTab === "home" && (
@@ -3130,7 +3130,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       <MobileTabBar activeTab={activeTab} setActiveTab={selectTab} />
 
       {toast && (
-        <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 rounded-full bg-[#111111] px-5 py-3 text-center text-sm font-medium text-white">
+        <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 rounded-full bg-[#242124] px-5 py-3 text-center text-sm font-medium text-[#fffdfb]">
           {toast}
         </div>
       )}
@@ -3148,17 +3148,17 @@ function TopBar({
   setActiveTab: (tab: Tab) => void;
 }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-[#e5e5e5] bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-[#eadfda] bg-[#fffdfb]/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 md:h-16 md:px-8">
         <button className="text-base font-black md:text-xl" onClick={() => setActiveTab("home")}>
           마이썬 운동일지
         </button>
         <div className="flex items-center gap-2">
-          <span className="hidden max-w-[220px] truncate text-xs font-medium text-[#707072] md:inline">{userEmail}</span>
-          <button className="h-9 rounded-full bg-[#111111] px-4 text-sm font-medium text-white" onClick={() => setActiveTab("train")}>
+          <span className="hidden max-w-[220px] truncate text-xs font-medium text-[#7a7470] md:inline">{userEmail}</span>
+          <button className="h-9 rounded-full bg-[#242124] px-4 text-sm font-medium text-[#fffdfb]" onClick={() => setActiveTab("train")}>
             기록
           </button>
-          <button className="hidden h-9 rounded-full bg-[#f5f5f5] px-4 text-sm font-medium text-[#111111] md:inline" onClick={onSignOut}>
+          <button className="hidden h-9 rounded-full bg-[#faf4f1] px-4 text-sm font-medium text-[#242124] md:inline" onClick={onSignOut}>
             로그아웃
           </button>
         </div>
@@ -3258,22 +3258,22 @@ function HomeDashboard({
 
   return (
     <>
-      <section className="relative min-h-[64svh] overflow-hidden bg-[#111111] md:min-h-[680px]">
+      <section className="relative min-h-[64svh] overflow-hidden bg-[#242124] md:min-h-[680px]">
         <div
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
           style={{ backgroundImage: "url('/images/mysun-home-hero.jpg')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/72 md:via-black/22" />
-        <div className="relative mx-auto flex min-h-[64svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-white md:min-h-[680px] md:px-8 md:pb-14">
-          <p className="text-sm font-semibold text-white/80">오늘도 천천히, 꾸준히</p>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/70 via-[#242124]/12 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
+        <div className="relative mx-auto flex min-h-[64svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
+          <p className="text-sm font-semibold text-[#fffdfb]/80">오늘도 천천히, 꾸준히</p>
           <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
             마이썬 운동일지
           </h1>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
-            <button className="h-12 rounded-full bg-white px-6 text-base font-medium text-[#111111]" onClick={onStart}>
+            <button className="h-12 rounded-full bg-[#fffdfb] px-6 text-base font-medium text-[#242124]" onClick={onStart}>
               운동 기록
             </button>
-            <button className="h-12 rounded-full bg-[#111111] px-6 text-base font-medium text-white ring-1 ring-white/35" onClick={onAnalyze}>
+            <button className="h-12 rounded-full bg-[#242124] px-6 text-base font-medium text-[#fffdfb] ring-1 ring-[#fffdfb]/35" onClick={onAnalyze}>
               운동 분석
             </button>
           </div>
@@ -3283,23 +3283,23 @@ function HomeDashboard({
       <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[1fr_1fr] md:px-8 md:py-10">
         <div>
           <div className="mb-6 grid gap-3">
-            <div className="border-y border-[#e5e5e5] py-3">
+            <div className="border-y border-[#eadfda] py-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold text-[#707072]">주간 운동 목표</p>
-                <p className="text-sm font-black text-[#111111]">{weekProgress}/{weeklyGoal}회</p>
+                <p className="text-xs font-semibold text-[#7a7470]">주간 운동 목표</p>
+                <p className="text-sm font-black text-[#242124]">{weekProgress}/{weeklyGoal}회</p>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e5e5e5]">
-                <div className="h-full rounded-full bg-[#111111]" style={{ width: `${weeklyGoalPercent}%` }} />
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eadfda]">
+                <div className="h-full rounded-full bg-[#242124]" style={{ width: `${weeklyGoalPercent}%` }} />
               </div>
             </div>
 
             <div className="flex items-end justify-between gap-3">
               <SectionTitle kicker={summaryRangeLabels[range]} title="운동 요약" />
-              <div className="mb-1 flex rounded-full bg-[#f5f5f5] p-1">
+              <div className="mb-1 flex rounded-full bg-[#faf4f1] p-1">
                 {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
                   <button
                     key={item}
-                    className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#111111] text-white" : "text-[#111111]"}`}
+                    className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
                     onClick={() => setRange(item)}
                   >
                     {summaryRangeLabels[item]}
@@ -3310,25 +3310,25 @@ function HomeDashboard({
           </div>
 
           <div className="grid gap-2">
-            <button className="bg-[#f5f5f5] p-5 text-left" onClick={() => setModalOpen(true)}>
+            <button className="rounded-[14px] bg-[#faf4f1] p-5 text-left" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 횟수</p>
               <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.count}회`}</p>
             </button>
-            <button className="bg-[#f5f5f5] p-5 text-left" onClick={() => setModalOpen(true)}>
+            <button className="rounded-[14px] bg-[#faf4f1] p-5 text-left" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 시간</p>
               <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.minutes}분`}</p>
             </button>
-            <button className="bg-[#f5f5f5] p-5 text-left" onClick={() => setModalOpen(true)}>
+            <button className="rounded-[14px] bg-[#faf4f1] p-5 text-left" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 밸런스</p>
               <BalanceBars balance={summary.balance} />
             </button>
           </div>
 
-          <div className="mt-7 border-t border-[#cacacb] pt-5">
-            <p className="text-sm font-medium text-[#707072]">추천 루틴</p>
+          <div className="mt-7 border-t border-[#ded4cf] pt-5">
+            <p className="text-sm font-medium text-[#7a7470]">추천 루틴</p>
             <h2 className="mt-2 text-2xl font-semibold">{recommendedRoutine}</h2>
-            <p className="mt-2 text-sm leading-6 text-[#39393b]">{routineNote(recommendedRoutine)}</p>
-            <button className="mt-5 h-12 w-full rounded-full bg-[#111111] px-8 text-base font-medium text-white md:w-auto" onClick={onStart}>
+            <p className="mt-2 text-sm leading-6 text-[#4b4541]">{routineNote(recommendedRoutine)}</p>
+            <button className="mt-5 h-12 w-full rounded-full bg-[#242124] px-8 text-base font-medium text-[#fffdfb] md:w-auto" onClick={onStart}>
               이 루틴으로 시작
             </button>
           </div>
@@ -3372,8 +3372,8 @@ function BalanceBars({ balance }: { balance: { upper: number; lower: number; cor
             <span>{row.label}</span>
             <span>{row.value}%</span>
           </div>
-          <div className="h-2 bg-white">
-            <div className="h-2 bg-[#111111]" style={{ width: `${row.value}%` }} />
+          <div className="h-2 bg-[#fffdfb]">
+            <div className="h-2 bg-[#242124]" style={{ width: `${row.value}%` }} />
           </div>
         </div>
       ))}
@@ -3391,8 +3391,8 @@ function WorkoutSummaryModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[86svh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl md:max-w-lg md:rounded-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+      <div className="flex max-h-[86svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-lg md:rounded-2xl">
         <div className={`flex items-center justify-between border-b p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>{rangeLabel}</p>
@@ -3437,25 +3437,25 @@ function HomeView({
 }) {
   return (
     <>
-      <section className="relative min-h-[72svh] overflow-hidden bg-[#111111] md:min-h-[680px]">
+      <section className="relative min-h-[72svh] overflow-hidden bg-[#242124] md:min-h-[680px]">
         <div
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
           style={{ backgroundImage: "url('/images/mysun-home-hero.jpg')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/72 md:via-black/22" />
-        <div className="relative mx-auto flex min-h-[72svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-white md:min-h-[680px] md:px-8 md:pb-14">
-          <p className="text-sm font-semibold text-white/80">오늘도 천천히, 꾸준히</p>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/70 via-[#242124]/12 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
+        <div className="relative mx-auto flex min-h-[72svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
+          <p className="text-sm font-semibold text-[#fffdfb]/80">오늘도 천천히, 꾸준히</p>
           <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
             마이썬 운동일지
           </h1>
-          <p className="mt-4 max-w-sm text-base leading-7 text-white/80">
+          <p className="mt-4 max-w-sm text-base leading-7 text-[#fffdfb]/80">
             운동을 기록하고, 이번 주 몸의 밸런스를 한눈에 확인해요.
           </p>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
-            <button className="h-12 rounded-full bg-white px-6 text-base font-medium text-[#111111]" onClick={onStart}>
+            <button className="h-12 rounded-full bg-[#fffdfb] px-6 text-base font-medium text-[#242124]" onClick={onStart}>
               운동 기록
             </button>
-            <button className="h-12 rounded-full bg-[#111111] px-6 text-base font-medium text-white ring-1 ring-white/35" onClick={onAnalyze}>
+            <button className="h-12 rounded-full bg-[#242124] px-6 text-base font-medium text-[#fffdfb] ring-1 ring-[#fffdfb]/35" onClick={onAnalyze}>
               밸런스 보기
             </button>
           </div>
@@ -3473,11 +3473,11 @@ function HomeView({
               { label: "부하", value: loading ? "-" : `${Math.round(weekStats.volume)}` },
             ]}
           />
-          <div className="mt-7 border-t border-[#cacacb] pt-5">
-            <p className="text-sm font-medium text-[#707072]">추천 루틴</p>
+          <div className="mt-7 border-t border-[#ded4cf] pt-5">
+            <p className="text-sm font-medium text-[#7a7470]">추천 루틴</p>
             <h2 className="mt-2 text-2xl font-semibold">{recommendedRoutine}</h2>
-            <p className="mt-2 text-sm leading-6 text-[#39393b]">{routineNote(recommendedRoutine)}</p>
-            <button className="mt-5 h-12 w-full rounded-full bg-[#111111] px-8 text-base font-medium text-white md:w-auto" onClick={onStart}>
+            <p className="mt-2 text-sm leading-6 text-[#4b4541]">{routineNote(recommendedRoutine)}</p>
+            <button className="mt-5 h-12 w-full rounded-full bg-[#242124] px-8 text-base font-medium text-[#fffdfb] md:w-auto" onClick={onStart}>
               이 루틴으로 시작
             </button>
           </div>
@@ -3488,8 +3488,8 @@ function HomeView({
             {recent ? (
               <div>
                 <div className="flex items-start justify-between gap-4">
-                  <p className="text-sm font-medium text-[#707072]">{formatDate(recent.date)}</p>
-                  <span className="shrink-0 rounded-full bg-[#f5f5f5] px-3 py-2 text-sm font-semibold">{recent.durationMinutes}분</span>
+                  <p className="text-sm font-medium text-[#7a7470]">{formatDate(recent.date)}</p>
+                  <span className="shrink-0 rounded-full bg-[#faf4f1] px-3 py-2 text-sm font-semibold">{recent.durationMinutes}분</span>
                 </div>
                 <SessionExerciseList session={recent} />
               </div>
@@ -3634,7 +3634,7 @@ function WorkoutEntryView({
           </div>
         </div>
 
-        <div className="mb-4 flex items-center justify-between gap-3 border-y border-[#cacacb] py-3">
+        <div className="mb-4 flex items-center justify-between gap-3 border-y border-[#ded4cf] py-3">
           <div className="min-w-0">
             <p className={`text-xs font-semibold ${UI.textMuted}`}>운동 추가</p>
             <p className="mt-0.5 truncate text-base font-semibold">{draftSets.length}개 운동 입력 중</p>
@@ -3661,19 +3661,19 @@ function WorkoutEntryView({
         <div className="grid gap-3">
           <Field label="검색">
             <input
-              className="nike-input h-12 min-w-0 bg-[#f5f5f5]"
+              className="nike-input h-12 min-w-0 bg-[#faf4f1]"
               value={exerciseSearch}
               onChange={event => setExerciseSearch(event.target.value)}
               placeholder="운동 이름을 검색해 주세요."
             />
           </Field>
 
-          <div className="flex gap-1 overflow-x-auto rounded-full bg-[#f5f5f5] p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-1 overflow-x-auto rounded-full bg-[#faf4f1] p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {ROUTINE_TABS.map(routine => (
               <button
                 key={routine.label}
                 type="button"
-                className={`h-10 shrink-0 rounded-full px-5 text-xs font-semibold ${routine.value === routineName || routine.label === routineName ? "bg-[#111111] text-white" : "text-[#707072]"}`}
+                className={`h-10 shrink-0 rounded-full px-5 text-xs font-semibold ${routine.value === routineName || routine.label === routineName ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
                 onClick={() => handleRoutineTab(routine.value)}
               >
                 {routine.label}
@@ -3682,12 +3682,12 @@ function WorkoutEntryView({
           </div>
 
           {hasSubTabs && (
-            <div className="flex gap-1 overflow-x-auto border-b border-[#e5e5e5] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-1 overflow-x-auto border-b border-[#eadfda] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {currentSubTabs.map(tab => (
                 <button
                   key={tab}
                   type="button"
-                  className={`h-8 shrink-0 rounded-full px-3 text-xs font-semibold ${routineSubTab === tab ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#707072]"}`}
+                  className={`h-8 shrink-0 rounded-full px-3 text-xs font-semibold ${routineSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : "bg-[#faf4f1] text-[#7a7470]"}`}
                   onClick={() => setRoutineSubTab(tab)}
                 >
                   {tab}
@@ -3711,21 +3711,21 @@ function WorkoutEntryView({
                 <button
                   key={exercise.id}
                   type="button"
-                  className={`relative grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden border border-[#e5e5e5] bg-white p-3 text-left transition active:bg-[#f5f5f5] ${saved ? "border-[#a9d8b8] bg-[#eaf8ef]" : ""}`}
+                  className={`relative grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-[14px] border border-[#eadfda] bg-[#fffdfb] p-3 text-left transition active:bg-[#faf4f1] ${saved ? "border-[#b9dfc5] bg-[#edf8f1]" : ""}`}
                   onClick={() => setEditingExerciseId(exercise.id)}
                 >
-                  {saved && <span className="absolute inset-y-0 left-0 w-1 bg-[#007d48]" />}
+                  {saved && <span className="absolute inset-y-0 left-0 w-1 bg-[#2f8c63]" />}
                   <span className="min-w-0 pl-1">
                     <span className="flex min-w-0 items-center gap-2">
-                      {favorite && <b className="shrink-0 rounded-full bg-[#eaf8ef] px-2 py-0.5 text-[10px] font-black text-[#007d48]">즐겨찾기</b>}
+                      {favorite && <b className="shrink-0 rounded-full bg-[#edf8f1] px-2 py-0.5 text-[10px] font-black text-[#2f8c63]">즐겨찾기</b>}
                       <span className="truncate text-base font-semibold">{exercise.name}</span>
                     </span>
                     <span className={`mt-1 block truncate text-xs font-semibold ${UI.textMuted}`}>
                       {exercise.category} · {primaryPart}{secondaryPart}
                     </span>
-                    {saved && <span className="mt-1 block truncate text-xs font-semibold text-[#007d48]">{draftExerciseSummary(saved)}</span>}
+                    {saved && <span className="mt-1 block truncate text-xs font-semibold text-[#2f8c63]">{draftExerciseSummary(saved)}</span>}
                   </span>
-                  <span className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${saved ? "bg-white text-[#007d48]" : "bg-[#111111] text-white"}`}>
+                  <span className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${saved ? "bg-[#fffdfb] text-[#2f8c63]" : "bg-[#242124] text-[#fffdfb]"}`}>
                     {saved ? "수정" : "입력"}
                   </span>
                 </button>
@@ -3733,14 +3733,14 @@ function WorkoutEntryView({
             })}
 
             {visibleExercises.length === 0 && (
-              <div className={`${UI.surface} p-4 text-sm font-semibold ${UI.textMuted}`}>
+              <div className={`${UI.surface} rounded-[14px] p-4 text-sm font-semibold ${UI.textMuted}`}>
                 검색 결과가 없어요.
               </div>
             )}
           </div>
 
           {draftSets.length > 0 && (
-            <div className="border-t border-[#e5e5e5] pt-4">
+            <div className="border-t border-[#eadfda] pt-4">
               <p className={`text-sm font-medium ${UI.textMuted}`}>입력된 운동</p>
               <div className="mt-3 grid gap-2">
                 {draftSets.map((draft, index) => {
@@ -3751,7 +3751,7 @@ function WorkoutEntryView({
                         <span className="block truncate text-sm font-semibold">{exercise?.name || "운동"}</span>
                         <span className={`mt-1 block text-xs font-semibold ${UI.textMuted}`}>{draftExerciseSummary(draft)}</span>
                       </button>
-                      <button className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#d30005]" type="button" onClick={() => removeSet(index)}>
+                      <button className="shrink-0 rounded-full bg-[#fffdfb] px-3 py-2 text-xs font-semibold text-[#c84653]" type="button" onClick={() => removeSet(index)}>
                         삭제
                       </button>
                     </div>
@@ -3821,11 +3821,11 @@ function MemoEntryModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl md:max-w-md md:rounded-2xl">
-        <div className={`flex items-start justify-between gap-4 border-b bg-white p-5 ${UI.border}`}>
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-md md:rounded-2xl">
+        <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
-            <p className="text-sm font-medium text-[#707072]">운동 기록</p>
+            <p className="text-sm font-medium text-[#7a7470]">운동 기록</p>
             <h2 className="mt-1 text-2xl font-semibold">메모 추가</h2>
           </div>
           <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
@@ -3835,7 +3835,7 @@ function MemoEntryModal({
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           <Field label="메모">
             <textarea
-              className="nike-input min-h-40 resize-none bg-white"
+              className="nike-input min-h-40 resize-none bg-[#fffdfb]"
               value={value}
               onChange={event => onChange(event.target.value)}
               placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요."
@@ -3843,7 +3843,7 @@ function MemoEntryModal({
             />
           </Field>
         </div>
-        <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#e5e5e5] bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#eadfda] bg-[#fffdfb] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <button className={`${UI.primaryButton} h-12 text-base`} onClick={onClose}>
             완료
           </button>
@@ -3909,13 +3909,13 @@ function ExerciseEntryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl md:max-w-md md:rounded-2xl">
-        <div className={`flex items-start justify-between gap-4 border-b bg-white p-5 ${UI.border}`}>
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+      <div className="flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-md md:rounded-2xl">
+        <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>{exercise.category}</p>
             <h2 className="mt-1 truncate text-2xl font-semibold">{exercise.name}</h2>
-            {exercise.detail && <p className="mt-2 text-sm font-semibold text-[#111111]">{exercise.detail}</p>}
+            {exercise.detail && <p className="mt-2 text-sm font-semibold text-[#242124]">{exercise.detail}</p>}
           </div>
           <button className={`grid h-10 w-10 shrink-0 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
             X
@@ -3928,19 +3928,19 @@ function ExerciseEntryModal({
               {exercise.recordLabel && (
                 <div>
                   <p className={`text-xs font-semibold ${UI.textMuted}`}>기록 방식</p>
-                  <p className="mt-1 text-sm font-semibold leading-5 text-[#111111]">{exercise.recordLabel}</p>
+                  <p className="mt-1 text-sm font-semibold leading-5 text-[#242124]">{exercise.recordLabel}</p>
                 </div>
               )}
               <div>
                 <p className={`text-xs font-semibold ${UI.textMuted}`}>주요 자극</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-[#111111]">{exerciseImpactSummary(exercise)}</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-[#242124]">{exerciseImpactSummary(exercise)}</p>
               </div>
             </div>
 
             <div className="grid gap-3">
               <Field label="세트 수">
                 <input
-                  className="nike-input bg-white px-3 text-center"
+                  className="nike-input bg-[#fffdfb] px-3 text-center"
                   inputMode="numeric"
                   value={setCount}
                   onChange={event => setSetCount(event.target.value)}
@@ -3951,7 +3951,7 @@ function ExerciseEntryModal({
               {bodyWeightRequired && (
                 <Field label="체중(KG)">
                   <input
-                    className="nike-input bg-white px-3"
+                    className="nike-input bg-[#fffdfb] px-3"
                     inputMode="decimal"
                     value={bodyWeight}
                     onChange={event => setBodyWeight(event.target.value)}
@@ -3967,12 +3967,12 @@ function ExerciseEntryModal({
                     ) : isTime ? (
                       <IntensityPicker value={weight || "2"} onChange={setWeight} />
                     ) : (
-                      <input className="nike-input bg-white px-3" inputMode="decimal" value={weight} onChange={event => setWeight(event.target.value)} placeholder="0" />
+                      <input className="nike-input bg-[#fffdfb] px-3" inputMode="decimal" value={weight} onChange={event => setWeight(event.target.value)} placeholder="0" />
                     )}
                   </Field>
                 )}
                 <Field label={repsLabel}>
-                  <input className="nike-input bg-white px-3" inputMode="numeric" value={reps} onChange={event => setReps(event.target.value)} placeholder={isTime ? "10" : isCarry ? "30" : "12"} />
+                  <input className="nike-input bg-[#fffdfb] px-3" inputMode="numeric" value={reps} onChange={event => setReps(event.target.value)} placeholder={isTime ? "10" : isCarry ? "30" : "12"} />
                 </Field>
               </div>
             </div>
@@ -4002,7 +4002,7 @@ function ExerciseEntryModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#e5e5e5] bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#eadfda] bg-[#fffdfb] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button className={`${UI.primaryButton} h-12 text-base`} onClick={handleSave} disabled={!canSave}>
             입력 저장
           </button>
@@ -4131,10 +4131,10 @@ function WorkoutView({
           </div>
         </div>
 
-        <div className="border-y border-[#cacacb]">
-          <div className="grid gap-3 border-b border-[#e5e5e5] py-5">
+        <div className="border-y border-[#ded4cf]">
+          <div className="grid gap-3 border-b border-[#eadfda] py-5">
             <div>
-              <p className="text-sm font-medium text-[#707072]">세트 입력</p>
+              <p className="text-sm font-medium text-[#7a7470]">세트 입력</p>
               <h2 className="text-2xl font-semibold">운동 추가</h2>
             </div>
             <div className="grid gap-3">
@@ -4153,10 +4153,10 @@ function WorkoutView({
               </Field>
               <div className="grid gap-2">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-medium text-[#707072]">
+                  <p className="text-xs font-medium text-[#7a7470]">
                     {exerciseSearch ? "검색 결과" : `${routineName} 운동 목록`}
                   </p>
-                  <span className="text-xs font-semibold text-[#707072]">{availableExercises.length}개</span>
+                  <span className="text-xs font-semibold text-[#7a7470]">{availableExercises.length}개</span>
                 </div>
                 <div className="grid gap-2">
                   {availableExercises.map(exercise => {
@@ -4165,35 +4165,35 @@ function WorkoutView({
                       <button
                         key={exercise.id}
                         type="button"
-                        className={`flex items-center justify-between gap-3 p-4 text-left ${selected ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#111111]"}`}
+                        className={`flex items-center justify-between gap-3 p-4 text-left ${selected ? "bg-[#242124] text-[#fffdfb]" : "bg-[#faf4f1] text-[#242124]"}`}
                         onClick={() => toggleSelectedExercise(exercise.id)}
                         aria-pressed={selected}
                       >
                         <span className="min-w-0">
                           <span className="block truncate text-base font-semibold">{exercise.name}</span>
-                          <span className={`mt-1 block text-xs font-medium ${selected ? "text-white/65" : "text-[#707072]"}`}>
+                          <span className={`mt-1 block text-xs font-medium ${selected ? "text-[#fffdfb]/65" : "text-[#7a7470]"}`}>
                             {exercise.category} / 휴식 {exercise.defaultRestSeconds}초
                           </span>
                         </span>
-                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black ${selected ? "bg-white text-[#111111]" : "bg-white text-[#707072]"}`}>
+                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black ${selected ? "bg-[#fffdfb] text-[#242124]" : "bg-[#fffdfb] text-[#7a7470]"}`}>
                           {selected ? "✓" : "+"}
                         </span>
                       </button>
                     );
                   })}
                   {availableExercises.length === 0 && (
-                    <div className="bg-[#f5f5f5] p-4 text-sm font-semibold text-[#707072]">
+                    <div className="bg-[#faf4f1] p-4 text-sm font-semibold text-[#7a7470]">
                       검색 결과가 없어요
                     </div>
                   )}
                 </div>
               </div>
-              <button className="h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white disabled:opacity-40" onClick={addSelectedExercise} disabled={availableExercises.length === 0 || selectedExerciseValues.length === 0}>
+              <button className="h-12 rounded-full bg-[#242124] px-5 text-sm font-medium text-[#fffdfb] disabled:opacity-40" onClick={addSelectedExercise} disabled={availableExercises.length === 0 || selectedExerciseValues.length === 0}>
                 선택한 운동 {selectedExerciseValues.length}개 추가
               </button>
             </div>
             {draftSets.length > 0 && (
-              <div className="rounded-[24px] bg-[#f5f5f5] px-4 py-3 text-sm font-semibold text-[#39393b]">
+              <div className="rounded-[24px] bg-[#faf4f1] px-4 py-3 text-sm font-semibold text-[#4b4541]">
                 오늘 입력 중: {workoutNameForSets(draftSets, routineName)} · {draftSets.reduce((sum, set) => sum + draftSetCount(set), 0)}세트
               </div>
             )}
@@ -4204,20 +4204,20 @@ function WorkoutView({
             const { set, index } = sets[0]!;
             const isTime = exercise?.type === "time";
             return (
-              <div key={exerciseName} className="border-b border-[#e5e5e5] py-5 last:border-b-0">
+              <div key={exerciseName} className="border-b border-[#eadfda] py-5 last:border-b-0">
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-semibold">{exerciseName}</h3>
-                    <p className="text-sm font-medium text-[#707072]">{exercise?.category} / 휴식 {exercise?.defaultRestSeconds || 0}초</p>
+                    <p className="text-sm font-medium text-[#7a7470]">{exercise?.category} / 휴식 {exercise?.defaultRestSeconds || 0}초</p>
                   </div>
-                  <button className="h-10 rounded-full bg-white px-4 text-sm font-medium text-[#d30005] ring-1 ring-[#e5e5e5]" onClick={() => removeSet(index)}>
+                  <button className="h-10 rounded-full bg-[#fffdfb] px-4 text-sm font-medium text-[#c84653] ring-1 ring-[#eadfda]" onClick={() => removeSet(index)}>
                     삭제
                   </button>
                 </div>
-                <div className="grid gap-3 bg-[#f5f5f5] p-3">
+                <div className="grid gap-3 bg-[#faf4f1] p-3">
                   <Field label="세트 수" compact>
                     <input
-                      className="nike-input bg-white px-3 text-center"
+                      className="nike-input bg-[#fffdfb] px-3 text-center"
                       inputMode="numeric"
                       value={set.setCount}
                       onChange={event => updateDraftSet(index, { setCount: event.target.value })}
@@ -4229,14 +4229,14 @@ function WorkoutView({
                       {isTime ? (
                         <IntensityPicker value={set.weight || "2"} onChange={value => updateDraftSet(index, { weight: value })} />
                       ) : (
-                        <input className="nike-input bg-white px-3" inputMode="decimal" value={set.weight} onChange={event => updateDraftSet(index, { weight: event.target.value })} placeholder="0" />
+                        <input className="nike-input bg-[#fffdfb] px-3" inputMode="decimal" value={set.weight} onChange={event => updateDraftSet(index, { weight: event.target.value })} placeholder="0" />
                       )}
                     </Field>
                     <Field label={isTime ? "분" : "횟수"} compact>
-                      <input className="nike-input bg-white px-3" inputMode="numeric" value={set.reps} onChange={event => updateDraftSet(index, { reps: event.target.value })} placeholder={isTime ? "10" : "12"} />
+                      <input className="nike-input bg-[#fffdfb] px-3" inputMode="numeric" value={set.reps} onChange={event => updateDraftSet(index, { reps: event.target.value })} placeholder={isTime ? "10" : "12"} />
                     </Field>
                   </div>
-                  <p className="text-xs font-semibold text-[#707072]">
+                  <p className="text-xs font-semibold text-[#7a7470]">
                     저장 시 {draftSetCount(set)}세트로 계산돼요.
                   </p>
                 </div>
@@ -4247,11 +4247,11 @@ function WorkoutView({
       </div>
 
       <aside className="grid gap-6 self-start">
-        <div className="bg-[#f5f5f5] p-5">
+        <div className="bg-[#faf4f1] p-5">
           <Field label="메모">
-            <textarea className="nike-input min-h-28 resize-none bg-white" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요." />
+            <textarea className="nike-input min-h-28 resize-none bg-[#fffdfb]" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요." />
           </Field>
-          <button className="mt-5 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50" onClick={finishWorkout} disabled={saving}>
+          <button className="mt-5 h-12 w-full rounded-full bg-[#242124] text-base font-medium text-[#fffdfb] disabled:opacity-50" onClick={finishWorkout} disabled={saving}>
             {saving ? "저장 중..." : editingSessionId ? "수정 저장" : "운동 저장"}
           </button>
         </div>
@@ -4273,12 +4273,12 @@ function WorkoutView({
 
 function IntensityPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <div className="grid grid-cols-3 overflow-hidden rounded-full bg-white p-1">
+    <div className="grid grid-cols-3 overflow-hidden rounded-full bg-[#fffdfb] p-1">
       {INTENSITY_LEVELS.map(level => (
         <button
           key={level.value}
           type="button"
-          className={`h-10 rounded-full px-2 text-[11px] font-semibold ${value === level.value ? "bg-[#111111] text-white" : "text-[#707072]"}`}
+          className={`h-10 rounded-full px-2 text-[11px] font-semibold ${value === level.value ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
           onClick={() => onChange(level.value)}
         >
           {level.label}
@@ -4295,7 +4295,7 @@ function RpePicker({ value, onChange }: { value: string; onChange: (value: strin
         <button
           key={level}
           type="button"
-          className={`h-9 rounded-full text-xs font-bold ${value === level ? "bg-[#111111] text-white" : "bg-white text-[#707072] ring-1 ring-[#e5e5e5]"}`}
+          className={`h-9 rounded-full text-xs font-bold ${value === level ? "bg-[#242124] text-[#fffdfb]" : "bg-[#fffdfb] text-[#7a7470] ring-1 ring-[#eadfda]"}`}
           onClick={() => onChange(level)}
         >
           {level}
@@ -4310,14 +4310,14 @@ function SavedWorkoutPanel({ session, onEdit }: { session: WorkoutSession; onEdi
   const exercises = Array.from(new Set(session.sets.map(set => exerciseById.get(set.exerciseId)?.name || "운동")));
 
   return (
-    <section className="bg-[#111111] p-5 text-white">
+    <section className="rounded-[18px] bg-[#3a3032] p-5 text-[#fffdfb]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-white/60">방금 저장</p>
+          <p className="text-sm font-medium text-[#fffdfb]/60">방금 저장</p>
           <h2 className="mt-1 text-2xl font-semibold">{session.routineName}</h2>
-          <p className="mt-1 text-sm font-medium text-white/60">{formatDate(session.date)}</p>
+          <p className="mt-1 text-sm font-medium text-[#fffdfb]/60">{formatDate(session.date)}</p>
         </div>
-        <button className="h-10 rounded-full bg-white px-4 text-sm font-semibold text-[#111111]" onClick={onEdit}>
+        <button className="h-10 rounded-full bg-[#fffdfb] px-4 text-sm font-semibold text-[#242124]" onClick={onEdit}>
           수정
         </button>
       </div>
@@ -4328,7 +4328,7 @@ function SavedWorkoutPanel({ session, onEdit }: { session: WorkoutSession; onEdi
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {exercises.map(exercise => (
-          <span key={exercise} className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">
+          <span key={exercise} className="rounded-full bg-[#fffdfb]/10 px-3 py-1 text-xs font-semibold text-[#fffdfb]">
             {exercise}
           </span>
         ))}
@@ -4395,7 +4395,7 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                 <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => moveCalendar(-1)} aria-label="이전 달">
                   ‹
                 </button>
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#111111] text-lg font-semibold text-white" onClick={() => moveCalendar(1)} aria-label="다음 달">
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => moveCalendar(1)} aria-label="다음 달">
                   ›
                 </button>
               </div>
@@ -4415,20 +4415,20 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                     key={dateKey}
                     className={`relative grid aspect-square place-items-center rounded-md text-sm font-semibold ${
                       hasRecord
-                        ? "bg-[#e9f8ee] text-[#0f5132] ring-1 ring-[#97d7aa]"
+                        ? "bg-[#e9f8ee] text-[#2c6548] ring-1 ring-[#b9dfc5]"
                         : day.inMonth
-                          ? `${UI.surface} text-[#111111]`
-                          : "bg-white text-[#cacacb]"
+                          ? `${UI.surface} text-[#242124]`
+                          : "bg-[#fffdfb] text-[#ded4cf]"
                     }`}
                     onClick={() => hasRecord && setSelectedDate(dateKey)}
                     disabled={!hasRecord}
                     aria-label={`${formatDate(dateKey)} 운동 기록 ${daySessions.length}개`}
                   >
                     <span>{day.date.getDate()}</span>
-                    {isToday && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#d30005]" />}
+                    {isToday && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#c84653]" />}
                     {hasRecord && (
                       <span className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5">
-                        <i className="h-1.5 w-1.5 rounded-full bg-[#1f9d55]" />
+                        <i className="h-1.5 w-1.5 rounded-full bg-[#4da36f]" />
                         {daySessions.length > 1 && <b className="text-[9px] leading-none">{daySessions.length}</b>}
                       </span>
                     )}
@@ -4448,7 +4448,7 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                 <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(-1)} aria-label="이전 기간">
                   ‹
                 </button>
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#111111] text-lg font-semibold text-white" onClick={() => movePeriod(1)} aria-label="다음 기간">
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => movePeriod(1)} aria-label="다음 기간">
                   ›
                 </button>
               </div>
@@ -4521,11 +4521,11 @@ function SegmentedControl({
   className?: string;
 }) {
   return (
-    <div className={`grid grid-cols-4 gap-1 rounded-full bg-[#f5f5f5] p-1 ${className}`}>
+    <div className={`grid grid-cols-4 gap-1 rounded-full bg-[#faf4f1] p-1 ${className}`}>
       {items.map(item => (
         <button
           key={item.id}
-          className={`h-10 rounded-full text-xs font-semibold ${value === item.id ? "bg-[#111111] text-white" : "text-[#707072]"}`}
+          className={`h-10 rounded-full text-xs font-semibold ${value === item.id ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
           onClick={() => onChange(item.id)}
           type="button"
         >
@@ -4548,12 +4548,12 @@ function WorkoutSessionDetailCard({
   const scores = showScores ? scoreSessions([session]).filter(item => item.score > 0).slice(0, 3) : [];
 
   return (
-    <article className={`${UI.surface} p-5`}>
+    <article className={`${UI.surface} rounded-[14px] p-5`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className={`text-sm font-medium ${UI.textMuted}`}>{formatDate(session.date)}</p>
-            <span className={`${UI.pill} bg-white`}>{session.durationMinutes}분</span>
+            <span className={`${UI.pill} bg-[#fffdfb]`}>{session.durationMinutes}분</span>
           </div>
           <h3 className="mt-1 truncate text-xl font-semibold">{session.routineName}</h3>
         </div>
@@ -4567,7 +4567,7 @@ function WorkoutSessionDetailCard({
       {scores.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {scores.map(score => (
-            <span key={score.id} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111111]">
+            <span key={score.id} className="rounded-full bg-[#fffdfb] px-3 py-1 text-xs font-semibold text-[#242124]">
               {score.name} {score.score}
             </span>
           ))}
@@ -4587,11 +4587,11 @@ function SessionExerciseList({ session }: { session: WorkoutSession }) {
       {items.map(item => (
         <div key={`${item.name}-${item.load}-${item.reps}`} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 p-3 ${UI.card}`}>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[#111111]">{item.name}</p>
+            <p className="truncate text-sm font-semibold text-[#242124]">{item.name}</p>
             <p className={`mt-1 text-xs font-medium ${UI.textMuted}`}>{item.category}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-semibold text-[#111111]">{item.load} · {item.reps}</p>
+            <p className="text-sm font-semibold text-[#242124]">{item.load} · {item.reps}</p>
             <p className={`mt-1 text-xs font-semibold ${UI.textMuted}`}>{item.sets}세트</p>
           </div>
         </div>
@@ -4616,14 +4616,14 @@ function WorkoutHistoryModal({
   deleteSession: (id: string) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl md:max-w-lg md:rounded-2xl">
-        <div className={`flex items-start justify-between gap-4 border-b bg-white p-5 ${UI.border}`}>
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-lg md:rounded-2xl">
+        <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>운동 완료</p>
             <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
           </div>
-          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#111111] text-lg font-semibold text-white" onClick={onClose} aria-label="닫기">
+          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={onClose} aria-label="닫기">
             ×
           </button>
         </div>
@@ -4661,18 +4661,18 @@ function AnalysisView({
   const rangeGroupBalance = useMemo(() => groupScores(rangeScores).filter(item => item.score > 0), [rangeScores]);
   const rangeStats = useMemo(() => summarizeSessions(rangedSessions), [rangedSessions]);
   const missing = rangeScores.filter(item => item.score === 0).slice(0, 3);
-  const pieData = rangeGroupBalance.length ? rangeGroupBalance : [{ name: "기록 없음", score: 1, color: "#cacacb" }];
+  const pieData = rangeGroupBalance.length ? rangeGroupBalance : [{ name: "기록 없음", score: 1, color: "#ded4cf" }];
 
   return (
     <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[0.9fr_1.1fr] md:px-8 md:py-10">
       <div className="grid gap-7 self-start">
         <MuscleMapPanel range={range} setRange={setRange} scores={activeScores} />
-        <div className="bg-[#111111] p-6 text-white">
+        <div className="rounded-[18px] bg-[#3a3032] p-6 text-[#fffdfb]">
           <p className="text-sm font-medium text-[#9e9ea0]">코치 메모</p>
           <h2 className="mt-3 text-2xl font-semibold leading-tight">
             {summaryRangeLabels[range]}는 {rangeGroupBalance[0]?.name || "운동 기록"} 비중이 가장 높아요.
           </h2>
-          <p className="mt-4 text-sm leading-6 text-white/75">
+          <p className="mt-4 text-sm leading-6 text-[#fffdfb]/75">
             다음 운동은 {recommendedRoutine} 루틴을 추천해요.
             {missing.length > 0 && ` 아직 부족한 부위는 ${missing.map(item => item.name).join(", ")}입니다.`}
           </p>
@@ -4692,12 +4692,12 @@ function AnalysisView({
           <DonutChart data={pieData} />
           <div className="mt-8 grid gap-2">
             {rangeGroupBalance.map(item => (
-              <div key={item.name} className="flex items-center justify-between border-t border-[#e5e5e5] py-3">
+              <div key={item.name} className="flex items-center justify-between border-t border-[#eadfda] py-3">
                 <span className="flex items-center gap-3 text-base font-medium">
                   <i className="h-3 w-3 rounded-full" style={{ background: item.color }} />
                   {item.name}
                 </span>
-                <span className="text-base font-medium text-[#707072]">{item.score}</span>
+                <span className="text-base font-medium text-[#7a7470]">{item.score}</span>
               </div>
             ))}
           </div>
@@ -4800,36 +4800,36 @@ function ProfileView({
     <section className="mx-auto max-w-[960px] px-4 py-7 pb-28 md:px-8 md:py-10">
       <SectionTitle kicker="내 정보" title="운동 설정" />
       <div className="grid gap-5">
-        <div className="bg-[#111111] p-5 text-white">
-          <p className="text-sm font-medium text-white/60">로그인 계정</p>
+        <div className="rounded-[18px] bg-[#3a3032] p-5 text-[#fffdfb]">
+          <p className="text-sm font-medium text-[#fffdfb]/60">로그인 계정</p>
           <h2 className="mt-2 break-all text-xl font-semibold">{userEmail || "내 계정"}</h2>
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">
-          <button className={`${UI.surface} p-5 text-left`} type="button" onClick={() => setActiveModal("profile")}>
+          <button className={`${UI.surface} rounded-[14px] p-5 text-left`} type="button" onClick={() => setActiveModal("profile")}>
             <p className={`text-sm font-medium ${UI.textMuted}`}>개인 운동 정보</p>
             <h2 className="mt-2 text-2xl font-semibold">몸 상태 기록</h2>
-            <p className="mt-4 text-sm font-semibold text-[#111111]">{genderText}</p>
+            <p className="mt-4 text-sm font-semibold text-[#242124]">{genderText}</p>
             <p className={`mt-1 text-sm leading-6 ${UI.textMuted}`}>
               키 {heightCm || "-"}cm · 몸무게 {weightKg || "-"}kg
             </p>
-            <span className={`mt-5 inline-flex ${UI.pill} bg-white text-xs`}>수정하기</span>
+            <span className={`mt-5 inline-flex ${UI.pill} bg-[#fffdfb] text-xs`}>수정하기</span>
           </button>
 
-          <button className={`${UI.surface} p-5 text-left`} type="button" onClick={() => setActiveModal("goal")}>
+          <button className={`${UI.surface} rounded-[14px] p-5 text-left`} type="button" onClick={() => setActiveModal("goal")}>
             <p className={`text-sm font-medium ${UI.textMuted}`}>주간 운동 목표</p>
             <h2 className="mt-2 text-2xl font-semibold">{clampWeeklyGoal(weeklyGoal)}회 / 주</h2>
             <p className={`mt-4 text-sm leading-6 ${UI.textMuted}`}>홈 화면 목표 진행률에 표시됩니다.</p>
-            <span className={`mt-5 inline-flex ${UI.pill} bg-white text-xs`}>목표 변경</span>
+            <span className={`mt-5 inline-flex ${UI.pill} bg-[#fffdfb] text-xs`}>목표 변경</span>
           </button>
 
-          <button className={`${UI.surface} p-5 text-left`} type="button" onClick={() => setActiveModal("favorites")}>
+          <button className={`${UI.surface} rounded-[14px] p-5 text-left`} type="button" onClick={() => setActiveModal("favorites")}>
             <p className={`text-sm font-medium ${UI.textMuted}`}>개인 루틴 운동</p>
             <h2 className="mt-2 text-2xl font-semibold">{favoriteExerciseIds.length}개 선택</h2>
             <p className={`mt-4 line-clamp-2 text-sm leading-6 ${UI.textMuted}`}>
               {favoritePreview || "기록 탭 상단에 고정할 운동을 선택하세요."}
             </p>
-            <span className={`mt-5 inline-flex ${UI.pill} bg-white text-xs`}>운동 선택</span>
+            <span className={`mt-5 inline-flex ${UI.pill} bg-[#fffdfb] text-xs`}>운동 선택</span>
           </button>
         </div>
 
@@ -4841,9 +4841,9 @@ function ProfileView({
       </div>
 
       {activeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-          <div className="flex max-h-[90svh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl md:max-w-lg md:rounded-2xl">
-            <div className={`flex items-start justify-between gap-4 border-b bg-white p-5 ${UI.border}`}>
+        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+          <div className="flex max-h-[90svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-lg md:rounded-2xl">
+            <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
               <div>
                 <p className={`text-sm font-medium ${UI.textMuted}`}>내 정보</p>
                 <h2 className="mt-1 text-2xl font-semibold">
@@ -4859,7 +4859,7 @@ function ProfileView({
             {activeModal === "profile" && (
               <div className="grid gap-3">
                 <Field label="성별">
-                  <select className="nike-input bg-white" value={gender} onChange={event => setGender(event.target.value)}>
+                  <select className="nike-input bg-[#fffdfb]" value={gender} onChange={event => setGender(event.target.value)}>
                     <option value="">선택 안 함</option>
                     <option value="female">여성</option>
                     <option value="male">남성</option>
@@ -4868,10 +4868,10 @@ function ProfileView({
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="키(cm)">
-                    <input className="nike-input bg-white" inputMode="decimal" value={heightCm} onChange={event => setHeightCm(event.target.value)} placeholder="예: 165" />
+                    <input className="nike-input bg-[#fffdfb]" inputMode="decimal" value={heightCm} onChange={event => setHeightCm(event.target.value)} placeholder="예: 165" />
                   </Field>
                   <Field label="몸무게(kg)">
-                    <input className="nike-input bg-white" inputMode="decimal" value={weightKg} onChange={event => setWeightKg(event.target.value)} placeholder="예: 55" />
+                    <input className="nike-input bg-[#fffdfb]" inputMode="decimal" value={weightKg} onChange={event => setWeightKg(event.target.value)} placeholder="예: 55" />
                   </Field>
                 </div>
                 <p className={`text-sm leading-6 ${UI.textMuted}`}>운동 분석과 체중형 운동 볼륨 계산에 활용할 수 있는 기본 정보입니다.</p>
@@ -4882,7 +4882,7 @@ function ProfileView({
               <div className="grid gap-3">
                 <div className="grid grid-cols-[1fr_auto] gap-3">
                   <input
-                    className="nike-input bg-white text-center text-xl font-semibold"
+                    className="nike-input bg-[#fffdfb] text-center text-xl font-semibold"
                     inputMode="numeric"
                     value={weeklyGoal}
                     onChange={event => setWeeklyGoal(event.target.value)}
@@ -4902,7 +4902,7 @@ function ProfileView({
                 <div className="mt-4 grid gap-3">
                   <Field label="검색">
                     <input
-                      className="nike-input h-12 min-w-0 bg-white"
+                      className="nike-input h-12 min-w-0 bg-[#fffdfb]"
                       value={favoriteSearch}
                       onChange={event => setFavoriteSearch(event.target.value)}
                       placeholder="운동 이름을 검색하세요"
@@ -4914,7 +4914,7 @@ function ProfileView({
                       <button
                         key={routine.label}
                         type="button"
-                        className={`h-9 min-w-[72px] shrink-0 rounded-full px-3 text-xs font-semibold ${routine.value === favoriteRoutine.value ? "bg-[#111111] text-white" : "text-[#707072]"}`}
+                        className={`h-9 min-w-[72px] shrink-0 rounded-full px-3 text-xs font-semibold ${routine.value === favoriteRoutine.value ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
                         onClick={() => handleFavoriteRoutineTab(routine.value)}
                       >
                         {routine.label}
@@ -4928,7 +4928,7 @@ function ProfileView({
                         <button
                           key={tab}
                           type="button"
-                          className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${favoriteSubTab === tab ? "bg-[#111111] text-white" : `${UI.surface} ${UI.textMuted}`}`}
+                          className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${favoriteSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : `${UI.surface} ${UI.textMuted}`}`}
                           onClick={() => setFavoriteSubTab(tab)}
                         >
                           {tab}
@@ -4950,21 +4950,21 @@ function ProfileView({
                       <button
                         key={exercise.id}
                         type="button"
-                        className={`flex items-center justify-between gap-3 p-4 text-left ring-1 ${selected ? `${UI.surfaceActive} ring-[#a9d8b8]` : `${UI.surface} ring-transparent`}`}
+                        className={`flex items-center justify-between gap-3 p-4 text-left ring-1 ${selected ? `${UI.surfaceActive} ring-[#b9dfc5]` : `${UI.surface} ring-transparent`}`}
                         onClick={() => toggleFavorite(exercise.id)}
                       >
                         <span className="min-w-0">
                           <span className="block truncate text-base font-semibold">{exercise.name}</span>
                           <span className={`mt-1 block text-xs font-medium ${UI.textMuted}`}>{exercise.category}</span>
                         </span>
-                        <span className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selected ? "bg-white text-[#007d48]" : "bg-white text-[#707072]"}`}>
+                        <span className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selected ? "bg-[#fffdfb] text-[#2f8c63]" : "bg-[#fffdfb] text-[#7a7470]"}`}>
                           {selected ? "즐겨찾기" : "선택"}
                         </span>
                       </button>
                     );
                   })}
                   {visibleFavoriteExercises.length === 0 && (
-                    <div className={`${UI.surface} p-4 text-sm font-semibold ${UI.textMuted}`}>
+                    <div className={`${UI.surface} rounded-[14px] p-4 text-sm font-semibold ${UI.textMuted}`}>
                       검색 결과가 없습니다.
                     </div>
                   )}
@@ -5004,11 +5004,11 @@ function MuscleMapPanel({
 
 function RangePills({ value, onChange }: { value: SummaryRange; onChange: (value: SummaryRange) => void }) {
   return (
-    <div className="flex gap-1 overflow-x-auto rounded-full bg-[#f5f5f5] p-1">
+    <div className="flex gap-1 overflow-x-auto rounded-full bg-[#faf4f1] p-1">
       {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
         <button
           key={item}
-          className={`h-9 shrink-0 rounded-full px-3 text-xs font-semibold ${value === item ? "bg-[#111111] text-white" : "text-[#111111]"}`}
+          className={`h-9 shrink-0 rounded-full px-3 text-xs font-semibold ${value === item ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
           onClick={() => onChange(item)}
         >
           {summaryRangeLabels[item]}
@@ -5025,7 +5025,7 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
 
   return (
     <div className="grid gap-5">
-      <div className="bg-[#f5f5f5] p-3">
+      <div className="rounded-[14px] bg-[#faf4f1] p-3">
         {visibleScores.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {visibleScores.map((item, index) => (
@@ -5033,16 +5033,16 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
             ))}
           </div>
         ) : (
-          <div className="bg-white p-6 text-center text-sm font-semibold leading-6 text-[#707072]">
+          <div className="bg-[#fffdfb] p-6 text-center text-sm font-semibold leading-6 text-[#7a7470]">
             운동을 저장하면 자극 부위별 이미지가 표시돼요
           </div>
         )}
       </div>
       <div>
-        <p className="mb-3 text-xs font-semibold text-[#707072]">전체 자극 대비 비율</p>
+        <p className="mb-3 text-xs font-semibold text-[#7a7470]">전체 자극 대비 비율</p>
         <div className="grid gap-4">
           {activeScores.slice(0, 5).map((item, index) => <MuscleRow key={item.id} item={item} total={total} index={index} />)}
-          {activeScores.length === 0 && <p className="text-base leading-7 text-[#707072]">운동을 저장하면 전체 신체 이미지 위에 자극 부위가 표시됩니다.</p>}
+          {activeScores.length === 0 && <p className="text-base leading-7 text-[#7a7470]">운동을 저장하면 전체 신체 이미지 위에 자극 부위가 표시됩니다.</p>}
         </div>
       </div>
     </div>
@@ -5055,16 +5055,16 @@ function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: numbe
   const imageSrc = MUSCLE_FOCUS_IMAGES[key] || MUSCLE_FOCUS_IMAGES.upper;
 
   return (
-    <div className="bg-white p-3">
+    <div className="rounded-[14px] bg-[#fffdfb] p-3">
       <img
-        className="mx-auto aspect-square w-full max-w-[118px] rounded-full border border-[#eef0f2] bg-white object-cover"
+        className="mx-auto aspect-square w-full max-w-[118px] rounded-full border border-[#eef0f2] bg-[#fffdfb] object-cover"
         src={imageSrc}
         alt=""
         aria-hidden="true"
       />
       <div className="mt-3 flex items-center justify-between gap-2">
         <span className="truncate text-sm font-semibold">{index + 1}. {item.name}</span>
-        <span className="shrink-0 text-sm font-semibold text-[#707072]">{percent}%</span>
+        <span className="shrink-0 text-sm font-semibold text-[#7a7470]">{percent}%</span>
       </div>
     </div>
   );
@@ -5106,9 +5106,9 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
   return (
     <div className="mt-6 grid place-items-center">
         <div className="grid h-52 w-52 place-items-center rounded-full" style={{ background: `conic-gradient(${stops})` }}>
-        <div className="grid h-32 w-32 place-items-center rounded-full bg-white text-center">
+        <div className="grid h-32 w-32 place-items-center rounded-full bg-[#fffdfb] text-center">
           <div>
-            <p className="text-sm font-medium text-[#707072]">합계</p>
+            <p className="text-sm font-medium text-[#7a7470]">합계</p>
             <p className="text-3xl font-medium">{Math.round(total)}</p>
           </div>
         </div>
@@ -5119,18 +5119,18 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
 
 function BarRanking({ data }: { data: Array<Muscle & { score: number }> }) {
   const total = data.reduce((sum, item) => sum + item.score, 0) || 1;
-  if (data.length === 0) return <p className="mt-4 text-base leading-7 text-[#707072]">운동을 저장하면 주간 순위가 표시됩니다.</p>;
+  if (data.length === 0) return <p className="mt-4 text-base leading-7 text-[#7a7470]">운동을 저장하면 주간 순위가 표시됩니다.</p>;
   return (
     <div className="mt-6 grid gap-4">
       {data.map(item => {
         const percent = Math.round((item.score / total) * 100);
         return (
           <div key={item.id} className="grid grid-cols-[76px_1fr_44px] items-center gap-3">
-            <span className="truncate text-sm font-medium text-[#39393b]">{item.name}</span>
-            <div className="h-7 bg-[#f5f5f5]">
-              <div className="h-7 bg-[#111111]" style={{ width: `${Math.max(7, percent)}%` }} />
+            <span className="truncate text-sm font-medium text-[#4b4541]">{item.name}</span>
+            <div className="h-7 bg-[#faf4f1]">
+              <div className="h-7 bg-[#242124]" style={{ width: `${Math.max(7, percent)}%` }} />
             </div>
-            <span className="text-right text-sm font-medium text-[#707072]">{percent}%</span>
+            <span className="text-right text-sm font-medium text-[#7a7470]">{percent}%</span>
           </div>
         );
       })}
@@ -5145,10 +5145,10 @@ function MuscleRow({ item, total, index }: { item: Muscle & { score: number }; t
     <div>
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="text-sm font-medium">{index + 1}. {item.name}</span>
-        <span className="text-sm font-medium text-[#707072]">{percent}%</span>
+        <span className="text-sm font-medium text-[#7a7470]">{percent}%</span>
       </div>
-      <div className="h-2 bg-[#f5f5f5]">
-        <div className="h-2 bg-[#111111]" style={{ width }} />
+      <div className="h-2 bg-[#faf4f1]">
+        <div className="h-2 bg-[#242124]" style={{ width }} />
       </div>
     </div>
   );
@@ -5158,7 +5158,7 @@ function MetricGrid({ items }: { items: Array<{ label: string; value: string }> 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
       {items.map(item => (
-        <div key={item.label} className={`${UI.surface} p-4`}>
+        <div key={item.label} className={`${UI.surface} rounded-[14px] p-4`}>
           <p className={`text-sm font-medium ${UI.textMuted}`}>{item.label}</p>
           <p className="mt-4 text-3xl font-semibold leading-none">{item.value}</p>
         </div>
@@ -5210,8 +5210,8 @@ function EmptyState({ text, action, onClick }: { text: string; action?: string; 
 
 function SmallStudioStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white p-3">
-      <p className="text-xs font-medium text-[#707072]">{label}</p>
+    <div className="rounded-[14px] bg-[#fffdfb] p-3">
+      <p className="text-xs font-medium text-[#7a7470]">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>
   );
@@ -5219,12 +5219,12 @@ function SmallStudioStat({ label, value }: { label: string; value: string }) {
 
 function MobileTabBar({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: (tab: Tab) => void }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#e5e5e5] bg-white/95 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eadfda] bg-[#fffdfb]/95 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden">
       <div className="grid grid-cols-5 gap-1">
         {tabItems.map(tab => (
           <button
             key={tab.id}
-            className={`h-11 rounded-full text-[11px] font-semibold ${activeTab === tab.id ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#39393b]"}`}
+            className={`h-11 rounded-full text-[11px] font-semibold ${activeTab === tab.id ? "bg-[#242124] text-[#fffdfb]" : "bg-[#faf4f1] text-[#4b4541]"}`}
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
