@@ -43,6 +43,7 @@ type WorkoutSession = {
 
 type DraftSet = {
   exerciseId: string;
+  setCount: string;
   weight: string;
   reps: string;
   memo: string;
@@ -652,6 +653,26 @@ function intensityMultiplier(value: string | number | undefined) {
   return INTENSITY_LEVELS.find(level => level.value === numeric)?.multiplier || 1;
 }
 
+function draftSetCount(set: DraftSet) {
+  return clampSetCount(set.setCount || 1);
+}
+
+function expandDraftSets(draftSets: DraftSet[], idPrefix: string): SetLog[] {
+  return draftSets.flatMap((set, draftIndex) => {
+    const exercise = exerciseById.get(set.exerciseId);
+    const isTime = exercise?.type === "time";
+    return Array.from({ length: draftSetCount(set) }, (_, setIndex) => ({
+      id: `${idPrefix}-${draftIndex}-${setIndex}`,
+      exerciseId: set.exerciseId,
+      setNumber: 0,
+      weight: isTime ? parseNumber(set.weight) || 2 : parseNumber(set.weight),
+      reps: isTime ? 1 : parseNumber(set.reps),
+      durationSeconds: isTime ? parseNumber(set.reps) * 60 : undefined,
+      memo: set.memo.trim() || undefined,
+    })).map((item, index, items) => item);
+  }).map((set, index) => ({ ...set, setNumber: index + 1 }));
+}
+
 function setVolume(set: SetLog) {
   const exercise = exerciseById.get(set.exerciseId);
   if (exercise?.type === "time") return Math.max(Number(set.durationSeconds || 0) / 60, 1) * 25 * intensityMultiplier(set.weight);
@@ -765,14 +786,21 @@ function workoutNameForSets(sets: Array<{ exerciseId: string }>, fallback = ROUT
 }
 
 function draftSetsFromSession(session: WorkoutSession): DraftSet[] {
-  return session.sets.map(set => {
-    const exercise = exerciseById.get(set.exerciseId);
+  const groups = new Map<string, SetLog[]>();
+  for (const set of session.sets) {
+    groups.set(set.exerciseId, [...(groups.get(set.exerciseId) || []), set]);
+  }
+
+  return Array.from(groups.entries()).map(([exerciseId, sets]) => {
+    const first = sets[0];
+    const exercise = exerciseById.get(exerciseId);
     const isTime = exercise?.type === "time";
     return {
-      exerciseId: set.exerciseId,
-      weight: isTime ? String(set.weight || 2) : String(set.weight || ""),
-      reps: isTime ? String(Math.round((set.durationSeconds || 0) / 60) || "") : String(set.reps || ""),
-      memo: set.memo || "",
+      exerciseId,
+      setCount: String(sets.length || 1),
+      weight: isTime ? String(first.weight || 2) : String(first.weight || ""),
+      reps: isTime ? String(Math.round((first.durationSeconds || 0) / 60) || "") : String(first.reps || ""),
+      memo: first.memo || "",
     };
   });
 }
@@ -855,18 +883,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       date: draftDate,
       routineName,
       durationMinutes: parseNumber(draftDuration),
-      sets: draftSets.map((set, index) => {
-        const exercise = exerciseById.get(set.exerciseId);
-        const isTime = exercise?.type === "time";
-        return {
-          id: `draft-${index}`,
-          exerciseId: set.exerciseId,
-          setNumber: index + 1,
-          weight: isTime ? parseNumber(set.weight) || 2 : parseNumber(set.weight),
-          reps: isTime ? 1 : parseNumber(set.reps),
-          durationSeconds: isTime ? parseNumber(set.reps) * 60 : undefined,
-        };
-      }),
+      sets: expandDraftSets(draftSets, "draft"),
     };
     return scoreSessions([pseudo]).filter(item => item.score > 0);
   }, [draftDate, draftDuration, draftSets, routineName]);
@@ -892,13 +909,24 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
   function addSet(exerciseId = selectedExercise, count = 1) {
     const exercise = exerciseById.get(exerciseId);
-    const nextSets = Array.from({ length: clampSetCount(count) }, () => ({
-      exerciseId,
-      weight: exercise?.type === "time" ? "2" : "",
-      reps: "",
-      memo: "",
-    }));
-    setDraftSets(items => [...items, ...nextSets]);
+    setDraftSets(items => {
+      const existingIndex = items.findIndex(item => item.exerciseId === exerciseId);
+      if (existingIndex >= 0) {
+        return items.map((item, index) => (
+          index === existingIndex
+            ? { ...item, setCount: String(draftSetCount(item) + clampSetCount(count)) }
+            : item
+        ));
+      }
+
+      return [...items, {
+        exerciseId,
+        setCount: String(clampSetCount(count)),
+        weight: exercise?.type === "time" ? "2" : "",
+        reps: "",
+        memo: "",
+      }];
+    });
   }
 
   function removeSet(index: number) {
@@ -906,20 +934,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }
 
   async function finishWorkout() {
-    const validSets = draftSets
-      .map((set, index) => {
-        const exercise = exerciseById.get(set.exerciseId);
-        const isTime = exercise?.type === "time";
-        return {
-          id: `${Date.now()}-${index}`,
-          exerciseId: set.exerciseId,
-          setNumber: index + 1,
-          weight: isTime ? parseNumber(set.weight) || 2 : parseNumber(set.weight),
-          reps: isTime ? 1 : parseNumber(set.reps),
-          durationSeconds: isTime ? parseNumber(set.reps) * 60 : undefined,
-          memo: set.memo.trim() || undefined,
-        };
-      })
+    const validSets = expandDraftSets(draftSets, `${Date.now()}`)
       .filter(set => (set.durationSeconds || 0) > 0 || (set.reps || 0) > 0);
 
     if (validSets.length === 0) {
@@ -1488,7 +1503,6 @@ function WorkoutView({
   saving: boolean;
 }) {
   const [exerciseSearch, setExerciseSearch] = useState("");
-  const [setCount, setSetCount] = useState("1");
   const grouped = useMemo(() => {
     const map = new Map<string, Array<{ set: DraftSet; index: number }>>();
     draftSets.forEach((set, index) => {
@@ -1525,7 +1539,7 @@ function WorkoutView({
 
   function addSelectedExercise() {
     if (!availableExercises.length) return;
-    addSet(selectedExerciseValue, clampSetCount(setCount));
+    addSet(selectedExerciseValue);
   }
 
   return (
@@ -1600,30 +1614,21 @@ function WorkoutView({
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                <Field label="세트 수">
-                  <input
-                    className="nike-input h-12 min-w-0 px-3 text-center"
-                    inputMode="numeric"
-                    value={setCount}
-                    onChange={event => setSetCount(event.target.value)}
-                    onBlur={() => setSetCount(String(clampSetCount(setCount)))}
-                  />
-                </Field>
-                <button className="mt-5 h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white disabled:opacity-40" onClick={addSelectedExercise} disabled={availableExercises.length === 0}>
-                  추가
-                </button>
-              </div>
+              <button className="h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white disabled:opacity-40" onClick={addSelectedExercise} disabled={availableExercises.length === 0}>
+                선택한 운동 추가
+              </button>
             </div>
             {draftSets.length > 0 && (
               <div className="rounded-[24px] bg-[#f5f5f5] px-4 py-3 text-sm font-semibold text-[#39393b]">
-                오늘 입력 중: {workoutNameForSets(draftSets, routineName)} · {draftSets.length}세트
+                오늘 입력 중: {workoutNameForSets(draftSets, routineName)} · {draftSets.reduce((sum, set) => sum + draftSetCount(set), 0)}세트
               </div>
             )}
           </div>
 
           {grouped.map(([exerciseName, sets]) => {
             const exercise = exerciseById.get(sets[0]?.set.exerciseId || "");
+            const { set, index } = sets[0]!;
+            const isTime = exercise?.type === "time";
             return (
               <div key={exerciseName} className="border-b border-[#e5e5e5] py-5 last:border-b-0">
                 <div className="mb-4 flex items-center justify-between gap-4">
@@ -1631,32 +1636,35 @@ function WorkoutView({
                     <h3 className="text-xl font-semibold">{exerciseName}</h3>
                     <p className="text-sm font-medium text-[#707072]">{exercise?.category} / 휴식 {exercise?.defaultRestSeconds || 0}초</p>
                   </div>
-                  <button className="h-10 rounded-full bg-[#111111] px-4 text-sm font-medium text-white" onClick={() => addSet(exercise?.id)}>
-                    +1
+                  <button className="h-10 rounded-full bg-white px-4 text-sm font-medium text-[#d30005] ring-1 ring-[#e5e5e5]" onClick={() => removeSet(index)}>
+                    삭제
                   </button>
                 </div>
-                <div className="grid gap-2">
-                  {sets.map(({ set, index }, visibleIndex) => {
-                    const isTime = exercise?.type === "time";
-                    return (
-                      <div key={`${set.exerciseId}-${index}`} className="grid grid-cols-[34px_1fr_1fr_40px] items-end gap-2 bg-[#f5f5f5] p-2">
-                        <div className="pb-3 text-center text-sm font-medium text-[#707072]">{visibleIndex + 1}</div>
-                        <Field label={isTime ? "강도" : "KG"} compact>
-                          {isTime ? (
-                            <IntensityPicker value={set.weight || "2"} onChange={value => updateDraftSet(index, { weight: value })} />
-                          ) : (
-                            <input className="nike-input bg-white px-3" inputMode="decimal" value={set.weight} onChange={event => updateDraftSet(index, { weight: event.target.value })} placeholder="0" />
-                          )}
-                        </Field>
-                        <Field label={isTime ? "분" : "횟수"} compact>
-                          <input className="nike-input bg-white px-3" inputMode="numeric" value={set.reps} onChange={event => updateDraftSet(index, { reps: event.target.value })} placeholder={isTime ? "10" : "12"} />
-                        </Field>
-                        <button className="mb-1 h-10 rounded-full bg-white text-sm font-medium text-[#d30005]" onClick={() => removeSet(index)} aria-label="세트 삭제">
-                          X
-                        </button>
-                      </div>
-                    );
-                  })}
+                <div className="grid gap-3 bg-[#f5f5f5] p-3">
+                  <Field label="세트 수" compact>
+                    <input
+                      className="nike-input bg-white px-3 text-center"
+                      inputMode="numeric"
+                      value={set.setCount || "1"}
+                      onChange={event => updateDraftSet(index, { setCount: event.target.value })}
+                      onBlur={() => updateDraftSet(index, { setCount: String(draftSetCount(set)) })}
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field label={isTime ? "강도" : "KG"} compact>
+                      {isTime ? (
+                        <IntensityPicker value={set.weight || "2"} onChange={value => updateDraftSet(index, { weight: value })} />
+                      ) : (
+                        <input className="nike-input bg-white px-3" inputMode="decimal" value={set.weight} onChange={event => updateDraftSet(index, { weight: event.target.value })} placeholder="0" />
+                      )}
+                    </Field>
+                    <Field label={isTime ? "분" : "횟수"} compact>
+                      <input className="nike-input bg-white px-3" inputMode="numeric" value={set.reps} onChange={event => updateDraftSet(index, { reps: event.target.value })} placeholder={isTime ? "10" : "12"} />
+                    </Field>
+                  </div>
+                  <p className="text-xs font-semibold text-[#707072]">
+                    저장 시 {draftSetCount(set)}세트로 계산돼요.
+                  </p>
                 </div>
               </div>
             );
