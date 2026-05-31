@@ -984,6 +984,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
       {activeTab === "balance" && (
         <AnalysisView
+          sessions={sortedSessions}
           weekStats={weekStats}
           weeklyScores={weeklyScores}
           todayScores={todayScores}
@@ -1036,9 +1037,10 @@ function TopBar({
   );
 }
 
-type SummaryRange = "week" | "month" | "year";
+type SummaryRange = "today" | "week" | "month" | "year";
 
 const summaryRangeLabels: Record<SummaryRange, string> = {
+  today: "오늘",
   week: "이번 주",
   month: "이번 달",
   year: "올해",
@@ -1046,6 +1048,7 @@ const summaryRangeLabels: Record<SummaryRange, string> = {
 
 function rangeStart(range: SummaryRange) {
   const now = new Date();
+  if (range === "today") return today();
   if (range === "year") return `${now.getFullYear()}-01-01`;
   if (range === "month") {
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -1058,6 +1061,13 @@ function rangeStart(range: SummaryRange) {
   day.setDate(now.getDate() - daysFromMonday);
   const offset = day.getTimezoneOffset() * 60000;
   return new Date(day.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function sessionsForSummaryRange(sessions: WorkoutSession[], range: SummaryRange) {
+  const start = rangeStart(range);
+  const end = today();
+  if (range === "today") return sessions.filter(session => session.date === start);
+  return sessions.filter(session => session.date >= start && session.date <= end);
 }
 
 function workoutSummary(sessions: WorkoutSession[]) {
@@ -1105,11 +1115,11 @@ function HomeDashboard({
   onStart: () => void;
   onAnalyze: () => void;
 }) {
-  const [range, setRange] = useState<SummaryRange>("week");
+  const [range, setRange] = useState<SummaryRange>("today");
   const [modalOpen, setModalOpen] = useState(false);
-  const start = rangeStart(range);
-  const rangedSessions = useMemo(() => sessions.filter(session => session.date >= start), [sessions, start]);
+  const rangedSessions = useMemo(() => sessionsForSummaryRange(sessions, range), [sessions, range]);
   const summary = useMemo(() => workoutSummary(rangedSessions), [rangedSessions]);
+  const rangeScores = useMemo(() => scoreSessions(rangedSessions).filter(item => item.score > 0), [rangedSessions]);
 
   return (
     <>
@@ -1192,9 +1202,7 @@ function HomeDashboard({
               <EmptyState text="첫 운동을 기록하면 이곳에 최근 일지가 표시됩니다." action="첫 운동 기록" onClick={onStart} />
             )}
           </FlatPanel>
-          <FlatPanel title={topToday.length ? "오늘의 자극" : "이번 주 자극"} kicker="근육 지도">
-            <BodyMap scores={topToday.length ? topToday : topWeek} />
-          </FlatPanel>
+          <MuscleMapPanel range={range} setRange={setRange} scores={rangeScores} />
         </div>
       </section>
 
@@ -1878,33 +1886,37 @@ function WorkoutHistoryModal({
 }
 
 function AnalysisView({
+  sessions,
   weekStats,
   weeklyScores,
   todayScores,
   groupBalance,
   recommendedRoutine,
 }: {
+  sessions: WorkoutSession[];
   weekStats: { count: number; sets: number; minutes: number; volume: number };
   weeklyScores: Array<Muscle & { score: number }>;
   todayScores: Array<Muscle & { score: number }>;
   groupBalance: Array<{ name: string; score: number; color: string }>;
   recommendedRoutine: string;
 }) {
-  const topWeek = weeklyScores.filter(item => item.score > 0);
-  const topToday = todayScores.filter(item => item.score > 0);
-  const missing = weeklyScores.filter(item => item.score === 0).slice(0, 3);
-  const pieData = groupBalance.length ? groupBalance : [{ name: "기록 없음", score: 1, color: "#cacacb" }];
+  const [range, setRange] = useState<SummaryRange>("week");
+  const rangedSessions = useMemo(() => sessionsForSummaryRange(sessions, range), [sessions, range]);
+  const rangeScores = useMemo(() => scoreSessions(rangedSessions), [rangedSessions]);
+  const activeScores = rangeScores.filter(item => item.score > 0);
+  const rangeGroupBalance = useMemo(() => groupScores(rangeScores).filter(item => item.score > 0), [rangeScores]);
+  const rangeStats = useMemo(() => summarizeSessions(rangedSessions), [rangedSessions]);
+  const missing = rangeScores.filter(item => item.score === 0).slice(0, 3);
+  const pieData = rangeGroupBalance.length ? rangeGroupBalance : [{ name: "기록 없음", score: 1, color: "#cacacb" }];
 
   return (
     <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[0.9fr_1.1fr] md:px-8 md:py-10">
       <div className="grid gap-7 self-start">
-        <FlatPanel title={topToday.length ? "오늘 자극" : "이번 주 자극"} kicker="근육 지도">
-          <BodyMap scores={topToday.length ? topToday : topWeek} />
-        </FlatPanel>
+        <MuscleMapPanel range={range} setRange={setRange} scores={activeScores} />
         <div className="bg-[#111111] p-6 text-white">
           <p className="text-sm font-medium text-[#9e9ea0]">코치 메모</p>
           <h2 className="mt-3 text-2xl font-semibold leading-tight">
-            이번 주는 {groupBalance[0]?.name || "운동 기록"} 비중이 가장 높아요.
+            {summaryRangeLabels[range]}는 {rangeGroupBalance[0]?.name || "운동 기록"} 비중이 가장 높아요.
           </h2>
           <p className="mt-4 text-sm leading-6 text-white/75">
             다음 운동은 {recommendedRoutine} 루틴을 추천해요.
@@ -1916,16 +1928,16 @@ function AnalysisView({
       <div className="grid gap-7">
         <MetricGrid
           items={[
-            { label: "운동", value: `${weekStats.count}` },
-            { label: "세트", value: `${weekStats.sets}` },
-            { label: "시간", value: `${weekStats.minutes}분` },
-            { label: "부하", value: `${Math.round(weekStats.volume)}` },
+            { label: "운동", value: `${rangeStats.count}` },
+            { label: "세트", value: `${rangeStats.sets}` },
+            { label: "시간", value: `${rangeStats.minutes}분` },
+            { label: "부하", value: `${Math.round(rangeStats.volume)}` },
           ]}
         />
-        <FlatPanel title="부위 밸런스" kicker="이번 주">
+        <FlatPanel title="부위 밸런스" kicker={summaryRangeLabels[range]}>
           <DonutChart data={pieData} />
           <div className="mt-8 grid gap-2">
-            {groupBalance.map(item => (
+            {rangeGroupBalance.map(item => (
               <div key={item.name} className="flex items-center justify-between border-t border-[#e5e5e5] py-3">
                 <span className="flex items-center gap-3 text-base font-medium">
                   <i className="h-3 w-3 rounded-full" style={{ background: item.color }} />
@@ -1937,7 +1949,7 @@ function AnalysisView({
           </div>
         </FlatPanel>
         <FlatPanel title="근육 순위" kicker="자극량">
-          <BarRanking data={topWeek.slice(0, 8)} />
+          <BarRanking data={activeScores.slice(0, 8)} />
         </FlatPanel>
       </div>
     </section>
@@ -1965,6 +1977,41 @@ function ProfileView({ userEmail, sessionCount, onSignOut }: { userEmail?: strin
         </div>
       </div>
     </section>
+  );
+}
+
+function MuscleMapPanel({
+  range,
+  setRange,
+  scores,
+}: {
+  range: SummaryRange;
+  setRange: (range: SummaryRange) => void;
+  scores: Array<Muscle & { score: number }>;
+}) {
+  return (
+    <FlatPanel title={`${summaryRangeLabels[range]} 자극`} kicker="근육 지도">
+      <RangePills value={range} onChange={setRange} />
+      <div className="mt-5">
+        <BodyMap scores={scores} />
+      </div>
+    </FlatPanel>
+  );
+}
+
+function RangePills({ value, onChange }: { value: SummaryRange; onChange: (value: SummaryRange) => void }) {
+  return (
+    <div className="flex gap-1 overflow-x-auto rounded-full bg-[#f5f5f5] p-1">
+      {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
+        <button
+          key={item}
+          className={`h-9 shrink-0 rounded-full px-3 text-xs font-semibold ${value === item ? "bg-[#111111] text-white" : "text-[#111111]"}`}
+          onClick={() => onChange(item)}
+        >
+          {summaryRangeLabels[item]}
+        </button>
+      ))}
+    </div>
   );
 }
 
