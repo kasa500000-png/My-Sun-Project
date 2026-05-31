@@ -29,7 +29,14 @@ type VolumeType =
   | "bodyweight_factor_or_added"
   | "time_unilateral"
   | "bodyweight_or_weighted"
-  | "time_or_bodyweight";
+  | "time_or_bodyweight"
+  | "weight_or_dumbbell"
+  | "single_weight_unilateral"
+  | "carry_both"
+  | "carry_unilateral"
+  | "carry_single"
+  | "sled_push"
+  | "time_or_distance";
 type HistoryRange = "day" | "week" | "month" | "year";
 type BodyFilter = "all" | "upper" | "lower" | "core";
 
@@ -320,6 +327,7 @@ const MUSCLES: Muscle[] = [
 const UPPER_SUB_TABS = ["전체", "Push", "Pull", "어깨", "팔", "체중운동"];
 const LOWER_SUB_TABS = ["전체", "대퇴사두", "햄스트링", "둔근/힙", "종아리", "체중운동", "머신"];
 const CORE_SUB_TABS = ["전체", "복직근", "복사근", "하복부", "코어 안정화", "허리/기립근", "시간형"];
+const FULL_BODY_SUB_TABS = ["전체", "맨몸", "덤벨/케틀벨", "고강도", "이동형", "힙/하체 중심", "상체/코어 중심"];
 
 const UPPER_EXERCISE_IDS = [
   "bench-press",
@@ -391,6 +399,29 @@ const CORE_EXERCISE_IDS = [
   "superman",
 ];
 
+const FULL_BODY_EXERCISE_IDS = [
+  "burpee",
+  "mountain-climber",
+  "jumping-jack",
+  "squat-jump",
+  "inchworm",
+  "bear-crawl",
+  "plank-to-push-up",
+  "push-up-shoulder-tap",
+  "kettlebell-swing",
+  "dumbbell-thruster",
+  "clean-and-press",
+  "deadlift",
+  "snatch",
+  "medicine-ball-slam",
+  "battle-rope",
+  "farmers-walk",
+  "suitcase-carry",
+  "sandbag-carry",
+  "sled-push",
+  "turkish-get-up",
+];
+
 function isUpperRoutineTab(routine: { label: string; value: string }) {
   return routine.value === "상체 밸런스" || routine.label === "상체";
 }
@@ -403,10 +434,15 @@ function isCoreRoutineTab(routine: { label: string; value: string }) {
   return routine.value === "코어 리셋" || routine.label === "코어";
 }
 
+function isFullBodyRoutineTab(routine: { label: string; value: string }) {
+  return routine.value === "전신" || routine.label === "전신";
+}
+
 function routineSubTabs(routine: { label: string; value: string }) {
   if (isUpperRoutineTab(routine)) return UPPER_SUB_TABS;
   if (isLowerRoutineTab(routine)) return LOWER_SUB_TABS;
   if (isCoreRoutineTab(routine)) return CORE_SUB_TABS;
+  if (isFullBodyRoutineTab(routine)) return FULL_BODY_SUB_TABS;
   return [];
 }
 
@@ -1194,7 +1230,7 @@ const EXERCISES: Exercise[] = [
     category: "코어",
     type: "time",
     defaultRestSeconds: 45,
-    subTabs: ["하복부", "코어 안정화", "시간형"],
+    subTabs: ["하복부", "코어 안정화", "시간형", "맨몸", "고강도", "상체/코어 중심"],
     detail: "하복부 · 심폐 중심",
     recordLabel: "시간 × 세트",
     volumeType: "time_or_bodyweight",
@@ -1396,6 +1432,357 @@ const EXERCISES: Exercise[] = [
     ],
   },
   {
+    id: "burpee",
+    name: "버피",
+    category: "전신",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["맨몸", "고강도"],
+    detail: "전신 · 심폐 중심",
+    recordLabel: "체중 × 0.75 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.75,
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.15 },
+      { muscleId: "glutes", impactRatio: 0.15 },
+      { muscleId: "chest", impactRatio: 0.2 },
+      { muscleId: "triceps", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.2 },
+      { muscleId: "cardio", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "jumping-jack",
+    name: "점핑잭",
+    category: "전신",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["맨몸", "고강도"],
+    detail: "전신 · 심폐 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time_or_bodyweight",
+    bodyweightFactor: 0.35,
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.2 },
+      { muscleId: "glutes", impactRatio: 0.15 },
+      { muscleId: "shoulders", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.15 },
+      { muscleId: "calves", impactRatio: 0.1 },
+      { muscleId: "cardio", impactRatio: 0.2 },
+    ],
+  },
+  {
+    id: "squat-jump",
+    name: "스쿼트 점프",
+    category: "전신",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["맨몸", "고강도", "힙/하체 중심"],
+    detail: "하체 · 둔근 중심",
+    recordLabel: "체중 × 0.55 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.55,
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.4 },
+      { muscleId: "glutes", impactRatio: 0.3 },
+      { muscleId: "calves", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
+      { muscleId: "cardio", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "inchworm",
+    name: "인치웜",
+    category: "전신",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["맨몸", "상체/코어 중심"],
+    detail: "코어 · 어깨 · 햄스트링 중심",
+    recordLabel: "체중 × 0.60 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.6,
+    impacts: [
+      { muscleId: "core", impactRatio: 0.3 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "hamstrings", impactRatio: 0.2 },
+      { muscleId: "chest", impactRatio: 0.15 },
+      { muscleId: "triceps", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "bear-crawl",
+    name: "베어 크롤",
+    category: "전신",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["맨몸", "이동형", "상체/코어 중심"],
+    detail: "코어 · 어깨 · 하체 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time_or_distance",
+    impacts: [
+      { muscleId: "transverseAbs", impactRatio: 0.3 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "quads", impactRatio: 0.15 },
+      { muscleId: "glutes", impactRatio: 0.15 },
+      { muscleId: "cardio", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "plank-to-push-up",
+    name: "플랭크 투 푸쉬업",
+    category: "전신",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["맨몸", "상체/코어 중심"],
+    detail: "코어 · 가슴 · 삼두 중심",
+    recordLabel: "체중 × 0.65 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.65,
+    impacts: [
+      { muscleId: "core", impactRatio: 0.35 },
+      { muscleId: "chest", impactRatio: 0.25 },
+      { muscleId: "triceps", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.2 },
+    ],
+  },
+  {
+    id: "push-up-shoulder-tap",
+    name: "푸쉬업 숄더탭",
+    category: "전신",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["맨몸", "상체/코어 중심"],
+    detail: "가슴 · 어깨 · 코어 중심",
+    recordLabel: "체중 × 0.60 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.6,
+    impacts: [
+      { muscleId: "chest", impactRatio: 0.3 },
+      { muscleId: "core", impactRatio: 0.3 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "triceps", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "kettlebell-swing",
+    name: "케틀벨 스윙",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["덤벨/케틀벨", "힙/하체 중심"],
+    detail: "둔근 · 햄스트링 · 코어 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "single_weight",
+    impacts: [
+      { muscleId: "glutes", impactRatio: 0.4 },
+      { muscleId: "hamstrings", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.2 },
+      { muscleId: "back", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "dumbbell-thruster",
+    name: "덤벨 쓰러스터",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["덤벨/케틀벨", "고강도", "힙/하체 중심"],
+    detail: "하체 · 어깨 · 삼두 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 횟수 × 세트",
+    volumeType: "dumbbell_both",
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.35 },
+      { muscleId: "glutes", impactRatio: 0.25 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "triceps", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "clean-and-press",
+    name: "클린 앤 프레스",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["덤벨/케틀벨", "고강도"],
+    detail: "하체 · 등 · 어깨 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "weight_or_dumbbell",
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.15 },
+      { muscleId: "glutes", impactRatio: 0.15 },
+      { muscleId: "back", impactRatio: 0.25 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.1 },
+      { muscleId: "triceps", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "deadlift",
+    name: "데드리프트",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["덤벨/케틀벨", "힙/하체 중심"],
+    detail: "햄스트링 · 둔근 · 등 중심",
+    recordLabel: "총 중량 × 횟수 × 세트",
+    volumeType: "barbell_or_dumbbell",
+    impacts: [
+      { muscleId: "hamstrings", impactRatio: 0.3 },
+      { muscleId: "glutes", impactRatio: 0.3 },
+      { muscleId: "back", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "snatch",
+    name: "스내치",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["덤벨/케틀벨", "고강도"],
+    detail: "하체 · 등 · 어깨 중심",
+    recordLabel: "한쪽 중량 × 횟수 × 세트 × 좌우",
+    volumeType: "single_weight_unilateral",
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.15 },
+      { muscleId: "glutes", impactRatio: 0.15 },
+      { muscleId: "back", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.15 },
+      { muscleId: "triceps", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "medicine-ball-slam",
+    name: "메디신볼 슬램",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["고강도", "상체/코어 중심"],
+    detail: "코어 · 등 · 어깨 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "single_weight",
+    impacts: [
+      { muscleId: "core", impactRatio: 0.35 },
+      { muscleId: "back", impactRatio: 0.25 },
+      { muscleId: "shoulders", impactRatio: 0.2 },
+      { muscleId: "triceps", impactRatio: 0.1 },
+      { muscleId: "cardio", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "battle-rope",
+    name: "배틀로프",
+    category: "전신",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["고강도", "시간형", "상체/코어 중심"],
+    detail: "어깨 · 팔 · 코어 · 심폐 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time",
+    impacts: [
+      { muscleId: "shoulders", impactRatio: 0.35 },
+      { muscleId: "biceps", impactRatio: 0.12 },
+      { muscleId: "triceps", impactRatio: 0.13 },
+      { muscleId: "core", impactRatio: 0.25 },
+      { muscleId: "cardio", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "farmers-walk",
+    name: "파머스 워크",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["이동형", "덤벨/케틀벨"],
+    detail: "전완 · 승모 · 코어 중심",
+    recordLabel: "총 중량 × 거리/시간 × 세트",
+    volumeType: "carry_both",
+    impacts: [
+      { muscleId: "biceps", impactRatio: 0.3 },
+      { muscleId: "back", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.3 },
+      { muscleId: "quads", impactRatio: 0.08 },
+      { muscleId: "glutes", impactRatio: 0.07 },
+    ],
+  },
+  {
+    id: "suitcase-carry",
+    name: "수트케이스 캐리",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["이동형", "덤벨/케틀벨", "상체/코어 중심"],
+    detail: "복사근 · 전완 · 어깨 중심",
+    recordLabel: "한쪽 중량 × 거리/시간 × 세트 × 좌우",
+    volumeType: "carry_unilateral",
+    impacts: [
+      { muscleId: "obliques", impactRatio: 0.35 },
+      { muscleId: "biceps", impactRatio: 0.25 },
+      { muscleId: "back", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
+      { muscleId: "quads", impactRatio: 0.05 },
+      { muscleId: "glutes", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "sandbag-carry",
+    name: "샌드백 캐리",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["이동형", "고강도"],
+    detail: "코어 · 하체 · 등 중심",
+    recordLabel: "중량 × 거리/시간 × 세트",
+    volumeType: "carry_single",
+    impacts: [
+      { muscleId: "core", impactRatio: 0.3 },
+      { muscleId: "back", impactRatio: 0.25 },
+      { muscleId: "quads", impactRatio: 0.13 },
+      { muscleId: "glutes", impactRatio: 0.12 },
+      { muscleId: "biceps", impactRatio: 0.1 },
+      { muscleId: "cardio", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "sled-push",
+    name: "슬레드 푸시",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["이동형", "고강도", "힙/하체 중심"],
+    detail: "하체 · 둔근 · 심폐 중심",
+    recordLabel: "중량 × 거리 × 세트",
+    volumeType: "sled_push",
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.35 },
+      { muscleId: "glutes", impactRatio: 0.3 },
+      { muscleId: "calves", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
+      { muscleId: "cardio", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "turkish-get-up",
+    name: "터키쉬 겟업",
+    category: "전신",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["덤벨/케틀벨", "상체/코어 중심", "힙/하체 중심"],
+    detail: "어깨 · 코어 · 둔근 중심",
+    recordLabel: "한쪽 중량 × 횟수 × 세트 × 좌우",
+    volumeType: "single_weight_unilateral",
+    impacts: [
+      { muscleId: "shoulders", impactRatio: 0.3 },
+      { muscleId: "core", impactRatio: 0.3 },
+      { muscleId: "glutes", impactRatio: 0.2 },
+      { muscleId: "quads", impactRatio: 0.05 },
+      { muscleId: "hamstrings", impactRatio: 0.05 },
+      { muscleId: "biceps", impactRatio: 0.1 },
+    ],
+  },
+  {
     id: "running",
     name: "러닝",
     category: "유산소",
@@ -1464,7 +1851,7 @@ const ROUTINE_TABS = [
   {
     label: "전신",
     value: "전신",
-    exercises: ["squat", "lunge", "hip-bridge", "push-up", "pull-up", "plank", "side-plank", "mountain-climber", "ab-slide", "running", "stair-climber"],
+    exercises: FULL_BODY_EXERCISE_IDS,
   },
   {
     label: "유산소",
@@ -1687,8 +2074,16 @@ function setVolume(set: SetLog) {
       return weight * reps * 2;
     case "dumbbell_unilateral_lower":
       return weight * 2 * reps * 2;
+    case "single_weight_unilateral":
+      return weight * reps * 2;
     case "machine_unilateral":
     case "cable_unilateral":
+      return weight * reps * 2;
+    case "carry_both":
+    case "carry_single":
+    case "sled_push":
+      return weight * reps;
+    case "carry_unilateral":
       return weight * reps * 2;
     case "bodyweight_factor":
       return bodyWeight * (exercise.bodyweightFactor || 1) * reps;
@@ -2885,8 +3280,14 @@ function ExerciseEntryModal({
       ? "보조중량(KG)"
       : exercise.volumeType === "bodyweight_or_added" || exercise.volumeType === "bodyweight_factor_or_added"
         ? "추가중량(KG)"
+        : exercise.volumeType === "carry_both"
+          ? "총 중량(KG)"
+          : exercise.volumeType === "carry_unilateral"
+            ? "한쪽 중량(KG)"
         : "KG";
-  const isUnilateral = ["dumbbell_unilateral_lower", "machine_unilateral", "cable_unilateral", "time_unilateral"].includes(exercise.volumeType || "");
+  const isCarry = ["carry_both", "carry_unilateral", "carry_single", "sled_push"].includes(exercise.volumeType || "");
+  const isUnilateral = ["dumbbell_unilateral_lower", "machine_unilateral", "cable_unilateral", "time_unilateral", "single_weight_unilateral", "carry_unilateral"].includes(exercise.volumeType || "");
+  const repsLabel = isTime ? "분" : isCarry ? "거리/시간" : "횟수";
   const canSave = parseNumber(reps) > 0;
 
   function handleSave() {
@@ -2935,8 +3336,8 @@ function ExerciseEntryModal({
                 <input className="nike-input bg-white px-3" inputMode="decimal" value={weight} onChange={event => setWeight(event.target.value)} placeholder="0" />
               )}
             </Field>
-            <Field label={isTime ? "분" : "횟수"}>
-              <input className="nike-input bg-white px-3" inputMode="numeric" value={reps} onChange={event => setReps(event.target.value)} placeholder={isTime ? "10" : "12"} />
+            <Field label={repsLabel}>
+              <input className="nike-input bg-white px-3" inputMode="numeric" value={reps} onChange={event => setReps(event.target.value)} placeholder={isTime ? "10" : isCarry ? "30" : "12"} />
             </Field>
           </div>
           <p className="text-xs font-semibold text-[#707072]">
@@ -2945,6 +3346,11 @@ function ExerciseEntryModal({
           {isUnilateral && (
             <p className="text-xs font-semibold text-[#707072]">
               편측 운동은 한쪽 기준으로 입력하면 좌우 합산 Volume이 자동 계산됩니다.
+            </p>
+          )}
+          {isCarry && (
+            <p className="text-xs font-semibold text-[#707072]">
+              이동형 운동은 거리(m) 또는 시간(초)을 거리/시간 칸에 입력하면 부하로 계산됩니다.
             </p>
           )}
         </div>
