@@ -5,6 +5,18 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 type Tab = "home" | "train" | "log" | "balance" | "member";
 type ExerciseType = "weight" | "time" | "bodyweight";
+type VolumeType =
+  | "standard"
+  | "barbell"
+  | "machine"
+  | "cable"
+  | "dumbbell_both"
+  | "dumbbell_unilateral"
+  | "bodyweight_factor"
+  | "bodyweight_or_assist"
+  | "bodyweight_or_added"
+  | "machine_or_dumbbell"
+  | "dumbbell_or_cable";
 type HistoryRange = "day" | "week" | "month" | "year";
 type BodyFilter = "all" | "upper" | "lower" | "core";
 
@@ -20,6 +32,11 @@ type Exercise = {
   type: ExerciseType;
   impacts: MuscleImpact[];
   defaultRestSeconds: number;
+  subTabs?: string[];
+  detail?: string;
+  recordLabel?: string;
+  volumeType?: VolumeType;
+  bodyweightFactor?: number;
 };
 
 type SetLog = {
@@ -281,6 +298,31 @@ const MUSCLES: Muscle[] = [
   { id: "cardio", name: "유산소", group: "전신", color: "#1151ff" },
 ];
 
+const UPPER_SUB_TABS = ["전체", "Push", "Pull", "어깨", "팔", "체중운동"];
+
+const UPPER_EXERCISE_IDS = [
+  "bench-press",
+  "incline-dumbbell-press",
+  "chest-press-machine",
+  "cable-fly",
+  "push-up",
+  "dips",
+  "lat-pulldown",
+  "pull-up",
+  "seated-row",
+  "barbell-row",
+  "one-arm-dumbbell-row",
+  "face-pull",
+  "shoulder-press",
+  "dumbbell-shoulder-press",
+  "lateral-raise",
+  "rear-delt-fly",
+  "dumbbell-curl",
+  "hammer-curl",
+  "triceps-pushdown",
+  "overhead-triceps-extension",
+];
+
 const EXERCISES: Exercise[] = [
   {
     id: "squat",
@@ -358,15 +400,19 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "lat-pulldown",
-    name: "랫 풀다운",
+    name: "랫풀다운",
     category: "등",
     type: "weight",
     defaultRestSeconds: 75,
+    subTabs: ["Pull"],
+    detail: "광배근 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
     impacts: [
       { muscleId: "back", impactRatio: 0.6 },
-      { muscleId: "biceps", impactRatio: 0.2 },
+      { muscleId: "biceps", impactRatio: 0.25 },
       { muscleId: "shoulders", impactRatio: 0.1 },
-      { muscleId: "core", impactRatio: 0.1 },
+      { muscleId: "back", impactRatio: 0.05 },
     ],
   },
   {
@@ -375,11 +421,15 @@ const EXERCISES: Exercise[] = [
     category: "등",
     type: "bodyweight",
     defaultRestSeconds: 90,
+    subTabs: ["Pull", "체중운동"],
+    detail: "광배근 중심",
+    recordLabel: "체중 × 횟수 × 세트",
+    volumeType: "bodyweight_or_assist",
+    bodyweightFactor: 1,
     impacts: [
-      { muscleId: "back", impactRatio: 0.5 },
-      { muscleId: "biceps", impactRatio: 0.25 },
-      { muscleId: "shoulders", impactRatio: 0.15 },
-      { muscleId: "core", impactRatio: 0.1 },
+      { muscleId: "back", impactRatio: 0.75 },
+      { muscleId: "biceps", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.05 },
     ],
   },
   {
@@ -388,48 +438,193 @@ const EXERCISES: Exercise[] = [
     category: "등",
     type: "weight",
     defaultRestSeconds: 75,
+    subTabs: ["Pull"],
+    detail: "등 중앙 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
     impacts: [
-      { muscleId: "back", impactRatio: 0.6 },
-      { muscleId: "biceps", impactRatio: 0.2 },
+      { muscleId: "back", impactRatio: 0.75 },
+      { muscleId: "biceps", impactRatio: 0.15 },
       { muscleId: "shoulders", impactRatio: 0.1 },
-      { muscleId: "core", impactRatio: 0.1 },
     ],
   },
   {
     id: "bench-press",
-    name: "벤치 프레스",
+    name: "벤치프레스",
     category: "가슴",
     type: "weight",
     defaultRestSeconds: 90,
+    subTabs: ["Push"],
+    detail: "가슴 중심",
+    recordLabel: "바벨 총 중량 × 횟수 × 세트",
+    volumeType: "barbell",
+    impacts: [
+      { muscleId: "chest", impactRatio: 0.6 },
+      { muscleId: "triceps", impactRatio: 0.25 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "incline-dumbbell-press",
+    name: "인클라인 덤벨프레스",
+    category: "윗가슴",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["Push"],
+    detail: "윗가슴 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 횟수 × 세트",
+    volumeType: "dumbbell_both",
     impacts: [
       { muscleId: "chest", impactRatio: 0.55 },
-      { muscleId: "triceps", impactRatio: 0.25 },
-      { muscleId: "shoulders", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "triceps", impactRatio: 0.2 },
+    ],
+  },
+  {
+    id: "chest-press-machine",
+    name: "체스트 프레스 머신",
+    category: "가슴",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["Push"],
+    detail: "가슴 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
+    impacts: [
+      { muscleId: "chest", impactRatio: 0.65 },
+      { muscleId: "triceps", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "cable-fly",
+    name: "케이블 플라이",
+    category: "가슴",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["Push"],
+    detail: "가슴 고립",
+    recordLabel: "케이블 중량 × 횟수 × 세트",
+    volumeType: "cable",
+    impacts: [
+      { muscleId: "chest", impactRatio: 0.85 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
     ],
   },
   {
     id: "push-up",
-    name: "푸시업",
+    name: "푸쉬업",
     category: "가슴",
     type: "bodyweight",
     defaultRestSeconds: 60,
+    subTabs: ["Push", "체중운동"],
+    detail: "가슴 중심",
+    recordLabel: "체중 × 0.65 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.65,
     impacts: [
-      { muscleId: "chest", impactRatio: 0.45 },
+      { muscleId: "chest", impactRatio: 0.55 },
       { muscleId: "triceps", impactRatio: 0.25 },
       { muscleId: "shoulders", impactRatio: 0.15 },
-      { muscleId: "core", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "dips",
+    name: "딥스",
+    category: "가슴 / 삼두",
+    type: "bodyweight",
+    defaultRestSeconds: 90,
+    subTabs: ["Push", "체중운동"],
+    detail: "삼두 · 가슴 중심",
+    recordLabel: "체중 × 0.90 × 횟수 × 세트",
+    volumeType: "bodyweight_or_added",
+    bodyweightFactor: 0.9,
+    impacts: [
+      { muscleId: "triceps", impactRatio: 0.4 },
+      { muscleId: "chest", impactRatio: 0.4 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "barbell-row",
+    name: "바벨 로우",
+    category: "등",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["Pull"],
+    detail: "등 중앙 중심",
+    recordLabel: "바벨 총 중량 × 횟수 × 세트",
+    volumeType: "barbell",
+    impacts: [
+      { muscleId: "back", impactRatio: 0.65 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
+      { muscleId: "biceps", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "one-arm-dumbbell-row",
+    name: "원암 덤벨로우",
+    category: "등",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["Pull"],
+    detail: "광배근 중심",
+    recordLabel: "덤벨 한 손 중량 × 횟수 × 세트 × 2",
+    volumeType: "dumbbell_unilateral",
+    impacts: [
+      { muscleId: "back", impactRatio: 0.75 },
+      { muscleId: "biceps", impactRatio: 0.15 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "face-pull",
+    name: "페이스풀",
+    category: "후면어깨",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["Pull", "어깨"],
+    detail: "후면어깨 중심",
+    recordLabel: "케이블 중량 × 횟수 × 세트",
+    volumeType: "cable",
+    impacts: [
+      { muscleId: "shoulders", impactRatio: 0.65 },
+      { muscleId: "back", impactRatio: 0.35 },
     ],
   },
   {
     id: "shoulder-press",
-    name: "숄더 프레스",
+    name: "숄더프레스",
     category: "어깨",
     type: "weight",
     defaultRestSeconds: 75,
+    subTabs: ["어깨", "Push"],
+    detail: "어깨 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "barbell",
     impacts: [
-      { muscleId: "shoulders", impactRatio: 0.65 },
+      { muscleId: "shoulders", impactRatio: 0.7 },
+      { muscleId: "triceps", impactRatio: 0.25 },
+      { muscleId: "chest", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "dumbbell-shoulder-press",
+    name: "덤벨 숄더프레스",
+    category: "어깨",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["어깨", "Push"],
+    detail: "어깨 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 횟수 × 세트",
+    volumeType: "dumbbell_both",
+    impacts: [
+      { muscleId: "shoulders", impactRatio: 0.75 },
       { muscleId: "triceps", impactRatio: 0.2 },
-      { muscleId: "core", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.05 },
     ],
   },
   {
@@ -438,7 +633,80 @@ const EXERCISES: Exercise[] = [
     category: "어깨",
     type: "weight",
     defaultRestSeconds: 45,
-    impacts: [{ muscleId: "shoulders", impactRatio: 1 }],
+    subTabs: ["어깨"],
+    detail: "측면어깨 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 횟수 × 세트",
+    volumeType: "dumbbell_both",
+    impacts: [
+      { muscleId: "shoulders", impactRatio: 0.85 },
+      { muscleId: "back", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "rear-delt-fly",
+    name: "리어델트 플라이",
+    category: "후면어깨",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["어깨", "Pull"],
+    detail: "후면어깨 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "machine_or_dumbbell",
+    impacts: [
+      { muscleId: "shoulders", impactRatio: 0.75 },
+      { muscleId: "back", impactRatio: 0.25 },
+    ],
+  },
+  {
+    id: "dumbbell-curl",
+    name: "덤벨 컬",
+    category: "이두",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["팔"],
+    detail: "이두 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 횟수 × 세트",
+    volumeType: "dumbbell_both",
+    impacts: [{ muscleId: "biceps", impactRatio: 1 }],
+  },
+  {
+    id: "hammer-curl",
+    name: "해머 컬",
+    category: "이두 / 전완",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["팔"],
+    detail: "상완근 · 이두 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 횟수 × 세트",
+    volumeType: "dumbbell_both",
+    impacts: [{ muscleId: "biceps", impactRatio: 1 }],
+  },
+  {
+    id: "triceps-pushdown",
+    name: "트라이셉스 푸시다운",
+    category: "삼두",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["팔", "Push"],
+    detail: "삼두 중심",
+    recordLabel: "케이블 중량 × 횟수 × 세트",
+    volumeType: "cable",
+    impacts: [{ muscleId: "triceps", impactRatio: 1 }],
+  },
+  {
+    id: "overhead-triceps-extension",
+    name: "오버헤드 트라이셉스 익스텐션",
+    category: "삼두",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["팔", "Push"],
+    detail: "삼두 장두 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "dumbbell_or_cable",
+    impacts: [
+      { muscleId: "triceps", impactRatio: 0.9 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
   },
   {
     id: "plank",
@@ -505,7 +773,7 @@ const ROUTINES = [
     name: "UPPER BALANCE",
     label: "상체 밸런스",
     note: "등, 가슴, 어깨를 균형 있게.",
-    exercises: ["lat-pulldown", "pull-up", "seated-row", "bench-press", "push-up", "shoulder-press", "lateral-raise"],
+    exercises: UPPER_EXERCISE_IDS,
   },
   {
     name: "CORE RESET",
@@ -519,7 +787,7 @@ const ROUTINE_TABS = [
   {
     label: "상체",
     value: "상체 밸런스",
-    exercises: ["lat-pulldown", "pull-up", "seated-row", "bench-press", "push-up", "shoulder-press", "lateral-raise"],
+    exercises: UPPER_EXERCISE_IDS,
   },
   {
     label: "하체",
@@ -743,7 +1011,24 @@ function expandDraftSets(draftSets: DraftSet[], idPrefix: string): SetLog[] {
 function setVolume(set: SetLog) {
   const exercise = exerciseById.get(set.exerciseId);
   if (exercise?.type === "time") return Math.max(Number(set.durationSeconds || 0) / 60, 1) * 25 * intensityMultiplier(set.weight);
-  return Math.max(Number(set.weight || 0), exercise?.type === "bodyweight" ? 10 : 0) * Math.max(Number(set.reps || 0), 1);
+  const weight = Math.max(Number(set.weight || 0), 0);
+  const reps = Math.max(Number(set.reps || 0), 1);
+  const bodyWeight = 55;
+
+  switch (exercise?.volumeType) {
+    case "dumbbell_both":
+      return weight * 2 * reps;
+    case "dumbbell_unilateral":
+      return weight * reps * 2;
+    case "bodyweight_factor":
+      return bodyWeight * (exercise.bodyweightFactor || 1) * reps;
+    case "bodyweight_or_added":
+      return (bodyWeight * (exercise.bodyweightFactor || 1) + weight) * reps;
+    case "bodyweight_or_assist":
+      return Math.max(bodyWeight * (exercise.bodyweightFactor || 1) - weight, 0) * reps;
+    default:
+      return Math.max(weight, exercise?.type === "bodyweight" ? 10 : 0) * reps;
+  }
 }
 
 function scoreSessions(sessions: WorkoutSession[]) {
@@ -866,7 +1151,20 @@ function exerciseSearchText(exercise: Exercise) {
     .filter(routine => routine.exercises.includes(exercise.id))
     .map(routine => routine.label)
     .join(" ");
-  return normalizeSearchText(`${exercise.name} ${exercise.category} ${routineLabels}`);
+  return normalizeSearchText(`${exercise.name} ${exercise.category} ${routineLabels} ${(exercise.subTabs || []).join(" ")} ${exercise.detail || ""} ${exercise.recordLabel || ""}`);
+}
+
+function exerciseImpactSummary(exercise: Exercise) {
+  const totals = new Map<string, number>();
+  for (const impact of exercise.impacts) {
+    totals.set(impact.muscleId, (totals.get(impact.muscleId) || 0) + impact.impactRatio);
+  }
+  return Array.from(totals.entries())
+    .map(([muscleId, ratio]) => {
+      const muscle = MUSCLES.find(item => item.id === muscleId);
+      return `${muscle?.name || muscleId} ${Math.round(ratio * 100)}%`;
+    })
+    .join(" · ");
 }
 
 function workoutNameForSets(sets: Array<{ exerciseId: string }>, fallback = ROUTINES[0].label) {
@@ -1683,7 +1981,9 @@ function WorkoutEntryView({
 }) {
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
+  const [upperSubTab, setUpperSubTab] = useState(UPPER_SUB_TABS[0]);
   const currentRoutine = ROUTINE_TABS.find(routine => routine.value === routineName || routine.label === routineName) || ROUTINE_TABS[0];
+  const isUpperRoutine = currentRoutine.value === "상체 밸런스" || currentRoutine.label === "상체";
   const searchQuery = normalizeSearchText(exerciseSearch);
   const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
   const draftByExerciseId = useMemo(() => {
@@ -1695,15 +1995,17 @@ function WorkoutEntryView({
     const routineIds = new Set(currentRoutine.exercises);
     return EXERCISES
       .filter(exercise => routineIds.has(exercise.id))
+      .filter(exercise => !isUpperRoutine || upperSubTab === "전체" || exercise.subTabs?.includes(upperSubTab))
       .filter(exercise => !searchQuery || exerciseSearchText(exercise).includes(searchQuery))
       .sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)) || a.name.localeCompare(b.name, "ko"));
-  }, [currentRoutine, favoriteSet, searchQuery]);
+  }, [currentRoutine, favoriteSet, isUpperRoutine, searchQuery, upperSubTab]);
   const editingExercise = editingExerciseId ? exerciseById.get(editingExerciseId) : undefined;
   const editingDraft = editingExerciseId ? draftByExerciseId.get(editingExerciseId)?.draft : undefined;
 
   function handleRoutineTab(value: string) {
     setRoutineName(value);
     setExerciseSearch("");
+    setUpperSubTab(UPPER_SUB_TABS[0]);
     setEditingExerciseId(null);
   }
 
@@ -1756,6 +2058,21 @@ function WorkoutEntryView({
               ))}
             </div>
 
+            {isUpperRoutine && (
+              <div className="flex gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-[#e5e5e5] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {UPPER_SUB_TABS.map(tab => (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${upperSubTab === tab ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#707072]"}`}
+                    onClick={() => setUpperSubTab(tab)}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="grid gap-2">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-medium text-[#707072]">{exerciseSearch ? "검색 결과" : `${currentRoutine.label} 운동 목록`}</p>
@@ -1778,6 +2095,15 @@ function WorkoutEntryView({
                         {favorite && <b className="mr-1 text-[#007d48]">즐겨찾기</b>}
                         {exercise.category} / 휴식 {exercise.defaultRestSeconds}초
                       </span>
+                      {(exercise.detail || exercise.subTabs?.length) && (
+                        <span className="mt-1 block text-xs font-semibold text-[#111111]">
+                          {[exercise.detail, ...(exercise.subTabs || [])].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
+                      {exercise.recordLabel && (
+                        <span className="mt-1 block text-xs font-medium text-[#707072]">기록 방식: {exercise.recordLabel}</span>
+                      )}
+                      <span className="mt-1 block text-xs font-medium text-[#707072]">{exerciseImpactSummary(exercise)}</span>
                       {saved && <span className="mt-2 block text-xs font-semibold text-[#007d48]">{draftExerciseSummary(saved)}</span>}
                     </span>
                     <span className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ${saved ? "bg-white text-[#007d48]" : "bg-white text-[#707072]"}`}>
@@ -1876,6 +2202,13 @@ function ExerciseEntryModal({
   const [weight, setWeight] = useState(initialDraft.weight);
   const [reps, setReps] = useState(initialDraft.reps);
   const isTime = exercise.type === "time";
+  const weightLabel = isTime
+    ? "강도"
+    : exercise.volumeType === "bodyweight_or_assist"
+      ? "보조중량(KG)"
+      : exercise.volumeType === "bodyweight_or_added"
+        ? "추가중량(KG)"
+        : "KG";
   const canSave = parseNumber(reps) > 0;
 
   function handleSave() {
@@ -1894,10 +2227,16 @@ function ExerciseEntryModal({
           <div>
             <p className="text-sm font-medium text-[#707072]">{exercise.category}</p>
             <h2 className="mt-1 text-2xl font-semibold">{exercise.name}</h2>
+            {exercise.detail && <p className="mt-2 text-sm font-semibold text-[#111111]">{exercise.detail}</p>}
           </div>
           <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f5f5f5] text-lg font-semibold" onClick={onClose} aria-label="닫기">
             X
           </button>
+        </div>
+
+        <div className="mt-4 rounded-xl bg-[#f5f5f5] p-4">
+          {exercise.recordLabel && <p className="text-sm font-semibold text-[#111111]">기록 방식: {exercise.recordLabel}</p>}
+          <p className="mt-2 text-xs font-medium leading-5 text-[#707072]">자극 부위: {exerciseImpactSummary(exercise)}</p>
         </div>
 
         <div className="mt-5 grid gap-3">
@@ -1911,7 +2250,7 @@ function ExerciseEntryModal({
             />
           </Field>
           <div className="grid grid-cols-2 gap-2">
-            <Field label={isTime ? "강도" : "KG"}>
+            <Field label={weightLabel}>
               {isTime ? (
                 <IntensityPicker value={weight || "2"} onChange={setWeight} />
               ) : (
