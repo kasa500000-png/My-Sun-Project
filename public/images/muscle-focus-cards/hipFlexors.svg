@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 128 128">
+  <defs>
+    <clipPath id="clip"><circle cx="64" cy="64" r="58"/></clipPath>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#111111" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="128" height="128" fill="#ffffff"/>
+  <circle cx="64" cy="64" r="58" fill="#ffffff" stroke="#6f819b" stroke-width="1.8" filter="url(#shadow)"/>
+  <g clip-path="url(#clip)">
+    <g>
+      <path d="M50 33 C40 47 38 70 43 105 C48 112 56 109 58 101 C55 76 56 54 63 36 Z" fill="#f8f8f8" stroke="#9b9da0" stroke-width="1.6"/>
+      <path d="M78 33 C88 47 90 70 85 105 C80 112 72 109 70 101 C73 76 72 54 65 36 Z" fill="#f8f8f8" stroke="#9b9da0" stroke-width="1.6"/>
+      <path d="M49 55 C54 66 55 84 52 101" fill="none" stroke="#babcc0" stroke-width="1.2"/>
+      <path d="M79 55 C74 66 73 84 76 101" fill="none" stroke="#babcc0" stroke-width="1.2"/>
+      <path d="M59 36 C62 55 62 76 58 100" fill="none" stroke="#c4c6c8" stroke-width="1"/>
+      <path d="M69 36 C66 55 66 76 70 100" fill="none" stroke="#c4c6c8" stroke-width="1"/>
+      
+    <path d="M49 34 C57 40 59 55 55 70 C48 62 44 47 49 34 Z" fill="#d7352f" stroke="#9b1d1a" stroke-width="1.2" opacity="0.94"/>
+    <path d="M50 40 C53 48 53 58 52 66" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".42"/>
+  
+
+    <path d="M79 34 C71 40 69 55 73 70 C80 62 84 47 79 34 Z" fill="#d7352f" stroke="#9b1d1a" stroke-width="1.2" opacity="0.94"/>
+    <path d="M78 40 C75 48 75 58 76 66" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".42"/>
+  
+
+    <path d="M58 37 C63 45 64 59 61 75 C55 66 54 50 58 37 Z" fill="#d7352f" stroke="#9b1d1a" stroke-width="1.2" opacity="0.8"/>
+    
+  
+
+    <path d="M70 37 C65 45 64 59 67 75 C73 66 74 50 70 37 Z" fill="#d7352f" stroke="#9b1d1a" stroke-width="1.2" opacity="0.8"/>
+    
+  
+    </g>
+  </g>
+  <circle cx="64" cy="64" r="58" fill="none" stroke="#6f819b" stroke-width="1.8"/>
+</svg>

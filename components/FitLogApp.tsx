@@ -128,8 +128,16 @@ type MuscleIconKey =
   | "chest"
   | "back"
   | "shoulders"
+  | "biceps"
+  | "triceps"
   | "arms"
   | "core"
+  | "rectusAbs"
+  | "obliques"
+  | "transverseAbs"
+  | "lowerAbs"
+  | "hipFlexors"
+  | "erectors"
   | "quads"
   | "adductors"
   | "glutes"
@@ -137,6 +145,7 @@ type MuscleIconKey =
   | "hamstrings"
   | "calves"
   | "cardio"
+  | "recovery"
   | "lower"
   | "upper";
 
@@ -151,8 +160,16 @@ const MUSCLE_FOCUS_IMAGES: Record<MuscleIconKey, string> = {
   chest: "/images/muscle-focus-cards/chest.png",
   back: "/images/muscle-focus-cards/back.png",
   shoulders: "/images/muscle-focus-cards/shoulders.png",
+  biceps: "/images/muscle-focus-cards/biceps.svg",
+  triceps: "/images/muscle-focus-cards/triceps.svg",
   arms: "/images/muscle-focus-cards/arms.png",
   core: "/images/muscle-focus-cards/core.png",
+  rectusAbs: "/images/muscle-focus-cards/rectusAbs.svg",
+  obliques: "/images/muscle-focus-cards/obliques.svg",
+  transverseAbs: "/images/muscle-focus-cards/transverseAbs.svg",
+  lowerAbs: "/images/muscle-focus-cards/lowerAbs.svg",
+  hipFlexors: "/images/muscle-focus-cards/hipFlexors.svg",
+  erectors: "/images/muscle-focus-cards/erectors.svg",
   quads: "/images/muscle-focus-cards/quads.png",
   adductors: "/images/muscle-focus-cards/adductors.png",
   glutes: "/images/muscle-focus-cards/glutes.png",
@@ -160,6 +177,7 @@ const MUSCLE_FOCUS_IMAGES: Record<MuscleIconKey, string> = {
   hamstrings: "/images/muscle-focus-cards/hamstrings.png",
   calves: "/images/muscle-focus-cards/calves.png",
   cardio: "/images/muscle-focus-cards/cardio.png",
+  recovery: "/images/muscle-focus-cards/recovery.svg",
   lower: "/images/muscle-focus-cards/lower.png",
   upper: "/images/muscle-focus-cards/upper.png",
 };
@@ -2757,9 +2775,9 @@ function routineLabelFromSession(session: WorkoutSession) {
 }
 
 function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
+  if (muscleId in MUSCLE_FOCUS_IMAGES) return muscleId as MuscleIconKey;
   if (muscleId === "biceps" || muscleId === "triceps") return "arms";
   if (["rectusAbs", "obliques", "transverseAbs", "lowerAbs", "hipFlexors", "erectors"].includes(muscleId)) return "core";
-  if (muscleId in MUSCLE_FOCUS_IMAGES) return muscleId as MuscleIconKey;
   if (group === "하체") return "lower";
   if (group === "상체") return "upper";
   if (group === "코어") return "core";
