@@ -2794,6 +2794,17 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [activeTab]);
+
+  function selectTab(tab: Tab) {
+    setActiveTab(tab);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+  }
+
   async function loadSessions() {
     setLoadingSessions(true);
     try {
@@ -2996,7 +3007,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     setDraftMemo(session.memo || "");
     setDraftSets(draftSetsFromSession(session));
     setSelectedExercise(session.sets[0]?.exerciseId || defaultExerciseForRoutine(session.routineName));
-    setActiveTab("train");
+    selectTab("train");
     setToast("수정할 운동을 불러왔어요.");
   }
 
@@ -3008,7 +3019,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
   return (
     <main className="min-h-screen bg-white text-[#111111]">
-      <TopBar userEmail={userEmail} onSignOut={signOut} setActiveTab={setActiveTab} />
+      <TopBar userEmail={userEmail} onSignOut={signOut} setActiveTab={selectTab} />
 
       {activeTab === "home" && (
         <HomeDashboard
@@ -3022,9 +3033,9 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
           settings={settings}
           onStart={() => {
             setRoutineName(recommendedRoutine);
-            setActiveTab("train");
+            selectTab("train");
           }}
-          onAnalyze={() => setActiveTab("balance")}
+          onAnalyze={() => selectTab("balance")}
         />
       )}
 
@@ -3076,7 +3087,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
         />
       )}
 
-      <MobileTabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <MobileTabBar activeTab={activeTab} setActiveTab={selectTab} />
 
       {toast && (
         <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 rounded-full bg-[#111111] px-5 py-3 text-center text-sm font-medium text-white">
