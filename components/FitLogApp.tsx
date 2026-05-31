@@ -5,6 +5,8 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 type Tab = "home" | "train" | "log" | "balance" | "member";
 type ExerciseType = "weight" | "time" | "bodyweight";
+type HistoryRange = "day" | "week" | "month" | "year";
+type BodyFilter = "all" | "upper" | "lower" | "core";
 
 type MuscleImpact = {
   muscleId: string;
@@ -384,11 +386,124 @@ function today() {
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
 }
 
+function parseDate(value: string) {
+  return new Date(`${value}T00:00:00`);
+}
+
+function toDateKey(date: Date) {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+function addDays(date: Date, amount: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function addMonths(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function addYears(date: Date, amount: number) {
+  return new Date(date.getFullYear() + amount, date.getMonth(), date.getDate());
+}
+
+function startOfWeek(date: Date) {
+  const next = new Date(date);
+  const day = next.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  next.setDate(next.getDate() + diff);
+  return next;
+}
+
+function buildCalendarDays(month: Date) {
+  const start = startOfMonth(month);
+  const first = addDays(start, -start.getDay());
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = addDays(first, index);
+    return {
+      date,
+      inMonth: date.getMonth() === month.getMonth(),
+    };
+  });
+}
+
+function formatMonth(date: Date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+  }).format(date);
+}
+
+function formatDateShort(date: Date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+function addPeriod(date: Date, range: HistoryRange, direction: -1 | 1) {
+  if (range === "day") return addDays(date, direction);
+  if (range === "week") return addDays(date, direction * 7);
+  if (range === "month") return addMonths(date, direction);
+  return addYears(date, direction);
+}
+
+function getHistoryPeriod(range: HistoryRange, cursor: Date) {
+  if (range === "day") {
+    const date = toDateKey(cursor);
+    return { start: date, end: date, label: formatDate(date) };
+  }
+
+  if (range === "week") {
+    const start = startOfWeek(cursor);
+    const end = addDays(start, 6);
+    return {
+      start: toDateKey(start),
+      end: toDateKey(end),
+      label: `${formatDateShort(start)} - ${formatDateShort(end)}`,
+    };
+  }
+
+  if (range === "month") {
+    const start = startOfMonth(cursor);
+    const end = endOfMonth(cursor);
+    return {
+      start: toDateKey(start),
+      end: toDateKey(end),
+      label: formatMonth(cursor),
+    };
+  }
+
+  const start = new Date(cursor.getFullYear(), 0, 1);
+  const end = new Date(cursor.getFullYear(), 11, 31);
+  return {
+    start: toDateKey(start),
+    end: toDateKey(end),
+    label: `${cursor.getFullYear()}년`,
+  };
+}
+
 function byId<T extends { id: string }>(items: T[]) {
   return new Map(items.map(item => [item.id, item]));
 }
 
 const exerciseById = byId(EXERCISES);
+
+const BODY_FILTER_MUSCLES: Record<Exclude<BodyFilter, "all">, string[]> = {
+  upper: ["chest", "back", "shoulders", "biceps", "triceps"],
+  lower: ["quads", "glutes", "hamstrings", "calves"],
+  core: ["core"],
+};
 
 function parseNumber(value: string | number | undefined) {
   const n = Number(value || 0);
@@ -432,6 +547,36 @@ function sessionStats(session: WorkoutSession) {
   const volume = Math.round(session.sets.reduce((sum, set) => sum + setVolume(set), 0));
   const exercises = new Set(session.sets.map(set => set.exerciseId)).size;
   return { totalSets, volume, exercises };
+}
+
+function summarizeSessions(sessions: WorkoutSession[]) {
+  const exerciseIds = new Set<string>();
+  let sets = 0;
+  let minutes = 0;
+  let volume = 0;
+
+  for (const session of sessions) {
+    sets += session.sets.length;
+    minutes += session.durationMinutes;
+    volume += sessionStats(session).volume;
+    for (const set of session.sets) {
+      exerciseIds.add(set.exerciseId);
+    }
+  }
+
+  return {
+    count: sessions.length,
+    sets,
+    minutes,
+    volume,
+    exercises: exerciseIds.size,
+  };
+}
+
+function sessionMatchesBodyFilter(session: WorkoutSession, filter: BodyFilter) {
+  if (filter === "all") return true;
+  const targets = new Set(BODY_FILTER_MUSCLES[filter]);
+  return scoreSessions([session]).some(item => targets.has(item.id) && item.score > 0);
 }
 
 function formatDate(date: string) {
@@ -1218,6 +1363,44 @@ function WorkoutView({
 }
 
 function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; sessions: WorkoutSession[]; deleteSession: (id: string) => void }) {
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(parseDate(today())));
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [range, setRange] = useState<HistoryRange>("week");
+  const [rangeCursor, setRangeCursor] = useState(() => parseDate(today()));
+  const [bodyFilter, setBodyFilter] = useState<BodyFilter>("all");
+
+  const sessionsByDate = useMemo(() => {
+    const map = new Map<string, WorkoutSession[]>();
+    for (const session of sessions) {
+      map.set(session.date, [...(map.get(session.date) || []), session]);
+    }
+    return map;
+  }, [sessions]);
+
+  const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth]);
+  const selectedSessions = selectedDate ? sessionsByDate.get(selectedDate) || [] : [];
+  const period = useMemo(() => getHistoryPeriod(range, rangeCursor), [range, rangeCursor]);
+  const filteredSessions = useMemo(
+    () => sessions
+      .filter(session => session.date >= period.start && session.date <= period.end)
+      .filter(session => sessionMatchesBodyFilter(session, bodyFilter))
+      .sort((a, b) => b.date.localeCompare(a.date)),
+    [bodyFilter, period.end, period.start, sessions],
+  );
+  const filteredStats = useMemo(() => summarizeSessions(filteredSessions), [filteredSessions]);
+
+  function moveCalendar(direction: -1 | 1) {
+    setCalendarMonth(current => addMonths(current, direction));
+  }
+
+  function movePeriod(direction: -1 | 1) {
+    setRangeCursor(current => addPeriod(current, range, direction));
+  }
+
+  function chooseRange(nextRange: HistoryRange) {
+    setRange(nextRange);
+  }
+
   return (
     <section className="mx-auto max-w-[1440px] px-4 py-7 pb-28 md:px-8 md:py-10">
       <SectionTitle kicker="운동 일지" title="기록 모아보기" />
@@ -1226,38 +1409,225 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
       ) : sessions.length === 0 ? (
         <EmptyState text="아직 저장된 운동 기록이 없어요. 첫 운동을 기록해 보세요." />
       ) : (
-        <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
-          {sessions.map(session => {
-            const stats = sessionStats(session);
-            const scores = scoreSessions([session]).filter(item => item.score > 0).slice(0, 3);
-            return (
-              <article key={session.id} className="border-t border-[#cacacb] pt-5">
-                <div className="bg-[#f5f5f5] p-5">
-                  <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
-                  <h3 className="mt-2 text-2xl font-semibold">{session.routineName}</h3>
-                  <div className="mt-6 grid grid-cols-3 gap-2">
-                    <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
-                    <SmallStudioStat label="운동" value={`${stats.exercises}`} />
-                    <SmallStudioStat label="시간" value={`${session.durationMinutes}`} />
-                  </div>
-                  {session.memo && <p className="mt-5 line-clamp-3 text-sm leading-6 text-[#39393b]">{session.memo}</p>}
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {scores.map(score => (
-                    <span key={score.id} className="rounded-full bg-[#f5f5f5] px-3 py-1 text-xs font-medium text-[#111111]">
-                      {score.name} {score.score}
-                    </span>
-                  ))}
-                </div>
-                <button className="mt-4 text-sm font-medium text-[#d30005] underline underline-offset-4" onClick={() => deleteSession(session.id)}>
-                  삭제
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <section className="self-start border-t border-[#cacacb] pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-[#707072]">캘린더</p>
+                <h2 className="mt-1 text-2xl font-semibold">{formatMonth(calendarMonth)}</h2>
+              </div>
+              <div className="flex gap-2">
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f5f5f5] text-lg font-semibold" onClick={() => moveCalendar(-1)} aria-label="이전 달">
+                  ‹
                 </button>
-              </article>
-            );
-          })}
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#111111] text-lg font-semibold text-white" onClick={() => moveCalendar(1)} aria-label="다음 달">
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-[#707072]">
+              {["일", "월", "화", "수", "목", "금", "토"].map(day => <span key={day}>{day}</span>)}
+            </div>
+            <div className="mt-2 grid grid-cols-7 gap-1">
+              {calendarDays.map(day => {
+                const dateKey = toDateKey(day.date);
+                const daySessions = sessionsByDate.get(dateKey) || [];
+                const hasRecord = daySessions.length > 0;
+                const isToday = dateKey === today();
+                return (
+                  <button
+                    key={dateKey}
+                    className={`relative grid aspect-square place-items-center rounded-md text-sm font-semibold ${
+                      day.inMonth ? "bg-[#f5f5f5] text-[#111111]" : "bg-white text-[#cacacb]"
+                    } ${hasRecord ? "ring-1 ring-[#111111]" : ""}`}
+                    onClick={() => hasRecord && setSelectedDate(dateKey)}
+                    disabled={!hasRecord}
+                    aria-label={`${formatDate(dateKey)} 운동 기록 ${daySessions.length}개`}
+                  >
+                    <span>{day.date.getDate()}</span>
+                    {isToday && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#d30005]" />}
+                    {hasRecord && (
+                      <span className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5">
+                        <i className="h-1.5 w-1.5 rounded-full bg-[#111111]" />
+                        {daySessions.length > 1 && <b className="text-[9px] leading-none">{daySessions.length}</b>}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="border-t border-[#cacacb] pt-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-[#707072]">기록 탐색</p>
+                <h2 className="mt-1 text-2xl font-semibold">{period.label}</h2>
+              </div>
+              <div className="flex gap-2">
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f5f5f5] text-lg font-semibold" onClick={() => movePeriod(-1)} aria-label="이전 기간">
+                  ‹
+                </button>
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#111111] text-lg font-semibold text-white" onClick={() => movePeriod(1)} aria-label="다음 기간">
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <SegmentedControl
+              className="mt-5"
+              items={[
+                { id: "day", label: "일별" },
+                { id: "week", label: "주별" },
+                { id: "month", label: "월별" },
+                { id: "year", label: "년별" },
+              ]}
+              value={range}
+              onChange={value => chooseRange(value as HistoryRange)}
+            />
+
+            <SegmentedControl
+              className="mt-3"
+              items={[
+                { id: "all", label: "전체" },
+                { id: "upper", label: "상체" },
+                { id: "lower", label: "하체" },
+                { id: "core", label: "코어" },
+              ]}
+              value={bodyFilter}
+              onChange={value => setBodyFilter(value as BodyFilter)}
+            />
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <SmallStudioStat label="횟수" value={`${filteredStats.count}`} />
+              <SmallStudioStat label="운동" value={`${filteredStats.exercises}`} />
+              <SmallStudioStat label="시간" value={`${filteredStats.minutes}분`} />
+            </div>
+
+            <div className="mt-6 grid gap-3">
+              {filteredSessions.length === 0 ? (
+                <p className="bg-[#f5f5f5] p-5 text-sm leading-6 text-[#707072]">선택한 조건에 맞는 운동 기록이 없습니다.</p>
+              ) : (
+                filteredSessions.map(session => (
+                  <WorkoutHistoryCard key={session.id} session={session} deleteSession={deleteSession} />
+                ))
+              )}
+            </div>
+          </section>
         </div>
       )}
+
+      {selectedDate && selectedSessions.length > 0 && (
+        <WorkoutHistoryModal
+          title={formatDate(selectedDate)}
+          sessions={selectedSessions}
+          onClose={() => setSelectedDate(null)}
+          deleteSession={deleteSession}
+        />
+      )}
     </section>
+  );
+}
+
+function SegmentedControl({
+  items,
+  value,
+  onChange,
+  className = "",
+}: {
+  items: Array<{ id: string; label: string }>;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <div className={`grid grid-cols-4 gap-1 rounded-full bg-[#f5f5f5] p-1 ${className}`}>
+      {items.map(item => (
+        <button
+          key={item.id}
+          className={`h-10 rounded-full text-xs font-semibold ${value === item.id ? "bg-[#111111] text-white" : "text-[#707072]"}`}
+          onClick={() => onChange(item.id)}
+          type="button"
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSession; deleteSession: (id: string) => void }) {
+  const stats = sessionStats(session);
+  const scores = scoreSessions([session]).filter(item => item.score > 0).slice(0, 3);
+
+  return (
+    <article className="bg-[#f5f5f5] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
+          <h3 className="mt-1 text-xl font-semibold">{session.routineName}</h3>
+        </div>
+        <button className="shrink-0 text-sm font-semibold text-[#d30005]" onClick={() => deleteSession(session.id)}>
+          삭제
+        </button>
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
+        <SmallStudioStat label="운동" value={`${stats.exercises}`} />
+        <SmallStudioStat label="시간" value={`${session.durationMinutes}분`} />
+      </div>
+      {scores.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {scores.map(score => (
+            <span key={score.id} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111111]">
+              {score.name} {score.score}
+            </span>
+          ))}
+        </div>
+      )}
+      {session.memo && <p className="mt-4 line-clamp-2 text-sm leading-6 text-[#39393b]">{session.memo}</p>}
+    </article>
+  );
+}
+
+function WorkoutHistoryModal({
+  title,
+  sessions,
+  onClose,
+  deleteSession,
+}: {
+  title: string;
+  sessions: WorkoutSession[];
+  onClose: () => void;
+  deleteSession: (id: string) => void;
+}) {
+  const stats = summarizeSessions(sessions);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+      <div className="max-h-[82svh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl md:max-w-lg md:rounded-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-[#707072]">운동 완료</p>
+            <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
+          </div>
+          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#111111] text-lg font-semibold text-white" onClick={onClose} aria-label="닫기">
+            ×
+          </button>
+        </div>
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <SmallStudioStat label="기록" value={`${stats.count}`} />
+          <SmallStudioStat label="운동" value={`${stats.exercises}`} />
+          <SmallStudioStat label="시간" value={`${stats.minutes}분`} />
+        </div>
+        <div className="mt-5 grid gap-3">
+          {sessions.map(session => (
+            <WorkoutHistoryCard key={session.id} session={session} deleteSession={deleteSession} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
