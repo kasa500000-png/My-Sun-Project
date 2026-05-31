@@ -1363,13 +1363,12 @@ function WorkoutSummaryModal({
             X
           </button>
         </div>
-        <div className="overflow-y-auto p-5">
+        <div className="min-h-0 overflow-y-auto p-5">
           {sessions.length === 0 ? (
             <p className="bg-[#f5f5f5] p-5 text-sm leading-6 text-[#707072]">선택한 기간에 등록된 운동 기록이 없습니다.</p>
           ) : (
             <div className="grid gap-3">
               {sessions.map(session => {
-                const stats = sessionStats(session);
                 return (
                   <article key={session.id} className="border-t border-[#cacacb] pt-4">
                     <div className="flex items-start justify-between gap-4">
@@ -1378,10 +1377,6 @@ function WorkoutSummaryModal({
                         <h3 className="mt-1 text-xl font-semibold">{session.routineName}</h3>
                       </div>
                       <span className="shrink-0 rounded-full bg-[#f5f5f5] px-3 py-2 text-sm font-semibold">{session.durationMinutes}분</span>
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
-                      <SmallStudioStat label="운동" value={`${stats.exercises}`} />
                     </div>
                     <SessionExerciseList session={session} />
                     {session.memo && <p className="mt-3 text-sm leading-6 text-[#39393b]">{session.memo}</p>}
@@ -1744,7 +1739,7 @@ function ExerciseEntryModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="w-full rounded-t-2xl bg-white p-5 shadow-2xl md:max-w-md md:rounded-2xl">
+      <div className="max-h-[90svh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl md:max-w-md md:rounded-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-[#707072]">{exercise.category}</p>
