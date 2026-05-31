@@ -353,6 +353,19 @@ const EXERCISES: Exercise[] = [
     ],
   },
   {
+    id: "pull-up",
+    name: "풀업",
+    category: "등",
+    type: "bodyweight",
+    defaultRestSeconds: 90,
+    impacts: [
+      { muscleId: "back", impactRatio: 0.5 },
+      { muscleId: "biceps", impactRatio: 0.25 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
     id: "seated-row",
     name: "시티드 로우",
     category: "등",
@@ -423,6 +436,19 @@ const EXERCISES: Exercise[] = [
     ],
   },
   {
+    id: "ab-slide",
+    name: "AB슬라이드",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    impacts: [
+      { muscleId: "core", impactRatio: 0.65 },
+      { muscleId: "shoulders", impactRatio: 0.15 },
+      { muscleId: "back", impactRatio: 0.1 },
+      { muscleId: "chest", impactRatio: 0.1 },
+    ],
+  },
+  {
     id: "running",
     name: "러닝",
     category: "유산소",
@@ -462,13 +488,13 @@ const ROUTINES = [
     name: "UPPER BALANCE",
     label: "상체 밸런스",
     note: "등, 가슴, 어깨를 균형 있게.",
-    exercises: ["lat-pulldown", "seated-row", "bench-press", "shoulder-press"],
+    exercises: ["lat-pulldown", "pull-up", "seated-row", "bench-press", "shoulder-press"],
   },
   {
     name: "CORE RESET",
     label: "코어 리셋",
     note: "코어 안정감과 가벼운 전신 운동.",
-    exercises: ["plank", "push-up", "running"],
+    exercises: ["plank", "ab-slide", "push-up", "running"],
   },
 ];
 
