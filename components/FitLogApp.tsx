@@ -110,7 +110,7 @@ const MUSCLE_OVERLAY_IMAGES: Record<string, string> = {
   cardio: "/images/muscles/cardio.png",
 };
 
-const MUSCLE_OVERLAY_VERSION = "20260531-combined3";
+const MUSCLE_OVERLAY_VERSION = "20260531-combined4";
 
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
@@ -1439,8 +1439,12 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                   <button
                     key={dateKey}
                     className={`relative grid aspect-square place-items-center rounded-md text-sm font-semibold ${
-                      day.inMonth ? "bg-[#f5f5f5] text-[#111111]" : "bg-white text-[#cacacb]"
-                    } ${hasRecord ? "ring-1 ring-[#111111]" : ""}`}
+                      hasRecord
+                        ? "bg-[#e9f8ee] text-[#0f5132] ring-1 ring-[#97d7aa]"
+                        : day.inMonth
+                          ? "bg-[#f5f5f5] text-[#111111]"
+                          : "bg-white text-[#cacacb]"
+                    }`}
                     onClick={() => hasRecord && setSelectedDate(dateKey)}
                     disabled={!hasRecord}
                     aria-label={`${formatDate(dateKey)} 운동 기록 ${daySessions.length}개`}
@@ -1449,7 +1453,7 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                     {isToday && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#d30005]" />}
                     {hasRecord && (
                       <span className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5">
-                        <i className="h-1.5 w-1.5 rounded-full bg-[#111111]" />
+                        <i className="h-1.5 w-1.5 rounded-full bg-[#1f9d55]" />
                         {daySessions.length > 1 && <b className="text-[9px] leading-none">{daySessions.length}</b>}
                       </span>
                     )}
