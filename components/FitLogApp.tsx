@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 type Tab = "home" | "train" | "log" | "balance" | "member";
@@ -3571,6 +3571,20 @@ function WorkoutEntryView({
   }, [currentRoutine, favoriteSet, hasSubTabs, routineSubTab, searchQuery]);
   const editingExercise = editingExerciseId ? exerciseById.get(editingExerciseId) : undefined;
   const editingDraft = editingExerciseId ? draftByExerciseId.get(editingExerciseId)?.draft : undefined;
+  const savedFeedbackRef = useRef<HTMLDivElement | null>(null);
+  const lastScrolledSavedId = useRef<string | null>(lastSavedSession?.id || null);
+
+  useEffect(() => {
+    if (!lastSavedSession?.id) {
+      lastScrolledSavedId.current = null;
+      return;
+    }
+    if (lastScrolledSavedId.current === lastSavedSession.id) return;
+    lastScrolledSavedId.current = lastSavedSession.id;
+    window.setTimeout(() => {
+      savedFeedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }, [lastSavedSession?.id]);
 
   function handleRoutineTab(value: string) {
     setRoutineName(value);
@@ -3606,6 +3620,16 @@ function WorkoutEntryView({
           </div>
 
           <div className="grid gap-4">
+            <div className="md:hidden">
+              <WorkoutSaveBox
+                draftMemo={draftMemo}
+                setDraftMemo={setDraftMemo}
+                finishWorkout={finishWorkout}
+                editingSessionId={editingSessionId}
+                saving={saving}
+              />
+            </div>
+
             <Field label="검색">
               <input
                 className="nike-input h-12 min-w-0"
@@ -3713,17 +3737,24 @@ function WorkoutEntryView({
             )}
           </div>
         </div>
+        {lastSavedSession && (
+          <div ref={savedFeedbackRef} className="mt-6 grid gap-6 md:hidden">
+            <SavedWorkoutPanel session={lastSavedSession} onEdit={() => onEditSession(lastSavedSession)} />
+            <FlatPanel title="기록된 자극" kicker="방금 저장">
+              <BodyMap scores={scoreSessions([lastSavedSession]).filter(item => item.score > 0)} />
+            </FlatPanel>
+          </div>
+        )}
       </div>
 
-      <aside className="grid gap-6 self-start">
-        <div className="bg-[#f5f5f5] p-5">
-          <Field label="메모">
-            <textarea className="nike-input min-h-28 resize-none bg-white" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요." />
-          </Field>
-          <button className="mt-5 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50" onClick={finishWorkout} disabled={saving}>
-            {saving ? "저장 중..." : editingSessionId ? "수정 저장" : "운동 저장"}
-          </button>
-        </div>
+      <aside className="hidden gap-6 self-start md:grid">
+        <WorkoutSaveBox
+          draftMemo={draftMemo}
+          setDraftMemo={setDraftMemo}
+          finishWorkout={finishWorkout}
+          editingSessionId={editingSessionId}
+          saving={saving}
+        />
         {lastSavedSession && (
           <SavedWorkoutPanel session={lastSavedSession} onEdit={() => onEditSession(lastSavedSession)} />
         )}
@@ -3752,6 +3783,36 @@ function WorkoutEntryView({
         />
       )}
     </section>
+  );
+}
+
+function WorkoutSaveBox({
+  draftMemo,
+  setDraftMemo,
+  finishWorkout,
+  editingSessionId,
+  saving,
+}: {
+  draftMemo: string;
+  setDraftMemo: (value: string) => void;
+  finishWorkout: () => void | Promise<void>;
+  editingSessionId: string | null;
+  saving: boolean;
+}) {
+  return (
+    <div className="bg-[#f5f5f5] p-4 md:p-5">
+      <Field label="메모">
+        <textarea
+          className="nike-input min-h-20 resize-none bg-white md:min-h-28"
+          value={draftMemo}
+          onChange={event => setDraftMemo(event.target.value)}
+          placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요."
+        />
+      </Field>
+      <button className="mt-4 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50 md:mt-5" onClick={finishWorkout} disabled={saving}>
+        {saving ? "저장 중..." : editingSessionId ? "수정 저장" : "운동 저장"}
+      </button>
+    </div>
   );
 }
 
