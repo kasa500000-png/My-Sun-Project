@@ -71,6 +71,7 @@ type SetLog = {
   id: string;
   exerciseId: string;
   setNumber: number;
+  bodyWeight?: number;
   weight?: number;
   reps?: number;
   durationSeconds?: number;
@@ -89,6 +90,7 @@ type WorkoutSession = {
 type DraftSet = {
   exerciseId: string;
   setCount: string;
+  bodyWeight?: string;
   weight: string;
   reps: string;
   memo: string;
@@ -2446,6 +2448,35 @@ function isCardioExercise(exercise?: Exercise) {
   return Boolean(exercise?.volumeType?.startsWith("cardio_"));
 }
 
+function isBodyWeightVolumeExercise(exercise?: Exercise) {
+  return Boolean(exercise && [
+    "bodyweight_factor",
+    "bodyweight_factor_or_added",
+    "bodyweight_or_weighted",
+    "bodyweight_or_added",
+    "bodyweight_or_assist",
+    "time_or_bodyweight",
+  ].includes(exercise.volumeType || ""));
+}
+
+function needsBodyWeightInput(exercise?: Exercise) {
+  return Boolean(exercise && exercise.type !== "time" && isBodyWeightVolumeExercise(exercise));
+}
+
+function hasExternalLoadInput(exercise: Exercise) {
+  return [
+    "bodyweight_factor_or_added",
+    "bodyweight_or_weighted",
+    "bodyweight_or_added",
+    "bodyweight_or_assist",
+  ].includes(exercise.volumeType || "");
+}
+
+function formatKg(value?: string | number) {
+  const numeric = Number(value || 0);
+  return numeric > 0 ? `${numeric}KG` : "";
+}
+
 function cardioRpe(value: string | number | undefined, fallback = 5) {
   const rpe = Math.round(Number(value || fallback) || fallback);
   return Math.min(Math.max(rpe, 1), 10);
@@ -2463,6 +2494,7 @@ function expandDraftSets(draftSets: DraftSet[], idPrefix: string): SetLog[] {
       id: `${idPrefix}-${draftIndex}-${setIndex}`,
       exerciseId: set.exerciseId,
       setNumber: 0,
+      bodyWeight: needsBodyWeightInput(exercise) ? parseNumber(set.bodyWeight || "") : undefined,
       weight: isTime ? parseNumber(set.weight) || (isCardioExercise(exercise) ? exercise?.defaultRpe || 5 : 2) : parseNumber(set.weight),
       reps: isTime ? 1 : parseNumber(set.reps),
       durationSeconds: isTime ? parseNumber(set.reps) * 60 : undefined,
@@ -2495,7 +2527,7 @@ function setVolume(set: SetLog) {
   }
   const weight = Math.max(Number(set.weight || 0), 0);
   const reps = Math.max(Number(set.reps || 0), 1);
-  const bodyWeight = 55;
+  const bodyWeight = Math.max(Number(set.bodyWeight || 0), 0) || 55;
 
   switch (exercise?.volumeType) {
     case "dumbbell_both":
@@ -2563,6 +2595,19 @@ function sessionStats(session: WorkoutSession) {
   return { totalSets, volume, exercises };
 }
 
+function bodyWeightLoadText(exercise: Exercise | undefined, bodyWeight?: string | number, externalWeight?: string | number) {
+  if (!needsBodyWeightInput(exercise)) return "";
+
+  const bodyText = formatKg(bodyWeight);
+  const loadText = bodyText ? `체중 ${bodyText}` : "체중 미설정";
+  const externalText = formatKg(externalWeight);
+  if (!externalText || !exercise) return loadText;
+
+  if (exercise.volumeType === "bodyweight_or_assist") return `${loadText} · 보조 ${externalText}`;
+  if (exercise.volumeType === "bodyweight_or_weighted") return `${loadText} · 중량 ${externalText}`;
+  return `${loadText} · 추가 ${externalText}`;
+}
+
 function sessionExerciseSummaries(session: WorkoutSession) {
   const groups = new Map<string, { name: string; category: string; load: string; reps: string; sets: number }>();
 
@@ -2574,6 +2619,8 @@ function sessionExerciseSummaries(session: WorkoutSession) {
     const intensity = INTENSITY_LEVELS.find(level => level.value === String(Number(set.weight || 2) || 2))?.label || "보통";
     const load = exercise?.type === "time"
       ? cardio ? `RPE ${cardioRpe(set.weight, exercise?.defaultRpe || 5)}` : `강도 ${intensity}`
+      : needsBodyWeightInput(exercise)
+        ? bodyWeightLoadText(exercise, set.bodyWeight, set.weight)
       : Number(set.weight || 0) > 0
         ? `${Number(set.weight)}KG`
         : exercise?.type === "bodyweight"
@@ -2695,6 +2742,7 @@ function draftSetsFromSession(session: WorkoutSession): DraftSet[] {
     return {
       exerciseId,
       setCount: String(sets.length || 1),
+      bodyWeight: needsBodyWeightInput(exercise) ? String(first.bodyWeight || "") : "",
       weight: isTime ? String(first.weight || 2) : String(first.weight || ""),
       reps: isTime ? String(Math.round((first.durationSeconds || 0) / 60) || "") : String(first.reps || ""),
       memo: first.memo || "",
@@ -2994,6 +3042,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
           removeSet={removeSet}
           saveDraftExercise={saveDraftExercise}
           favoriteExerciseIds={settings.favoriteExerciseIds}
+          bodyWeightKg={settings.weightKg}
           finishWorkout={finishWorkout}
           editingSessionId={editingSessionId}
           lastSavedSession={lastSavedSession}
@@ -3430,14 +3479,19 @@ function draftExerciseSummary(set: DraftSet) {
   const exercise = exerciseById.get(set.exerciseId);
   const isTime = exercise?.type === "time";
   const intensity = INTENSITY_LEVELS.find(level => level.value === String(Number(set.weight || 2) || 2))?.label || "보통";
-  const load = isTime ? isCardioExercise(exercise) ? `RPE ${cardioRpe(set.weight, exercise?.defaultRpe || 5)}` : `강도 ${intensity}` : set.weight ? `${set.weight}KG` : exercise?.type === "bodyweight" ? "체중" : "무게 미입력";
+  const load = isTime
+    ? isCardioExercise(exercise) ? `RPE ${cardioRpe(set.weight, exercise?.defaultRpe || 5)}` : `강도 ${intensity}`
+    : needsBodyWeightInput(exercise)
+      ? bodyWeightLoadText(exercise, set.bodyWeight, set.weight)
+      : set.weight ? `${set.weight}KG` : exercise?.type === "bodyweight" ? "체중" : "무게 미입력";
   const reps = isTime ? `${set.reps || 0}분` : `${set.reps || 0}회`;
   return `${draftSetCount(set)}세트 · ${load} · ${reps}`;
 }
 
-function emptyDraftForExercise(exercise: Exercise): Omit<DraftSet, "exerciseId"> {
+function emptyDraftForExercise(exercise: Exercise, bodyWeightKg?: number | null): Omit<DraftSet, "exerciseId"> {
   return {
     setCount: "1",
+    bodyWeight: needsBodyWeightInput(exercise) && bodyWeightKg ? String(bodyWeightKg) : "",
     weight: exercise.type === "time" ? String(isCardioExercise(exercise) ? exercise.defaultRpe || 5 : 2) : "",
     reps: "",
     memo: "",
@@ -3457,6 +3511,7 @@ function WorkoutEntryView({
   removeSet,
   saveDraftExercise,
   favoriteExerciseIds,
+  bodyWeightKg,
   finishWorkout,
   editingSessionId,
   lastSavedSession,
@@ -3475,6 +3530,7 @@ function WorkoutEntryView({
   removeSet: (index: number) => void;
   saveDraftExercise: (exerciseId: string, draft: Omit<DraftSet, "exerciseId">) => void;
   favoriteExerciseIds: string[];
+  bodyWeightKg: number | null;
   finishWorkout: () => void | Promise<void>;
   editingSessionId: string | null;
   lastSavedSession: WorkoutSession | null;
@@ -3672,6 +3728,7 @@ function WorkoutEntryView({
           key={editingExercise.id}
           exercise={editingExercise}
           draft={editingDraft}
+          bodyWeightKg={bodyWeightKg}
           onClose={() => setEditingExerciseId(null)}
           onRemove={editingDraft ? () => {
             removeDraftByExerciseId(editingExercise.id);
@@ -3690,18 +3747,23 @@ function WorkoutEntryView({
 function ExerciseEntryModal({
   exercise,
   draft,
+  bodyWeightKg,
   onClose,
   onSave,
   onRemove,
 }: {
   exercise: Exercise;
   draft?: DraftSet;
+  bodyWeightKg: number | null;
   onClose: () => void;
   onSave: (draft: Omit<DraftSet, "exerciseId">) => void;
   onRemove?: () => void;
 }) {
-  const initialDraft = draft || { exerciseId: exercise.id, ...emptyDraftForExercise(exercise) };
+  const bodyWeightRequired = needsBodyWeightInput(exercise);
+  const showExternalLoad = exercise.type !== "time" && hasExternalLoadInput(exercise);
+  const initialDraft = draft || { exerciseId: exercise.id, ...emptyDraftForExercise(exercise, bodyWeightKg) };
   const [setCount, setSetCount] = useState(initialDraft.setCount);
+  const [bodyWeight, setBodyWeight] = useState(initialDraft.bodyWeight || (bodyWeightRequired && bodyWeightKg ? String(bodyWeightKg) : ""));
   const [weight, setWeight] = useState(initialDraft.weight);
   const [reps, setReps] = useState(initialDraft.reps);
   const isTime = exercise.type === "time";
@@ -3720,11 +3782,12 @@ function ExerciseEntryModal({
   const isCarry = ["carry_both", "carry_unilateral", "carry_single", "sled_push"].includes(exercise.volumeType || "");
   const isUnilateral = ["dumbbell_unilateral_lower", "machine_unilateral", "cable_unilateral", "time_unilateral", "single_weight_unilateral", "carry_unilateral"].includes(exercise.volumeType || "");
   const repsLabel = isTime ? "분" : isCarry ? "거리/시간" : "횟수";
-  const canSave = parseNumber(reps) > 0;
+  const canSave = parseNumber(reps) > 0 && (!bodyWeightRequired || parseNumber(bodyWeight) > 0);
 
   function handleSave() {
     onSave({
       setCount: String(clampSetCount(setCount)),
+      bodyWeight: bodyWeightRequired ? bodyWeight : "",
       weight: isTime ? weight || "2" : weight,
       reps,
       memo: initialDraft.memo || "",
@@ -3760,20 +3823,40 @@ function ExerciseEntryModal({
               onBlur={() => setSetCount(String(clampSetCount(setCount)))}
             />
           </Field>
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={weightLabel}>
-              {isTime && isCardio ? (
-                <RpePicker value={weight || String(exercise.defaultRpe || 5)} onChange={setWeight} />
-              ) : isTime ? (
-                <IntensityPicker value={weight || "2"} onChange={setWeight} />
-              ) : (
-                <input className="nike-input bg-white px-3" inputMode="decimal" value={weight} onChange={event => setWeight(event.target.value)} placeholder="0" />
-              )}
+          {bodyWeightRequired && (
+            <Field label="체중(KG)">
+              <input
+                className="nike-input bg-white px-3"
+                inputMode="decimal"
+                value={bodyWeight}
+                onChange={event => setBodyWeight(event.target.value)}
+                placeholder="미설정"
+              />
             </Field>
+          )}
+          <div className={`grid gap-2 ${showExternalLoad || isTime || !bodyWeightRequired ? "grid-cols-2" : "grid-cols-1"}`}>
+            {(showExternalLoad || isTime || !bodyWeightRequired) && (
+              <Field label={weightLabel}>
+                {isTime && isCardio ? (
+                  <RpePicker value={weight || String(exercise.defaultRpe || 5)} onChange={setWeight} />
+                ) : isTime ? (
+                  <IntensityPicker value={weight || "2"} onChange={setWeight} />
+                ) : (
+                  <input className="nike-input bg-white px-3" inputMode="decimal" value={weight} onChange={event => setWeight(event.target.value)} placeholder="0" />
+                )}
+              </Field>
+            )}
             <Field label={repsLabel}>
               <input className="nike-input bg-white px-3" inputMode="numeric" value={reps} onChange={event => setReps(event.target.value)} placeholder={isTime ? "10" : isCarry ? "30" : "12"} />
             </Field>
           </div>
+          {bodyWeightRequired && (
+            <p className={`text-xs font-semibold ${parseNumber(bodyWeight) > 0 ? "text-[#707072]" : "text-[#d30005]"}`}>
+              {bodyWeightKg
+                ? `내 정보 체중 ${bodyWeightKg}KG이 기본 입력됩니다.`
+                : "내 정보에 체중이 미설정되어 있어 수기로 입력해 주세요."}
+            </p>
+          )}
           <p className="text-xs font-semibold text-[#707072]">
             저장 시 {clampSetCount(setCount)}세트로 계산됩니다.
           </p>
