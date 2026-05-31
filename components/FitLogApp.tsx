@@ -6,6 +6,7 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 type Tab = "home" | "train" | "log" | "balance" | "member";
 type ExerciseType = "weight" | "time" | "bodyweight";
 type VolumeType =
+  | "time"
   | "standard"
   | "barbell"
   | "machine"
@@ -25,7 +26,10 @@ type VolumeType =
   | "dumbbell_unilateral_lower"
   | "machine_unilateral"
   | "cable_unilateral"
-  | "bodyweight_factor_or_added";
+  | "bodyweight_factor_or_added"
+  | "time_unilateral"
+  | "bodyweight_or_weighted"
+  | "time_or_bodyweight";
 type HistoryRange = "day" | "week" | "month" | "year";
 type BodyFilter = "all" | "upper" | "lower" | "core";
 
@@ -298,6 +302,12 @@ const MUSCLES: Muscle[] = [
   { id: "biceps", name: "이두", group: "팔", color: "#9e9ea0" },
   { id: "triceps", name: "삼두", group: "팔", color: "#4b4b4d" },
   { id: "core", name: "코어", group: "코어", color: "#007d48" },
+  { id: "rectusAbs", name: "복직근", group: "코어", color: "#111111" },
+  { id: "obliques", name: "복사근", group: "코어", color: "#39393b" },
+  { id: "transverseAbs", name: "복횡근", group: "코어", color: "#007d48" },
+  { id: "lowerAbs", name: "하복부", group: "코어", color: "#4b4b4d" },
+  { id: "hipFlexors", name: "고관절굴곡근", group: "코어", color: "#707072" },
+  { id: "erectors", name: "척추기립근", group: "코어", color: "#9e9ea0" },
   { id: "quads", name: "대퇴사두", group: "하체", color: "#111111" },
   { id: "adductors", name: "내전근", group: "하체", color: "#707072" },
   { id: "glutes", name: "둔근", group: "하체", color: "#d30005" },
@@ -309,6 +319,7 @@ const MUSCLES: Muscle[] = [
 
 const UPPER_SUB_TABS = ["전체", "Push", "Pull", "어깨", "팔", "체중운동"];
 const LOWER_SUB_TABS = ["전체", "대퇴사두", "햄스트링", "둔근/힙", "종아리", "체중운동", "머신"];
+const CORE_SUB_TABS = ["전체", "복직근", "복사근", "하복부", "코어 안정화", "허리/기립근", "시간형"];
 
 const UPPER_EXERCISE_IDS = [
   "bench-press",
@@ -356,6 +367,30 @@ const LOWER_EXERCISE_IDS = [
   "back-extension",
 ];
 
+const CORE_EXERCISE_IDS = [
+  "plank",
+  "side-plank",
+  "crunch",
+  "sit-up",
+  "leg-raise",
+  "hanging-leg-raise",
+  "russian-twist",
+  "bicycle-crunch",
+  "mountain-climber",
+  "dead-bug",
+  "bird-dog",
+  "heel-touch",
+  "cable-crunch",
+  "flutter-kick",
+  "v-up",
+  "toe-touch",
+  "plank-shoulder-tap",
+  "hollow-body-hold",
+  "ab-slide",
+  "back-extension",
+  "superman",
+];
+
 function isUpperRoutineTab(routine: { label: string; value: string }) {
   return routine.value === "상체 밸런스" || routine.label === "상체";
 }
@@ -364,9 +399,14 @@ function isLowerRoutineTab(routine: { label: string; value: string }) {
   return routine.value === "하체 집중" || routine.label === "하체";
 }
 
+function isCoreRoutineTab(routine: { label: string; value: string }) {
+  return routine.value === "코어 리셋" || routine.label === "코어";
+}
+
 function routineSubTabs(routine: { label: string; value: string }) {
   if (isUpperRoutineTab(routine)) return UPPER_SUB_TABS;
   if (isLowerRoutineTab(routine)) return LOWER_SUB_TABS;
+  if (isCoreRoutineTab(routine)) return CORE_SUB_TABS;
   return [];
 }
 
@@ -685,17 +725,17 @@ const EXERCISES: Exercise[] = [
   {
     id: "back-extension",
     name: "백 익스텐션",
-    category: "하체",
+    category: "하체 / 코어",
     type: "bodyweight",
     defaultRestSeconds: 60,
-    subTabs: ["햄스트링", "둔근/힙"],
-    detail: "둔근 · 햄스트링 · 허리 중심",
+    subTabs: ["햄스트링", "둔근/힙", "허리/기립근"],
+    detail: "척추기립근 · 둔근 · 햄스트링 중심",
     recordLabel: "체중 × 0.45 × 횟수 × 세트",
     volumeType: "bodyweight_factor_or_added",
     bodyweightFactor: 0.45,
     impacts: [
-      { muscleId: "back", impactRatio: 0.4 },
-      { muscleId: "glutes", impactRatio: 0.35 },
+      { muscleId: "erectors", impactRatio: 0.45 },
+      { muscleId: "glutes", impactRatio: 0.3 },
       { muscleId: "hamstrings", impactRatio: 0.2 },
       { muscleId: "core", impactRatio: 0.05 },
     ],
@@ -1015,11 +1055,307 @@ const EXERCISES: Exercise[] = [
     name: "플랭크",
     category: "코어",
     type: "time",
-    defaultRestSeconds: 45,
+    defaultRestSeconds: 60,
+    subTabs: ["코어 안정화", "시간형"],
+    detail: "복횡근 · 전체 코어 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time",
     impacts: [
-      { muscleId: "core", impactRatio: 0.75 },
-      { muscleId: "shoulders", impactRatio: 0.15 },
+      { muscleId: "transverseAbs", impactRatio: 0.45 },
+      { muscleId: "rectusAbs", impactRatio: 0.25 },
+      { muscleId: "obliques", impactRatio: 0.15 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
+      { muscleId: "glutes", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "side-plank",
+    name: "사이드 플랭크",
+    category: "코어",
+    type: "time",
+    defaultRestSeconds: 60,
+    subTabs: ["복사근", "코어 안정화", "시간형"],
+    detail: "복사근 중심",
+    recordLabel: "한쪽 시간 × 세트 × 좌우",
+    volumeType: "time_unilateral",
+    impacts: [
+      { muscleId: "obliques", impactRatio: 0.55 },
+      { muscleId: "transverseAbs", impactRatio: 0.25 },
       { muscleId: "glutes", impactRatio: 0.1 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "crunch",
+    name: "크런치",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 45,
+    subTabs: ["복직근"],
+    detail: "상복부 중심",
+    recordLabel: "체중 × 0.20 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.2,
+    impacts: [
+      { muscleId: "rectusAbs", impactRatio: 0.9 },
+      { muscleId: "transverseAbs", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "sit-up",
+    name: "싯업",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["복직근"],
+    detail: "복직근 중심",
+    recordLabel: "체중 × 0.30 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.3,
+    impacts: [
+      { muscleId: "rectusAbs", impactRatio: 0.7 },
+      { muscleId: "hipFlexors", impactRatio: 0.2 },
+      { muscleId: "transverseAbs", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "leg-raise",
+    name: "레그 레이즈",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["하복부"],
+    detail: "하복부 중심",
+    recordLabel: "체중 × 0.35 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.35,
+    impacts: [
+      { muscleId: "lowerAbs", impactRatio: 0.6 },
+      { muscleId: "hipFlexors", impactRatio: 0.25 },
+      { muscleId: "transverseAbs", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "hanging-leg-raise",
+    name: "행잉 레그 레이즈",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 75,
+    subTabs: ["하복부"],
+    detail: "하복부 · 고관절굴곡근 중심",
+    recordLabel: "체중 × 0.45 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.45,
+    impacts: [
+      { muscleId: "lowerAbs", impactRatio: 0.55 },
+      { muscleId: "hipFlexors", impactRatio: 0.25 },
+      { muscleId: "biceps", impactRatio: 0.1 },
+      { muscleId: "back", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "russian-twist",
+    name: "러시안 트위스트",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["복사근"],
+    detail: "복사근 중심",
+    recordLabel: "체중 × 0.25 × 횟수 × 세트",
+    volumeType: "bodyweight_or_weighted",
+    bodyweightFactor: 0.25,
+    impacts: [
+      { muscleId: "obliques", impactRatio: 0.6 },
+      { muscleId: "rectusAbs", impactRatio: 0.2 },
+      { muscleId: "transverseAbs", impactRatio: 0.1 },
+      { muscleId: "hipFlexors", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "bicycle-crunch",
+    name: "바이시클 크런치",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["복사근", "복직근"],
+    detail: "복사근 · 복직근 중심",
+    recordLabel: "체중 × 0.25 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.25,
+    impacts: [
+      { muscleId: "obliques", impactRatio: 0.45 },
+      { muscleId: "rectusAbs", impactRatio: 0.35 },
+      { muscleId: "lowerAbs", impactRatio: 0.2 },
+    ],
+  },
+  {
+    id: "mountain-climber",
+    name: "마운틴 클라이머",
+    category: "코어",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["하복부", "코어 안정화", "시간형"],
+    detail: "하복부 · 심폐 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time_or_bodyweight",
+    bodyweightFactor: 0.45,
+    impacts: [
+      { muscleId: "lowerAbs", impactRatio: 0.35 },
+      { muscleId: "transverseAbs", impactRatio: 0.25 },
+      { muscleId: "shoulders", impactRatio: 0.2 },
+      { muscleId: "cardio", impactRatio: 0.2 },
+    ],
+  },
+  {
+    id: "dead-bug",
+    name: "데드버그",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 45,
+    subTabs: ["코어 안정화"],
+    detail: "복횡근 중심",
+    recordLabel: "체중 × 0.20 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.2,
+    impacts: [
+      { muscleId: "transverseAbs", impactRatio: 0.6 },
+      { muscleId: "lowerAbs", impactRatio: 0.2 },
+      { muscleId: "hipFlexors", impactRatio: 0.2 },
+    ],
+  },
+  {
+    id: "bird-dog",
+    name: "버드독",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 45,
+    subTabs: ["코어 안정화", "허리/기립근"],
+    detail: "복횡근 · 척추기립근 중심",
+    recordLabel: "체중 × 0.20 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.2,
+    impacts: [
+      { muscleId: "transverseAbs", impactRatio: 0.4 },
+      { muscleId: "erectors", impactRatio: 0.3 },
+      { muscleId: "glutes", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "heel-touch",
+    name: "힐터치",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 45,
+    subTabs: ["복사근"],
+    detail: "복사근 중심",
+    recordLabel: "체중 × 0.20 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.2,
+    impacts: [
+      { muscleId: "obliques", impactRatio: 0.7 },
+      { muscleId: "rectusAbs", impactRatio: 0.2 },
+      { muscleId: "transverseAbs", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "cable-crunch",
+    name: "케이블 크런치",
+    category: "코어",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["복직근"],
+    detail: "복직근 중심",
+    recordLabel: "케이블 중량 × 횟수 × 세트",
+    volumeType: "cable",
+    impacts: [
+      { muscleId: "rectusAbs", impactRatio: 0.85 },
+      { muscleId: "transverseAbs", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "flutter-kick",
+    name: "플러터 킥",
+    category: "코어",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["하복부", "시간형"],
+    detail: "하복부 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time_or_bodyweight",
+    bodyweightFactor: 0.3,
+    impacts: [
+      { muscleId: "lowerAbs", impactRatio: 0.6 },
+      { muscleId: "hipFlexors", impactRatio: 0.25 },
+      { muscleId: "transverseAbs", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "v-up",
+    name: "브이업",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["복직근", "하복부"],
+    detail: "복직근 · 하복부 중심",
+    recordLabel: "체중 × 0.35 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.35,
+    impacts: [
+      { muscleId: "rectusAbs", impactRatio: 0.45 },
+      { muscleId: "lowerAbs", impactRatio: 0.35 },
+      { muscleId: "hipFlexors", impactRatio: 0.2 },
+    ],
+  },
+  {
+    id: "toe-touch",
+    name: "토터치",
+    category: "코어",
+    type: "bodyweight",
+    defaultRestSeconds: 45,
+    subTabs: ["복직근"],
+    detail: "상복부 중심",
+    recordLabel: "체중 × 0.25 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.25,
+    impacts: [
+      { muscleId: "rectusAbs", impactRatio: 0.75 },
+      { muscleId: "lowerAbs", impactRatio: 0.15 },
+      { muscleId: "transverseAbs", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "plank-shoulder-tap",
+    name: "플랭크 숄더탭",
+    category: "코어",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["코어 안정화", "시간형"],
+    detail: "코어 · 어깨 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time_or_bodyweight",
+    bodyweightFactor: 0.45,
+    impacts: [
+      { muscleId: "transverseAbs", impactRatio: 0.4 },
+      { muscleId: "obliques", impactRatio: 0.2 },
+      { muscleId: "shoulders", impactRatio: 0.25 },
+      { muscleId: "glutes", impactRatio: 0.15 },
+    ],
+  },
+  {
+    id: "hollow-body-hold",
+    name: "할로우 바디 홀드",
+    category: "코어",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["코어 안정화", "시간형", "복직근"],
+    detail: "복횡근 · 복직근 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time",
+    impacts: [
+      { muscleId: "transverseAbs", impactRatio: 0.45 },
+      { muscleId: "rectusAbs", impactRatio: 0.35 },
+      { muscleId: "lowerAbs", impactRatio: 0.2 },
     ],
   },
   {
@@ -1028,11 +1364,35 @@ const EXERCISES: Exercise[] = [
     category: "코어",
     type: "bodyweight",
     defaultRestSeconds: 60,
+    subTabs: ["코어 안정화", "복직근"],
+    detail: "복직근 · 코어 안정화 중심",
+    recordLabel: "체중 × 0.45 × 횟수 × 세트",
+    volumeType: "bodyweight_factor",
+    bodyweightFactor: 0.45,
     impacts: [
-      { muscleId: "core", impactRatio: 0.65 },
+      { muscleId: "rectusAbs", impactRatio: 0.45 },
+      { muscleId: "transverseAbs", impactRatio: 0.25 },
       { muscleId: "shoulders", impactRatio: 0.15 },
       { muscleId: "back", impactRatio: 0.1 },
-      { muscleId: "chest", impactRatio: 0.1 },
+      { muscleId: "chest", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "superman",
+    name: "슈퍼맨",
+    category: "코어",
+    type: "time",
+    defaultRestSeconds: 45,
+    subTabs: ["허리/기립근", "시간형"],
+    detail: "척추기립근 중심",
+    recordLabel: "시간 × 세트",
+    volumeType: "time_or_bodyweight",
+    bodyweightFactor: 0.25,
+    impacts: [
+      { muscleId: "erectors", impactRatio: 0.6 },
+      { muscleId: "glutes", impactRatio: 0.2 },
+      { muscleId: "hamstrings", impactRatio: 0.1 },
+      { muscleId: "shoulders", impactRatio: 0.1 },
     ],
   },
   {
@@ -1081,7 +1441,7 @@ const ROUTINES = [
     name: "CORE RESET",
     label: "코어 리셋",
     note: "코어 안정감과 가벼운 전신 운동.",
-    exercises: ["plank", "ab-slide", "push-up", "running"],
+    exercises: CORE_EXERCISE_IDS,
   },
 ];
 
@@ -1099,12 +1459,12 @@ const ROUTINE_TABS = [
   {
     label: "코어",
     value: "코어 리셋",
-    exercises: ["plank", "ab-slide", "push-up", "running"],
+    exercises: CORE_EXERCISE_IDS,
   },
   {
     label: "전신",
     value: "전신",
-    exercises: ["squat", "lunge", "hip-bridge", "push-up", "pull-up", "plank", "ab-slide", "running", "stair-climber"],
+    exercises: ["squat", "lunge", "hip-bridge", "push-up", "pull-up", "plank", "side-plank", "mountain-climber", "ab-slide", "running", "stair-climber"],
   },
   {
     label: "유산소",
@@ -1243,7 +1603,7 @@ const exerciseById = byId(EXERCISES);
 const BODY_FILTER_MUSCLES: Record<Exclude<BodyFilter, "all">, string[]> = {
   upper: ["chest", "back", "shoulders", "biceps", "triceps"],
   lower: ["quads", "adductors", "glutes", "abductors", "hamstrings", "calves"],
-  core: ["core"],
+  core: ["core", "rectusAbs", "obliques", "transverseAbs", "lowerAbs", "hipFlexors", "erectors"],
 };
 
 const INTENSITY_LEVELS = [
@@ -1312,7 +1672,10 @@ function expandDraftSets(draftSets: DraftSet[], idPrefix: string): SetLog[] {
 
 function setVolume(set: SetLog) {
   const exercise = exerciseById.get(set.exerciseId);
-  if (exercise?.type === "time") return Math.max(Number(set.durationSeconds || 0) / 60, 1) * 25 * intensityMultiplier(set.weight);
+  if (exercise?.type === "time") {
+    const base = Math.max(Number(set.durationSeconds || 0) / 60, 1) * 25 * intensityMultiplier(set.weight);
+    return exercise.volumeType === "time_unilateral" ? base * 2 : base;
+  }
   const weight = Math.max(Number(set.weight || 0), 0);
   const reps = Math.max(Number(set.reps || 0), 1);
   const bodyWeight = 55;
@@ -1331,6 +1694,8 @@ function setVolume(set: SetLog) {
       return bodyWeight * (exercise.bodyweightFactor || 1) * reps;
     case "bodyweight_factor_or_added":
       return (bodyWeight * (exercise.bodyweightFactor || 1) + weight) * reps;
+    case "bodyweight_or_weighted":
+      return weight > 0 ? weight * reps : bodyWeight * (exercise.bodyweightFactor || 1) * reps;
     case "bodyweight_or_added":
       return (bodyWeight * (exercise.bodyweightFactor || 1) + weight) * reps;
     case "bodyweight_or_assist":
@@ -1519,9 +1884,11 @@ function routineLabelFromSession(session: WorkoutSession) {
 
 function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
   if (muscleId === "biceps" || muscleId === "triceps") return "arms";
+  if (["rectusAbs", "obliques", "transverseAbs", "lowerAbs", "hipFlexors", "erectors"].includes(muscleId)) return "core";
   if (muscleId in MUSCLE_FOCUS_IMAGES) return muscleId as MuscleIconKey;
   if (group === "하체") return "lower";
   if (group === "상체") return "upper";
+  if (group === "코어") return "core";
   return "cardio";
 }
 
@@ -2519,7 +2886,7 @@ function ExerciseEntryModal({
       : exercise.volumeType === "bodyweight_or_added" || exercise.volumeType === "bodyweight_factor_or_added"
         ? "추가중량(KG)"
         : "KG";
-  const isUnilateral = ["dumbbell_unilateral_lower", "machine_unilateral", "cable_unilateral"].includes(exercise.volumeType || "");
+  const isUnilateral = ["dumbbell_unilateral_lower", "machine_unilateral", "cable_unilateral", "time_unilateral"].includes(exercise.volumeType || "");
   const canSave = parseNumber(reps) > 0;
 
   function handleSave() {
@@ -2577,7 +2944,7 @@ function ExerciseEntryModal({
           </p>
           {isUnilateral && (
             <p className="text-xs font-semibold text-[#707072]">
-              편측 운동은 한쪽 반복 횟수를 입력하면 좌우 합산 Volume이 자동 계산됩니다.
+              편측 운동은 한쪽 기준으로 입력하면 좌우 합산 Volume이 자동 계산됩니다.
             </p>
           )}
         </div>
