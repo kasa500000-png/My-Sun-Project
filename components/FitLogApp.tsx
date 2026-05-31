@@ -1292,12 +1292,11 @@ function HomeDashboard({
           <FlatPanel title={recent ? recent.routineName : "아직 기록이 없어요"} kicker="최근 기록">
             {recent ? (
               <div>
-                <p className="text-sm font-medium text-[#707072]">{formatDate(recent.date)}</p>
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  <SmallStudioStat label="세트" value={`${sessionStats(recent).totalSets}`} />
-                  <SmallStudioStat label="운동" value={`${sessionStats(recent).exercises}`} />
-                  <SmallStudioStat label="시간" value={`${recent.durationMinutes}`} />
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-sm font-medium text-[#707072]">{formatDate(recent.date)}</p>
+                  <span className="shrink-0 rounded-full bg-[#f5f5f5] px-3 py-2 text-sm font-semibold">{recent.durationMinutes}분</span>
                 </div>
+                <SessionExerciseList session={recent} />
               </div>
             ) : (
               <EmptyState text="첫 운동을 기록하면 이곳에 최근 일지가 표시됩니다." action="첫 운동 기록" onClick={onStart} />
@@ -1462,12 +1461,11 @@ function HomeView({
           <FlatPanel title={recent ? recent.routineName : "아직 기록이 없어요"} kicker="최근 기록">
             {recent ? (
               <div>
-                <p className="text-sm font-medium text-[#707072]">{formatDate(recent.date)}</p>
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  <SmallStudioStat label="세트" value={`${sessionStats(recent).totalSets}`} />
-                  <SmallStudioStat label="운동" value={`${sessionStats(recent).exercises}`} />
-                  <SmallStudioStat label="시간" value={`${recent.durationMinutes}`} />
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-sm font-medium text-[#707072]">{formatDate(recent.date)}</p>
+                  <span className="shrink-0 rounded-full bg-[#f5f5f5] px-3 py-2 text-sm font-semibold">{recent.durationMinutes}분</span>
                 </div>
+                <SessionExerciseList session={recent} />
               </div>
             ) : (
               <EmptyState text="첫 운동을 기록하면 이곳에 최근 일지가 표시됩니다." action="첫 운동 기록" onClick={onStart} />
@@ -2316,7 +2314,6 @@ function SessionExerciseList({ session }: { session: WorkoutSession }) {
 }
 
 function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSession; deleteSession: (id: string) => void }) {
-  const stats = sessionStats(session);
   const scores = scoreSessions([session]).filter(item => item.score > 0).slice(0, 3);
 
   return (
@@ -2332,10 +2329,6 @@ function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSessio
             삭제
           </button>
         </div>
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
-        <SmallStudioStat label="운동" value={`${stats.exercises}`} />
       </div>
       <SessionExerciseList session={session} />
       {scores.length > 0 && (
