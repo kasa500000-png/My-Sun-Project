@@ -6,6 +6,9 @@ export const dynamic = "force-dynamic";
 const DEFAULT_SETTINGS = {
   weeklyGoal: 3,
   favoriteExerciseIds: [] as string[],
+  gender: "",
+  heightCm: null as number | null,
+  weightKg: null as number | null,
 };
 
 function clampWeeklyGoal(value: unknown) {
@@ -18,10 +21,25 @@ function sanitizeExerciseIds(value: unknown) {
   return Array.from(new Set(value.map(String).map(item => item.trim()).filter(Boolean))).slice(0, 100);
 }
 
+function sanitizeGender(value: unknown) {
+  const gender = String(value || "");
+  return ["female", "male", "other", ""].includes(gender) ? gender : "";
+}
+
+function sanitizeBodyNumber(value: unknown) {
+  if (value === "" || value == null) return null;
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return null;
+  return Math.round(number * 10) / 10;
+}
+
 function mapSettings(row: any) {
   return {
     weeklyGoal: clampWeeklyGoal(row?.weekly_goal),
     favoriteExerciseIds: sanitizeExerciseIds(row?.favorite_exercise_ids),
+    gender: sanitizeGender(row?.gender),
+    heightCm: sanitizeBodyNumber(row?.height_cm),
+    weightKg: sanitizeBodyNumber(row?.weight_kg),
   };
 }
 
@@ -58,6 +76,9 @@ export async function POST(req: NextRequest) {
     user_id: userId,
     weekly_goal: clampWeeklyGoal(body.weeklyGoal ?? body.weekly_goal),
     favorite_exercise_ids: sanitizeExerciseIds(body.favoriteExerciseIds ?? body.favorite_exercise_ids),
+    gender: sanitizeGender(body.gender),
+    height_cm: sanitizeBodyNumber(body.heightCm ?? body.height_cm),
+    weight_kg: sanitizeBodyNumber(body.weightKg ?? body.weight_kg),
     updated_at: new Date().toISOString(),
   };
 

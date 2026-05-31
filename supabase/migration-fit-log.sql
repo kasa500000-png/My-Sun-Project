@@ -31,9 +31,17 @@ CREATE TABLE IF NOT EXISTS fit_user_settings (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   weekly_goal INTEGER NOT NULL DEFAULT 3 CHECK (weekly_goal BETWEEN 1 AND 14),
   favorite_exercise_ids TEXT[] NOT NULL DEFAULT '{}',
+  gender TEXT NOT NULL DEFAULT '',
+  height_cm NUMERIC,
+  weight_kg NUMERIC,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE fit_user_settings
+  ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS height_cm NUMERIC,
+  ADD COLUMN IF NOT EXISTS weight_kg NUMERIC;
 
 CREATE INDEX IF NOT EXISTS idx_fit_sessions_user_date
   ON fit_workout_sessions(user_id, workout_date DESC);

@@ -52,6 +52,9 @@ type DraftSet = {
 type UserSettings = {
   weeklyGoal: number;
   favoriteExerciseIds: string[];
+  gender: string;
+  heightCm: number | null;
+  weightKg: number | null;
 };
 
 type Muscle = {
@@ -69,6 +72,9 @@ type FitLogAppProps = {
 const DEFAULT_SETTINGS: UserSettings = {
   weeklyGoal: 3,
   favoriteExerciseIds: [],
+  gender: "",
+  heightCm: null,
+  weightKg: null,
 };
 
 type MuscleIconKey =
@@ -692,6 +698,18 @@ function sanitizeExerciseIds(value: unknown) {
   return Array.from(new Set(value.map(String).filter(id => allowed.has(id))));
 }
 
+function sanitizeGender(value: unknown) {
+  const gender = String(value || "");
+  return ["female", "male", "other", ""].includes(gender) ? gender : "";
+}
+
+function sanitizeBodyNumber(value: unknown) {
+  if (value === "" || value == null) return null;
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return null;
+  return Math.round(number * 10) / 10;
+}
+
 function clampSetCount(value: string | number) {
   const count = Math.floor(Number(value) || 1);
   return Math.min(Math.max(count, 1), 20);
@@ -990,6 +1008,9 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       setSettings({
         weeklyGoal: clampWeeklyGoal(data.settings?.weeklyGoal),
         favoriteExerciseIds: sanitizeExerciseIds(data.settings?.favoriteExerciseIds),
+        gender: sanitizeGender(data.settings?.gender),
+        heightCm: sanitizeBodyNumber(data.settings?.heightCm),
+        weightKg: sanitizeBodyNumber(data.settings?.weightKg),
       });
     } catch {
       setSettings(DEFAULT_SETTINGS);
@@ -1000,6 +1021,9 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     const normalized = {
       weeklyGoal: clampWeeklyGoal(nextSettings.weeklyGoal),
       favoriteExerciseIds: sanitizeExerciseIds(nextSettings.favoriteExerciseIds),
+      gender: sanitizeGender(nextSettings.gender),
+      heightCm: sanitizeBodyNumber(nextSettings.heightCm),
+      weightKg: sanitizeBodyNumber(nextSettings.weightKg),
     };
 
     setSavingSettings(true);
@@ -2591,11 +2615,17 @@ function ProfileView({
   onSignOut: () => void;
 }) {
   const [weeklyGoal, setWeeklyGoal] = useState(String(settings.weeklyGoal));
+  const [gender, setGender] = useState(settings.gender);
+  const [heightCm, setHeightCm] = useState(settings.heightCm == null ? "" : String(settings.heightCm));
+  const [weightKg, setWeightKg] = useState(settings.weightKg == null ? "" : String(settings.weightKg));
   const [favoriteExerciseIds, setFavoriteExerciseIds] = useState<string[]>(settings.favoriteExerciseIds);
   const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
 
   useEffect(() => {
     setWeeklyGoal(String(settings.weeklyGoal));
+    setGender(settings.gender);
+    setHeightCm(settings.heightCm == null ? "" : String(settings.heightCm));
+    setWeightKg(settings.weightKg == null ? "" : String(settings.weightKg));
     setFavoriteExerciseIds(settings.favoriteExerciseIds);
   }, [settings]);
 
@@ -2611,6 +2641,9 @@ function ProfileView({
     void onSave({
       weeklyGoal: clampWeeklyGoal(weeklyGoal),
       favoriteExerciseIds,
+      gender: sanitizeGender(gender),
+      heightCm: sanitizeBodyNumber(heightCm),
+      weightKg: sanitizeBodyNumber(weightKg),
     });
   }
 
@@ -2621,6 +2654,44 @@ function ProfileView({
         <div className="bg-[#111111] p-5 text-white">
           <p className="text-sm font-medium text-white/60">로그인 계정</p>
           <h2 className="mt-2 break-all text-xl font-semibold">{userEmail || "내 계정"}</h2>
+        </div>
+
+        <div className="bg-[#f5f5f5] p-5">
+          <p className="text-sm font-medium text-[#707072]">개인 운동 정보</p>
+          <h2 className="mt-1 text-2xl font-semibold">몸 상태 기록</h2>
+          <div className="mt-5 grid gap-3">
+            <Field label="성별">
+              <select className="nike-input bg-white" value={gender} onChange={event => setGender(event.target.value)}>
+                <option value="">선택 안 함</option>
+                <option value="female">여성</option>
+                <option value="male">남성</option>
+                <option value="other">기타</option>
+              </select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="키(cm)">
+                <input
+                  className="nike-input bg-white"
+                  inputMode="decimal"
+                  value={heightCm}
+                  onChange={event => setHeightCm(event.target.value)}
+                  placeholder="예: 165"
+                />
+              </Field>
+              <Field label="몸무게(kg)">
+                <input
+                  className="nike-input bg-white"
+                  inputMode="decimal"
+                  value={weightKg}
+                  onChange={event => setWeightKg(event.target.value)}
+                  placeholder="예: 55"
+                />
+              </Field>
+            </div>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-[#39393b]">
+            이후 운동 분석과 목표 추천에 활용할 수 있도록 계정 설정에 저장됩니다.
+          </p>
         </div>
 
         <div className="bg-[#f5f5f5] p-5">
