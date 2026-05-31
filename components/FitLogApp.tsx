@@ -700,6 +700,28 @@ function routineNote(label: string) {
   return ROUTINES.find(item => item.label === label)?.note || "오늘 컨디션에 맞춰 가볍게 시작해요.";
 }
 
+function normalizeSearchText(value: string) {
+  return value.toLocaleLowerCase("ko-KR").replace(/\s+/g, "");
+}
+
+function exerciseSearchText(exercise: Exercise) {
+  const routineLabels = ROUTINES
+    .filter(routine => routine.exercises.includes(exercise.id))
+    .map(routine => routine.label)
+    .join(" ");
+  return normalizeSearchText(`${exercise.name} ${exercise.category} ${routineLabels}`);
+}
+
+function workoutNameForSets(sets: Array<{ exerciseId: string }>, fallback = ROUTINES[0].label) {
+  const routineLabels = ROUTINES
+    .filter(routine => sets.some(set => routine.exercises.includes(set.exerciseId)))
+    .map(routine => routine.label);
+
+  if (routineLabels.length === 0) return fallback;
+  if (routineLabels.length === 1) return routineLabels[0];
+  return "복합 루틴";
+}
+
 function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
   if (muscleId === "biceps" || muscleId === "triceps") return "arms";
   if (muscleId in MUSCLE_FOCUS_IMAGES) return muscleId as MuscleIconKey;
@@ -726,7 +748,6 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }, [userId]);
 
   useEffect(() => {
-    setDraftSets(defaultDraft());
     setSelectedExercise(defaultExerciseForRoutine(routineName));
   }, [routineName]);
 
@@ -769,7 +790,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   const todayScores = useMemo(() => scoreSessions(todaySessions), [todaySessions]);
   const groupBalance = useMemo(() => groupScores(weeklyScores).filter(item => item.score > 0), [weeklyScores]);
   const topWeek = weeklyScores.filter(item => item.score > 0).slice(0, 6);
-  const topToday = todayScores.filter(item => item.score > 0).slice(0, 4);
+  const topToday = todayScores.filter(item => item.score > 0);
 
   const currentDraftScores = useMemo(() => {
     const pseudo: WorkoutSession = {
@@ -777,13 +798,18 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       date: draftDate,
       routineName,
       durationMinutes: parseNumber(draftDuration),
-      sets: draftSets.map((set, index) => ({
-        id: `draft-${index}`,
-        exerciseId: set.exerciseId,
-        setNumber: index + 1,
-        weight: parseNumber(set.weight),
-        reps: parseNumber(set.reps),
-      })),
+      sets: draftSets.map((set, index) => {
+        const exercise = exerciseById.get(set.exerciseId);
+        const isTime = exercise?.type === "time";
+        return {
+          id: `draft-${index}`,
+          exerciseId: set.exerciseId,
+          setNumber: index + 1,
+          weight: isTime ? undefined : parseNumber(set.weight),
+          reps: isTime ? 1 : parseNumber(set.reps),
+          durationSeconds: isTime ? parseNumber(set.reps) * 60 : undefined,
+        };
+      }),
     };
     return scoreSessions([pseudo]).filter(item => item.score > 0);
   }, [draftDate, draftDuration, draftSets, routineName]);
@@ -840,7 +866,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     const nextSession: WorkoutSession = {
       id: `${Date.now()}`,
       date: draftDate,
-      routineName,
+      routineName: workoutNameForSets(validSets, routineName),
       durationMinutes: Math.max(parseNumber(draftDuration), 1),
       memo: draftMemo.trim() || undefined,
       sets: validSets,
@@ -1361,6 +1387,7 @@ function WorkoutView({
   finishWorkout: () => void | Promise<void>;
   saving: boolean;
 }) {
+  const [exerciseSearch, setExerciseSearch] = useState("");
   const grouped = useMemo(() => {
     const map = new Map<string, Array<{ set: DraftSet; index: number }>>();
     draftSets.forEach((set, index) => {
@@ -1370,17 +1397,41 @@ function WorkoutView({
     });
     return Array.from(map.entries());
   }, [draftSets]);
+  const currentRoutine = ROUTINES.find(routine => routine.label === routineName) || ROUTINES[0];
+  const routineExerciseIds = useMemo(() => new Set(currentRoutine.exercises), [currentRoutine]);
+  const searchQuery = normalizeSearchText(exerciseSearch);
+  const availableExercises = useMemo(() => {
+    if (searchQuery) {
+      return EXERCISES.filter(exercise => exerciseSearchText(exercise).includes(searchQuery));
+    }
+    return EXERCISES.filter(exercise => routineExerciseIds.has(exercise.id));
+  }, [routineExerciseIds, searchQuery]);
+  const selectedExerciseValue = availableExercises.some(exercise => exercise.id === selectedExercise)
+    ? selectedExercise
+    : availableExercises[0]?.id || selectedExercise;
+
+  useEffect(() => {
+    if (availableExercises.length > 0 && !availableExercises.some(exercise => exercise.id === selectedExercise)) {
+      setSelectedExercise(availableExercises[0].id);
+    }
+  }, [availableExercises, selectedExercise, setSelectedExercise]);
+
+  function handleRoutineChange(value: string) {
+    setRoutineName(value);
+    setExerciseSearch("");
+    setSelectedExercise(defaultExerciseForRoutine(value));
+  }
+
+  function addSelectedExercise() {
+    if (!availableExercises.length) return;
+    addSet(selectedExerciseValue);
+  }
 
   return (
     <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[minmax(0,1fr)_360px] md:px-8 md:py-10">
       <div>
         <SectionTitle kicker="운동 기록" title="오늘 운동" />
         <div className="mb-6 grid gap-3">
-          <Field label="루틴">
-            <select className="nike-input" value={routineName} onChange={event => setRoutineName(event.target.value)}>
-              {ROUTINES.map(routine => <option key={routine.label}>{routine.label}</option>)}
-            </select>
-          </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="날짜">
               <input className="nike-input" type="date" value={draftDate} onChange={event => setDraftDate(event.target.value)} />
@@ -1395,16 +1446,53 @@ function WorkoutView({
           <div className="grid gap-3 border-b border-[#e5e5e5] py-5">
             <div>
               <p className="text-sm font-medium text-[#707072]">세트 입력</p>
-              <h2 className="text-2xl font-semibold">{routineName}</h2>
+              <h2 className="text-2xl font-semibold">운동 추가</h2>
             </div>
-            <div className="grid grid-cols-[1fr_auto] gap-2">
-              <select className="nike-input h-12 min-w-0" value={selectedExercise} onChange={event => setSelectedExercise(event.target.value)}>
-                {EXERCISES.map(exercise => <option key={exercise.id} value={exercise.id}>{exercise.name}</option>)}
-              </select>
-              <button className="h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white" onClick={() => addSet()}>
-                추가
-              </button>
+            <div className="grid gap-3">
+              <Field label="루틴 운동">
+                <select className="nike-input h-12 min-w-0" value={routineName} onChange={event => handleRoutineChange(event.target.value)}>
+                  {ROUTINES.map(routine => <option key={routine.label}>{routine.label}</option>)}
+                </select>
+              </Field>
+              <Field label="검색">
+                <input
+                  className="nike-input h-12 min-w-0"
+                  value={exerciseSearch}
+                  onChange={event => setExerciseSearch(event.target.value)}
+                  placeholder="운동 이름을 검색해 주세요"
+                />
+              </Field>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <Field label="운동 종류">
+                  <select
+                    className="nike-input h-12 min-w-0"
+                    value={selectedExerciseValue}
+                    onChange={event => setSelectedExercise(event.target.value)}
+                    disabled={availableExercises.length === 0}
+                  >
+                    {availableExercises.map(exercise => (
+                      <option key={exercise.id} value={exercise.id}>
+                        {exercise.name} · {exercise.category}
+                      </option>
+                    ))}
+                    {availableExercises.length === 0 && <option>검색 결과 없음</option>}
+                  </select>
+                </Field>
+                <button className="mt-5 h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white disabled:opacity-40" onClick={addSelectedExercise} disabled={availableExercises.length === 0}>
+                  추가
+                </button>
+              </div>
+              {exerciseSearch && (
+                <p className="text-xs font-medium text-[#707072]">
+                  검색 결과 {availableExercises.length}개
+                </p>
+              )}
             </div>
+            {draftSets.length > 0 && (
+              <div className="rounded-[24px] bg-[#f5f5f5] px-4 py-3 text-sm font-semibold text-[#39393b]">
+                오늘 입력 중: {workoutNameForSets(draftSets, routineName)} · {draftSets.length}세트
+              </div>
+            )}
           </div>
 
           {grouped.map(([exerciseName, sets]) => {
