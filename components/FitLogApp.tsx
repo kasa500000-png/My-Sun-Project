@@ -499,6 +499,34 @@ const ROUTINES = [
   },
 ];
 
+const ROUTINE_TABS = [
+  {
+    label: "상체",
+    value: "상체 밸런스",
+    exercises: ["lat-pulldown", "pull-up", "seated-row", "bench-press", "push-up", "shoulder-press", "lateral-raise"],
+  },
+  {
+    label: "하체",
+    value: "하체 집중",
+    exercises: ["squat", "leg-press", "hip-thrust", "hip-adduction", "hip-abduction", "bulgarian-split-squat", "stair-climber", "running"],
+  },
+  {
+    label: "코어",
+    value: "코어 리셋",
+    exercises: ["plank", "ab-slide", "push-up", "running"],
+  },
+  {
+    label: "전신",
+    value: "전신",
+    exercises: ["squat", "push-up", "pull-up", "plank", "ab-slide", "running", "stair-climber"],
+  },
+  {
+    label: "유산소",
+    value: "유산소",
+    exercises: ["running", "stair-climber"],
+  },
+];
+
 const tabItems: Array<{ id: Tab; label: string }> = [
   { id: "home", label: "홈" },
   { id: "train", label: "기록" },
@@ -803,6 +831,11 @@ function exerciseSearchText(exercise: Exercise) {
 }
 
 function workoutNameForSets(sets: Array<{ exerciseId: string }>, fallback = ROUTINES[0].label) {
+  const fallbackTab = ROUTINE_TABS.find(tab => tab.value === fallback || tab.label === fallback);
+  if (fallbackTab && sets.every(set => fallbackTab.exercises.includes(set.exerciseId))) {
+    return fallbackTab.value;
+  }
+
   const routineLabels = ROUTINES
     .filter(routine => sets.some(set => routine.exercises.includes(set.exerciseId)))
     .map(routine => routine.label);
@@ -833,7 +866,9 @@ function draftSetsFromSession(session: WorkoutSession): DraftSet[] {
 }
 
 function routineLabelFromSession(session: WorkoutSession) {
-  return ROUTINES.find(routine => routine.exercises.includes(session.sets[0]?.exerciseId || ""))?.label || ROUTINES[0].label;
+  const savedTab = ROUTINE_TABS.find(tab => tab.value === session.routineName || tab.label === session.routineName);
+  if (savedTab) return savedTab.value;
+  return ROUTINE_TABS.find(routine => routine.exercises.includes(session.sets[0]?.exerciseId || ""))?.value || ROUTINES[0].label;
 }
 
 function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
@@ -1535,7 +1570,7 @@ function WorkoutEntryView({
 }) {
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
-  const currentRoutine = ROUTINES.find(routine => routine.label === routineName) || ROUTINES[0];
+  const currentRoutine = ROUTINE_TABS.find(routine => routine.value === routineName || routine.label === routineName) || ROUTINE_TABS[0];
   const searchQuery = normalizeSearchText(exerciseSearch);
   const draftByExerciseId = useMemo(() => {
     const map = new Map<string, { draft: DraftSet; index: number }>();
@@ -1551,8 +1586,8 @@ function WorkoutEntryView({
   const editingExercise = editingExerciseId ? exerciseById.get(editingExerciseId) : undefined;
   const editingDraft = editingExerciseId ? draftByExerciseId.get(editingExerciseId)?.draft : undefined;
 
-  function handleRoutineTab(label: string) {
-    setRoutineName(label);
+  function handleRoutineTab(value: string) {
+    setRoutineName(value);
     setExerciseSearch("");
     setEditingExerciseId(null);
   }
@@ -1593,22 +1628,22 @@ function WorkoutEntryView({
               />
             </Field>
 
-            <div className="grid grid-cols-3 gap-2 rounded-full bg-[#f5f5f5] p-1">
-              {ROUTINES.map(routine => (
+            <div className="grid grid-cols-5 gap-1 rounded-full bg-[#f5f5f5] p-1">
+              {ROUTINE_TABS.map(routine => (
                 <button
                   key={routine.label}
                   type="button"
-                  className={`h-11 rounded-full text-sm font-semibold ${routine.label === routineName ? "bg-[#111111] text-white" : "text-[#707072]"}`}
-                  onClick={() => handleRoutineTab(routine.label)}
+                  className={`h-11 rounded-full text-xs font-semibold ${routine.value === routineName || routine.label === routineName ? "bg-[#111111] text-white" : "text-[#707072]"}`}
+                  onClick={() => handleRoutineTab(routine.value)}
                 >
-                  {routine.label.replace(" 집중", "").replace(" 밸런스", "").replace(" 리셋", "")}
+                  {routine.label}
                 </button>
               ))}
             </div>
 
             <div className="grid gap-2">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-medium text-[#707072]">{exerciseSearch ? "검색 결과" : `${routineName} 운동 목록`}</p>
+                <p className="text-xs font-medium text-[#707072]">{exerciseSearch ? "검색 결과" : `${currentRoutine.label} 운동 목록`}</p>
                 <span className="text-xs font-semibold text-[#707072]">{visibleExercises.length}개</span>
               </div>
 
@@ -2319,16 +2354,16 @@ function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSessio
   return (
     <article className="bg-[#f5f5f5] p-5">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
+            <span className="rounded-full bg-white px-3 py-2 text-sm font-semibold">{session.durationMinutes}분</span>
+          </div>
           <h3 className="mt-1 text-xl font-semibold">{session.routineName}</h3>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="rounded-full bg-white px-3 py-2 text-sm font-semibold">{session.durationMinutes}분</span>
-          <button className="text-sm font-semibold text-[#d30005]" onClick={() => deleteSession(session.id)}>
-            삭제
-          </button>
-        </div>
+        <button className="shrink-0 text-sm font-semibold text-[#d30005]" onClick={() => deleteSession(session.id)}>
+          삭제
+        </button>
       </div>
       <SessionExerciseList session={session} />
       {scores.length > 0 && (
@@ -2356,8 +2391,6 @@ function WorkoutHistoryModal({
   onClose: () => void;
   deleteSession: (id: string) => void;
 }) {
-  const stats = summarizeSessions(sessions);
-
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
       <div className="max-h-[82svh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl md:max-w-lg md:rounded-2xl">
@@ -2369,11 +2402,6 @@ function WorkoutHistoryModal({
           <button className="grid h-10 w-10 place-items-center rounded-full bg-[#111111] text-lg font-semibold text-white" onClick={onClose} aria-label="닫기">
             ×
           </button>
-        </div>
-        <div className="mt-5 grid grid-cols-3 gap-2">
-          <SmallStudioStat label="기록" value={`${stats.count}`} />
-          <SmallStudioStat label="운동" value={`${stats.exercises}`} />
-          <SmallStudioStat label="시간" value={`${stats.minutes}분`} />
         </div>
         <div className="mt-5 grid gap-3">
           {sessions.map(session => (
