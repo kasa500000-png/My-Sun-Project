@@ -1785,28 +1785,23 @@ function ProfileView({ userEmail, sessionCount, onSignOut }: { userEmail?: strin
 
 function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
   const activeScores = scores.filter(item => item.score > 0);
-  const max = Math.max(...activeScores.map(item => item.score), 1);
   const total = activeScores.reduce((sum, item) => sum + item.score, 0) || 1;
+  const visibleScores = activeScores.slice(0, 6);
 
   return (
     <div className="grid gap-5">
       <div className="bg-[#f5f5f5] p-3">
-        <div className="relative mx-auto max-w-[360px] overflow-hidden bg-white">
-          <img
-            className="block w-full select-none"
-            src="/images/muscle-body-base.png"
-            alt="전체 신체 근육 지도"
-            draggable={false}
-          />
-          {activeScores.map(item => (
-            <MuscleBodyOverlay key={item.id} item={item} max={max} />
-          ))}
-          {activeScores.length === 0 && (
-            <div className="absolute inset-x-5 bottom-5 rounded-full bg-white/90 px-4 py-3 text-center text-sm font-semibold text-[#707072]">
-              기록하면 자극 부위가 표시돼요
-            </div>
-          )}
-        </div>
+        {visibleScores.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {visibleScores.map((item, index) => (
+              <MuscleFocusCard key={item.id} item={item} total={total} index={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white p-6 text-center text-sm font-semibold leading-6 text-[#707072]">
+            운동을 저장하면 자극 부위별 이미지가 표시돼요
+          </div>
+        )}
       </div>
       <div>
         <p className="mb-3 text-xs font-semibold text-[#707072]">전체 자극 대비 비율</p>
@@ -1819,49 +1814,28 @@ function BodyMap({ scores }: { scores: Array<Muscle & { score: number }> }) {
   );
 }
 
-function MuscleBodyOverlay({ item, max }: { item: Muscle & { score: number }; max: number }) {
-  const shapes = MUSCLE_BODY_SHAPES[item.id];
-  const ratio = Math.min(1, item.score / Math.max(max, 1));
-  const opacity = 0.26 + ratio * 0.38;
-
-  if (!shapes) return null;
+function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: number }; total: number; index: number }) {
+  const key = muscleIconKey(item.id, item.group);
+  const position = MUSCLE_ICON_POSITIONS[key] || MUSCLE_ICON_POSITIONS.upper;
+  const percent = Math.round((item.score / total) * 100);
+  const backgroundPosition = `${(position.col / 3) * 100}% ${(position.row / 2) * 100}%`;
 
   return (
-    <svg
-      className="pointer-events-none absolute inset-0 h-full w-full select-none mix-blend-multiply"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      {shapes.map((shape, index) => {
-        const shapeOpacity = opacity * (shape.opacity ?? 1);
-        return (
-          <g key={`${item.id}-${index}`}>
-            <path
-              d={shape.d}
-              fill="#d30005"
-              fillOpacity={shapeOpacity}
-              stroke="#8f0003"
-              strokeOpacity={Math.min(0.45, shapeOpacity + 0.08)}
-              strokeWidth={0.22}
-              vectorEffect="non-scaling-stroke"
-            />
-            {shape.fibers?.map((fiber, fiberIndex) => (
-              <path
-                key={`${item.id}-${index}-${fiberIndex}`}
-                d={fiber}
-                fill="none"
-                stroke="#ffffff"
-                strokeLinecap="round"
-                strokeOpacity={Math.min(0.62, shapeOpacity + 0.14)}
-                strokeWidth={0.16}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
-          </g>
-        );
-      })}
-    </svg>
+    <div className="bg-white p-3">
+      <div
+        className="mx-auto aspect-square w-full max-w-[118px] rounded-full border border-[#e5e5e5] bg-white bg-no-repeat"
+        style={{
+          backgroundImage: "url('/images/muscle-focus-sheet.png')",
+          backgroundPosition,
+          backgroundSize: "400% 300%",
+        }}
+        aria-hidden="true"
+      />
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="truncate text-sm font-semibold">{index + 1}. {item.name}</span>
+        <span className="shrink-0 text-sm font-semibold text-[#707072]">{percent}%</span>
+      </div>
+    </div>
   );
 }
 
