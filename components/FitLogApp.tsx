@@ -1537,22 +1537,44 @@ function WorkoutView({
                   placeholder="운동 이름을 검색해 주세요"
                 />
               </Field>
-              <div className="grid grid-cols-[minmax(0,1fr)_76px_auto] gap-2">
-                <Field label="운동 종류">
-                  <select
-                    className="nike-input h-12 min-w-0"
-                    value={selectedExerciseValue}
-                    onChange={event => setSelectedExercise(event.target.value)}
-                    disabled={availableExercises.length === 0}
-                  >
-                    {availableExercises.map(exercise => (
-                      <option key={exercise.id} value={exercise.id}>
-                        {exercise.name} · {exercise.category}
-                      </option>
-                    ))}
-                    {availableExercises.length === 0 && <option>검색 결과 없음</option>}
-                  </select>
-                </Field>
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-medium text-[#707072]">
+                    {exerciseSearch ? "검색 결과" : `${routineName} 운동 목록`}
+                  </p>
+                  <span className="text-xs font-semibold text-[#707072]">{availableExercises.length}개</span>
+                </div>
+                <div className="grid gap-2">
+                  {availableExercises.map(exercise => {
+                    const selected = selectedExerciseValue === exercise.id;
+                    return (
+                      <button
+                        key={exercise.id}
+                        type="button"
+                        className={`flex items-center justify-between gap-3 p-4 text-left ${selected ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#111111]"}`}
+                        onClick={() => setSelectedExercise(exercise.id)}
+                        aria-pressed={selected}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-base font-semibold">{exercise.name}</span>
+                          <span className={`mt-1 block text-xs font-medium ${selected ? "text-white/65" : "text-[#707072]"}`}>
+                            {exercise.category} / 휴식 {exercise.defaultRestSeconds}초
+                          </span>
+                        </span>
+                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black ${selected ? "bg-white text-[#111111]" : "bg-white text-[#707072]"}`}>
+                          {selected ? "✓" : ""}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {availableExercises.length === 0 && (
+                    <div className="bg-[#f5f5f5] p-4 text-sm font-semibold text-[#707072]">
+                      검색 결과가 없어요
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                 <Field label="세트 수">
                   <input
                     className="nike-input h-12 min-w-0 px-3 text-center"
@@ -1566,11 +1588,6 @@ function WorkoutView({
                   추가
                 </button>
               </div>
-              {exerciseSearch && (
-                <p className="text-xs font-medium text-[#707072]">
-                  검색 결과 {availableExercises.length}개
-                </p>
-              )}
             </div>
             {draftSets.length > 0 && (
               <div className="rounded-[24px] bg-[#f5f5f5] px-4 py-3 text-sm font-semibold text-[#39393b]">
