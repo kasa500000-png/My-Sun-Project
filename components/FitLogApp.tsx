@@ -712,6 +712,33 @@ function sessionStats(session: WorkoutSession) {
   return { totalSets, volume, exercises };
 }
 
+function sessionExerciseSummaries(session: WorkoutSession) {
+  const groups = new Map<string, { name: string; category: string; load: string; reps: string; sets: number }>();
+
+  for (const set of session.sets) {
+    const exercise = exerciseById.get(set.exerciseId);
+    const name = exercise?.name || "운동";
+    const category = exercise?.category || "운동";
+    const intensity = INTENSITY_LEVELS.find(level => level.value === String(Number(set.weight || 2) || 2))?.label || "보통";
+    const load = exercise?.type === "time"
+      ? `강도 ${intensity}`
+      : Number(set.weight || 0) > 0
+        ? `${Number(set.weight)}KG`
+        : exercise?.type === "bodyweight"
+          ? "체중"
+          : "0KG";
+    const reps = exercise?.type === "time"
+      ? `${Math.max(Math.round(Number(set.durationSeconds || 0) / 60), 1)}분`
+      : `${Number(set.reps || 0)}회`;
+    const key = `${set.exerciseId}:${load}:${reps}`;
+    const current = groups.get(key) || { name, category, load, reps, sets: 0 };
+    current.sets += 1;
+    groups.set(key, current);
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+}
+
 function summarizeSessions(sessions: WorkoutSession[]) {
   const exerciseIds = new Set<string>();
   let sets = 0;
@@ -1349,13 +1376,18 @@ function WorkoutSummaryModal({
                 const stats = sessionStats(session);
                 return (
                   <article key={session.id} className="border-t border-[#cacacb] pt-4">
-                    <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
-                    <h3 className="mt-1 text-xl font-semibold">{session.routineName}</h3>
-                    <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
+                        <h3 className="mt-1 text-xl font-semibold">{session.routineName}</h3>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-[#f5f5f5] px-3 py-2 text-sm font-semibold">{session.durationMinutes}분</span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
                       <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
                       <SmallStudioStat label="운동" value={`${stats.exercises}`} />
-                      <SmallStudioStat label="시간" value={`${session.durationMinutes}`} />
                     </div>
+                    <SessionExerciseList session={session} />
                     {session.memo && <p className="mt-3 text-sm leading-6 text-[#39393b]">{session.memo}</p>}
                   </article>
                 );
@@ -1503,6 +1535,7 @@ function WorkoutView({
   saving: boolean;
 }) {
   const [exerciseSearch, setExerciseSearch] = useState("");
+  const [selectedExerciseIds, setSelectedExerciseIds] = useState<string[]>([selectedExercise]);
   const grouped = useMemo(() => {
     const map = new Map<string, Array<{ set: DraftSet; index: number }>>();
     draftSets.forEach((set, index) => {
@@ -1521,25 +1554,39 @@ function WorkoutView({
     }
     return EXERCISES.filter(exercise => routineExerciseIds.has(exercise.id));
   }, [routineExerciseIds, searchQuery]);
-  const selectedExerciseValue = availableExercises.some(exercise => exercise.id === selectedExercise)
-    ? selectedExercise
-    : availableExercises[0]?.id || selectedExercise;
+  const availableExerciseIds = useMemo(() => new Set(availableExercises.map(exercise => exercise.id)), [availableExercises]);
+  const selectedExerciseValues = selectedExerciseIds.filter(id => availableExerciseIds.has(id));
 
   useEffect(() => {
-    if (availableExercises.length > 0 && !availableExercises.some(exercise => exercise.id === selectedExercise)) {
-      setSelectedExercise(availableExercises[0].id);
-    }
-  }, [availableExercises, selectedExercise, setSelectedExercise]);
+    setSelectedExerciseIds(current => {
+      const valid = current.filter(id => availableExerciseIds.has(id));
+      if (valid.length > 0) return valid;
+      return availableExercises[0]?.id ? [availableExercises[0].id] : [];
+    });
+  }, [availableExerciseIds, availableExercises]);
+
+  function toggleSelectedExercise(exerciseId: string) {
+    setSelectedExercise(exerciseId);
+    setSelectedExerciseIds(current => {
+      if (current.includes(exerciseId)) {
+        const next = current.filter(id => id !== exerciseId);
+        return next.length > 0 ? next : current;
+      }
+      return [...current, exerciseId];
+    });
+  }
 
   function handleRoutineChange(value: string) {
+    const nextExercise = defaultExerciseForRoutine(value);
     setRoutineName(value);
     setExerciseSearch("");
-    setSelectedExercise(defaultExerciseForRoutine(value));
+    setSelectedExercise(nextExercise);
+    setSelectedExerciseIds([nextExercise]);
   }
 
   function addSelectedExercise() {
-    if (!availableExercises.length) return;
-    addSet(selectedExerciseValue);
+    const targets = selectedExerciseValues.length > 0 ? selectedExerciseValues : availableExercises.slice(0, 1).map(exercise => exercise.id);
+    for (const exerciseId of targets) addSet(exerciseId);
   }
 
   return (
@@ -1586,13 +1633,13 @@ function WorkoutView({
                 </div>
                 <div className="grid gap-2">
                   {availableExercises.map(exercise => {
-                    const selected = selectedExerciseValue === exercise.id;
+                    const selected = selectedExerciseValues.includes(exercise.id);
                     return (
                       <button
                         key={exercise.id}
                         type="button"
                         className={`flex items-center justify-between gap-3 p-4 text-left ${selected ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#111111]"}`}
-                        onClick={() => setSelectedExercise(exercise.id)}
+                        onClick={() => toggleSelectedExercise(exercise.id)}
                         aria-pressed={selected}
                       >
                         <span className="min-w-0">
@@ -1602,7 +1649,7 @@ function WorkoutView({
                           </span>
                         </span>
                         <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black ${selected ? "bg-white text-[#111111]" : "bg-white text-[#707072]"}`}>
-                          {selected ? "✓" : ""}
+                          {selected ? "✓" : "+"}
                         </span>
                       </button>
                     );
@@ -1614,8 +1661,8 @@ function WorkoutView({
                   )}
                 </div>
               </div>
-              <button className="h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white disabled:opacity-40" onClick={addSelectedExercise} disabled={availableExercises.length === 0}>
-                선택한 운동 추가
+              <button className="h-12 rounded-full bg-[#111111] px-5 text-sm font-medium text-white disabled:opacity-40" onClick={addSelectedExercise} disabled={availableExercises.length === 0 || selectedExerciseValues.length === 0}>
+                선택한 운동 {selectedExerciseValues.length}개 추가
               </button>
             </div>
             {draftSets.length > 0 && (
@@ -1945,6 +1992,28 @@ function SegmentedControl({
   );
 }
 
+function SessionExerciseList({ session }: { session: WorkoutSession }) {
+  const items = sessionExerciseSummaries(session);
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-4 grid gap-2">
+      {items.map(item => (
+        <div key={`${item.name}-${item.load}-${item.reps}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-white p-3 ring-1 ring-[#e5e5e5]">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[#111111]">{item.name}</p>
+            <p className="mt-1 text-xs font-medium text-[#707072]">{item.category}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-semibold text-[#111111]">{item.load} · {item.reps}</p>
+            <p className="mt-1 text-xs font-semibold text-[#707072]">{item.sets}세트</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSession; deleteSession: (id: string) => void }) {
   const stats = sessionStats(session);
   const scores = scoreSessions([session]).filter(item => item.score > 0).slice(0, 3);
@@ -1956,15 +2025,18 @@ function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSessio
           <p className="text-sm font-medium text-[#707072]">{formatDate(session.date)}</p>
           <h3 className="mt-1 text-xl font-semibold">{session.routineName}</h3>
         </div>
-        <button className="shrink-0 text-sm font-semibold text-[#d30005]" onClick={() => deleteSession(session.id)}>
-          삭제
-        </button>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="rounded-full bg-white px-3 py-2 text-sm font-semibold">{session.durationMinutes}분</span>
+          <button className="text-sm font-semibold text-[#d30005]" onClick={() => deleteSession(session.id)}>
+            삭제
+          </button>
+        </div>
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
         <SmallStudioStat label="운동" value={`${stats.exercises}`} />
-        <SmallStudioStat label="시간" value={`${session.durationMinutes}분`} />
       </div>
+      <SessionExerciseList session={session} />
       {scores.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {scores.map(score => (
