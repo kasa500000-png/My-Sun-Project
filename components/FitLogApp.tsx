@@ -2958,15 +2958,34 @@ function ProfileView({
   const [heightCm, setHeightCm] = useState(settings.heightCm == null ? "" : String(settings.heightCm));
   const [weightKg, setWeightKg] = useState(settings.weightKg == null ? "" : String(settings.weightKg));
   const [favoriteExerciseIds, setFavoriteExerciseIds] = useState<string[]>(settings.favoriteExerciseIds);
+  const [activeModal, setActiveModal] = useState<"profile" | "goal" | "favorites" | null>(null);
   const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
+  const favoritePreview = useMemo(
+    () => favoriteExerciseIds
+      .map(id => exerciseById.get(id)?.name)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(" · "),
+    [favoriteExerciseIds],
+  );
+  const genderText = gender === "female" ? "여성" : gender === "male" ? "남성" : gender === "other" ? "기타" : "미입력";
 
   useEffect(() => {
+    syncLocalFromSettings();
+  }, [settings]);
+
+  function syncLocalFromSettings() {
     setWeeklyGoal(String(settings.weeklyGoal));
     setGender(settings.gender);
     setHeightCm(settings.heightCm == null ? "" : String(settings.heightCm));
     setWeightKg(settings.weightKg == null ? "" : String(settings.weightKg));
     setFavoriteExerciseIds(settings.favoriteExerciseIds);
-  }, [settings]);
+  }
+
+  function closeModal() {
+    syncLocalFromSettings();
+    setActiveModal(null);
+  }
 
   function toggleFavorite(exerciseId: string) {
     setFavoriteExerciseIds(items => (
@@ -2976,14 +2995,15 @@ function ProfileView({
     ));
   }
 
-  function handleSave() {
-    void onSave({
+  async function handleSave() {
+    await onSave({
       weeklyGoal: clampWeeklyGoal(weeklyGoal),
       favoriteExerciseIds,
       gender: sanitizeGender(gender),
       heightCm: sanitizeBodyNumber(heightCm),
       weightKg: sanitizeBodyNumber(weightKg),
     });
+    setActiveModal(null);
   }
 
   return (
@@ -2995,105 +3015,126 @@ function ProfileView({
           <h2 className="mt-2 break-all text-xl font-semibold">{userEmail || "내 계정"}</h2>
         </div>
 
-        <div className="bg-[#f5f5f5] p-5">
-          <p className="text-sm font-medium text-[#707072]">개인 운동 정보</p>
-          <h2 className="mt-1 text-2xl font-semibold">몸 상태 기록</h2>
-          <div className="mt-5 grid gap-3">
-            <Field label="성별">
-              <select className="nike-input bg-white" value={gender} onChange={event => setGender(event.target.value)}>
-                <option value="">선택 안 함</option>
-                <option value="female">여성</option>
-                <option value="male">남성</option>
-                <option value="other">기타</option>
-              </select>
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="키(cm)">
-                <input
-                  className="nike-input bg-white"
-                  inputMode="decimal"
-                  value={heightCm}
-                  onChange={event => setHeightCm(event.target.value)}
-                  placeholder="예: 165"
-                />
-              </Field>
-              <Field label="몸무게(kg)">
-                <input
-                  className="nike-input bg-white"
-                  inputMode="decimal"
-                  value={weightKg}
-                  onChange={event => setWeightKg(event.target.value)}
-                  placeholder="예: 55"
-                />
-              </Field>
-            </div>
-          </div>
-          <p className="mt-4 text-sm leading-6 text-[#39393b]">
-            이후 운동 분석과 목표 추천에 활용할 수 있도록 계정 설정에 저장됩니다.
-          </p>
-        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <button className="bg-[#f5f5f5] p-5 text-left ring-1 ring-transparent transition hover:ring-[#cacacb]" type="button" onClick={() => setActiveModal("profile")}>
+            <p className="text-sm font-medium text-[#707072]">개인 운동 정보</p>
+            <h2 className="mt-2 text-2xl font-semibold">몸 상태 기록</h2>
+            <p className="mt-4 text-sm font-semibold text-[#111111]">{genderText}</p>
+            <p className="mt-1 text-sm leading-6 text-[#707072]">
+              키 {heightCm || "-"}cm · 몸무게 {weightKg || "-"}kg
+            </p>
+          </button>
 
-        <div className="bg-[#f5f5f5] p-5">
-          <p className="text-sm font-medium text-[#707072]">주간 운동 목표</p>
-          <h2 className="mt-1 text-2xl font-semibold">일주일에 몇 번 운동할까요?</h2>
-          <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
-            <input
-              className="nike-input bg-white text-center text-xl font-semibold"
-              inputMode="numeric"
-              value={weeklyGoal}
-              onChange={event => setWeeklyGoal(event.target.value)}
-              onBlur={() => setWeeklyGoal(String(clampWeeklyGoal(weeklyGoal)))}
-            />
-            <span className="grid h-12 place-items-center rounded-full bg-white px-5 text-sm font-semibold text-[#707072]">회 / 주</span>
-          </div>
-          <p className="mt-4 text-sm leading-6 text-[#39393b]">
-            저장하면 홈 화면 상단에서 이번 주 목표 진행률로 표시됩니다.
-          </p>
-        </div>
+          <button className="bg-[#f5f5f5] p-5 text-left ring-1 ring-transparent transition hover:ring-[#cacacb]" type="button" onClick={() => setActiveModal("goal")}>
+            <p className="text-sm font-medium text-[#707072]">주간 운동 목표</p>
+            <h2 className="mt-2 text-2xl font-semibold">{clampWeeklyGoal(weeklyGoal)}회 / 주</h2>
+            <p className="mt-4 text-sm leading-6 text-[#707072]">홈 화면 목표 진행률에 표시됩니다.</p>
+          </button>
 
-        <div className="bg-[#f5f5f5] p-5">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-[#707072]">나의 루틴 운동 설정</p>
-              <h2 className="mt-1 text-2xl font-semibold">주로 하는 운동</h2>
-            </div>
-            <span className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#007d48]">{favoriteExerciseIds.length}개 선택</span>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-[#39393b]">
-            선택한 운동은 기록 탭 운동 목록 상단에 고정되고 즐겨찾기 표시가 붙습니다.
-          </p>
-          <div className="mt-5 grid gap-2">
-            {EXERCISES.map(exercise => {
-              const selected = favoriteSet.has(exercise.id);
-              return (
-                <button
-                  key={exercise.id}
-                  type="button"
-                  className={`flex items-center justify-between gap-3 p-4 text-left ring-1 ${selected ? "bg-[#eaf8ef] ring-[#a9d8b8]" : "bg-white ring-transparent"}`}
-                  onClick={() => toggleFavorite(exercise.id)}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-base font-semibold">{exercise.name}</span>
-                    <span className="mt-1 block text-xs font-medium text-[#707072]">{exercise.category}</span>
-                  </span>
-                  <span className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selected ? "bg-white text-[#007d48]" : "bg-[#f5f5f5] text-[#707072]"}`}>
-                    {selected ? "즐겨찾기" : "선택"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <button className="bg-[#f5f5f5] p-5 text-left ring-1 ring-transparent transition hover:ring-[#cacacb]" type="button" onClick={() => setActiveModal("favorites")}>
+            <p className="text-sm font-medium text-[#707072]">개인 루틴 운동</p>
+            <h2 className="mt-2 text-2xl font-semibold">{favoriteExerciseIds.length}개 선택</h2>
+            <p className="mt-4 line-clamp-2 text-sm leading-6 text-[#707072]">
+              {favoritePreview || "기록 탭 상단에 고정할 운동을 선택하세요."}
+            </p>
+          </button>
         </div>
 
         <div className="grid gap-3">
-          <button className="h-12 rounded-full bg-[#111111] px-8 text-base font-medium text-white disabled:opacity-50" onClick={handleSave} disabled={saving}>
-            {saving ? "저장 중..." : "설정 저장"}
-          </button>
           <button className="h-12 rounded-full bg-[#f5f5f5] px-8 text-base font-medium text-[#111111]" onClick={onSignOut}>
             로그아웃
           </button>
         </div>
       </div>
+
+      {activeModal && (
+        <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+          <div className="max-h-[90svh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl md:max-w-lg md:rounded-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-[#707072]">내 정보</p>
+                <h2 className="mt-1 text-2xl font-semibold">
+                  {activeModal === "profile" ? "개인 운동 정보" : activeModal === "goal" ? "주간 운동 목표" : "개인 루틴 운동"}
+                </h2>
+              </div>
+              <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f5f5f5] text-lg font-semibold" onClick={closeModal} aria-label="닫기">
+                X
+              </button>
+            </div>
+
+            {activeModal === "profile" && (
+              <div className="mt-5 grid gap-3">
+                <Field label="성별">
+                  <select className="nike-input bg-white" value={gender} onChange={event => setGender(event.target.value)}>
+                    <option value="">선택 안 함</option>
+                    <option value="female">여성</option>
+                    <option value="male">남성</option>
+                    <option value="other">기타</option>
+                  </select>
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="키(cm)">
+                    <input className="nike-input bg-white" inputMode="decimal" value={heightCm} onChange={event => setHeightCm(event.target.value)} placeholder="예: 165" />
+                  </Field>
+                  <Field label="몸무게(kg)">
+                    <input className="nike-input bg-white" inputMode="decimal" value={weightKg} onChange={event => setWeightKg(event.target.value)} placeholder="예: 55" />
+                  </Field>
+                </div>
+                <p className="text-sm leading-6 text-[#707072]">운동 분석과 체중형 운동 볼륨 계산에 활용할 수 있는 기본 정보입니다.</p>
+              </div>
+            )}
+
+            {activeModal === "goal" && (
+              <div className="mt-5 grid gap-3">
+                <div className="grid grid-cols-[1fr_auto] gap-3">
+                  <input
+                    className="nike-input bg-white text-center text-xl font-semibold"
+                    inputMode="numeric"
+                    value={weeklyGoal}
+                    onChange={event => setWeeklyGoal(event.target.value)}
+                    onBlur={() => setWeeklyGoal(String(clampWeeklyGoal(weeklyGoal)))}
+                  />
+                  <span className="grid h-12 place-items-center rounded-full bg-[#f5f5f5] px-5 text-sm font-semibold text-[#707072]">회 / 주</span>
+                </div>
+                <p className="text-sm leading-6 text-[#707072]">1주 기준 1회부터 14회까지 설정할 수 있습니다.</p>
+              </div>
+            )}
+
+            {activeModal === "favorites" && (
+              <div className="mt-5">
+                <p className="text-sm leading-6 text-[#707072]">
+                  선택한 운동은 기록 탭 운동 목록 상단에 고정되고 즐겨찾기 표시가 붙습니다.
+                </p>
+                <div className="mt-4 grid max-h-[58svh] gap-2 overflow-y-auto pr-1">
+                  {EXERCISES.map(exercise => {
+                    const selected = favoriteSet.has(exercise.id);
+                    return (
+                      <button
+                        key={exercise.id}
+                        type="button"
+                        className={`flex items-center justify-between gap-3 p-4 text-left ring-1 ${selected ? "bg-[#eaf8ef] ring-[#a9d8b8]" : "bg-[#f5f5f5] ring-transparent"}`}
+                        onClick={() => toggleFavorite(exercise.id)}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-base font-semibold">{exercise.name}</span>
+                          <span className="mt-1 block text-xs font-medium text-[#707072]">{exercise.category}</span>
+                        </span>
+                        <span className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selected ? "bg-white text-[#007d48]" : "bg-white text-[#707072]"}`}>
+                          {selected ? "즐겨찾기" : "선택"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <button className="mt-6 h-12 w-full rounded-full bg-[#111111] px-8 text-base font-medium text-white disabled:opacity-50" onClick={handleSave} disabled={saving}>
+              {saving ? "저장 중..." : "저장"}
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
