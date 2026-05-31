@@ -3258,22 +3258,22 @@ function HomeDashboard({
 
   return (
     <>
-      <section className="relative min-h-[64svh] overflow-hidden bg-[#242124] md:min-h-[680px]">
+      <section className="relative min-h-[58svh] overflow-hidden bg-[#242124] md:min-h-[680px]">
         <div
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
           style={{ backgroundImage: "url('/images/mysun-home-hero.jpg')" }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/70 via-[#242124]/12 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
-        <div className="relative mx-auto flex min-h-[64svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
+        <div className="relative mx-auto flex min-h-[58svh] max-w-[1440px] flex-col justify-end px-4 pb-6 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
           <p className="text-sm font-semibold text-[#fffdfb]/80">오늘도 천천히, 꾸준히</p>
-          <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
+          <h1 className="mt-3 max-w-[720px] text-[40px] font-extrabold leading-[0.98] md:text-[82px]">
             마이썬 운동일지
           </h1>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
-            <button className="h-12 rounded-full bg-[#fffdfb] px-6 text-base font-medium text-[#242124]" onClick={onStart}>
+            <button className="h-12 rounded-full bg-[#fffdfb] px-6 text-base font-semibold text-[#242124] shadow-[0_10px_24px_rgba(36,33,36,0.16)]" onClick={onStart}>
               운동 기록
             </button>
-            <button className="h-12 rounded-full bg-[#242124] px-6 text-base font-medium text-[#fffdfb] ring-1 ring-[#fffdfb]/35" onClick={onAnalyze}>
+            <button className="h-12 rounded-full bg-[#fffdfb]/18 px-6 text-base font-semibold text-[#fffdfb] ring-1 ring-[#fffdfb]/45 backdrop-blur" onClick={onAnalyze}>
               운동 분석
             </button>
           </div>
@@ -3309,26 +3309,26 @@ function HomeDashboard({
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <button className="rounded-[14px] bg-[#faf4f1] p-5 text-left" onClick={() => setModalOpen(true)}>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="rounded-[18px] bg-[#faf4f1] p-5 text-left ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 횟수</p>
               <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.count}회`}</p>
             </button>
-            <button className="rounded-[14px] bg-[#faf4f1] p-5 text-left" onClick={() => setModalOpen(true)}>
+            <button className="rounded-[18px] bg-[#faf4f1] p-5 text-left ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 시간</p>
               <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.minutes}분`}</p>
             </button>
-            <button className="rounded-[14px] bg-[#faf4f1] p-5 text-left" onClick={() => setModalOpen(true)}>
+            <button className="col-span-2 rounded-[18px] bg-[#faf4f1] p-5 text-left ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 밸런스</p>
               <BalanceBars balance={summary.balance} />
             </button>
           </div>
 
-          <div className="mt-7 border-t border-[#ded4cf] pt-5">
+          <div className="mt-7 rounded-[20px] bg-[#fffdfb] p-5 ring-1 ring-[#eadfda]">
             <p className="text-sm font-medium text-[#7a7470]">추천 루틴</p>
             <h2 className="mt-2 text-2xl font-semibold">{recommendedRoutine}</h2>
             <p className="mt-2 text-sm leading-6 text-[#4b4541]">{routineNote(recommendedRoutine)}</p>
-            <button className="mt-5 h-12 w-full rounded-full bg-[#242124] px-8 text-base font-medium text-[#fffdfb] md:w-auto" onClick={onStart}>
+            <button className="mt-5 h-12 w-full rounded-full bg-[#242124] px-8 text-base font-semibold text-[#fffdfb] md:w-auto" onClick={onStart}>
               이 루틴으로 시작
             </button>
           </div>
@@ -3392,7 +3392,7 @@ function WorkoutSummaryModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[86svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-lg md:rounded-2xl">
+      <div className="flex max-h-[86svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
         <div className={`flex items-center justify-between border-b p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>{rangeLabel}</p>
@@ -3634,7 +3634,7 @@ function WorkoutEntryView({
           </div>
         </div>
 
-        <div className="mb-4 flex items-center justify-between gap-3 border-y border-[#ded4cf] py-3">
+        <div className="sticky top-[57px] z-20 mb-4 flex items-center justify-between gap-3 rounded-[18px] border border-[#eadfda] bg-[#fffdfb]/95 px-4 py-3 shadow-[0_10px_28px_rgba(58,48,50,0.08)] backdrop-blur">
           <div className="min-w-0">
             <p className={`text-xs font-semibold ${UI.textMuted}`}>운동 추가</p>
             <p className="mt-0.5 truncate text-base font-semibold">{draftSets.length}개 운동 입력 중</p>
@@ -3668,7 +3668,7 @@ function WorkoutEntryView({
             />
           </Field>
 
-          <div className="flex gap-1 overflow-x-auto rounded-full bg-[#faf4f1] p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-1 overflow-x-auto rounded-full bg-[#faf4f1] p-1 ring-1 ring-[#eadfda] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {ROUTINE_TABS.map(routine => (
               <button
                 key={routine.label}
@@ -3711,7 +3711,7 @@ function WorkoutEntryView({
                 <button
                   key={exercise.id}
                   type="button"
-                  className={`relative grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-[14px] border border-[#eadfda] bg-[#fffdfb] p-3 text-left transition active:bg-[#faf4f1] ${saved ? "border-[#b9dfc5] bg-[#edf8f1]" : ""}`}
+                  className={`relative grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-[16px] border border-[#eadfda] bg-[#fffdfb] p-3 text-left transition active:bg-[#faf4f1] ${saved ? "border-[#b9dfc5] bg-[#edf8f1]" : ""}`}
                   onClick={() => setEditingExerciseId(exercise.id)}
                 >
                   {saved && <span className="absolute inset-y-0 left-0 w-1 bg-[#2f8c63]" />}
@@ -3762,7 +3762,7 @@ function WorkoutEntryView({
           )}
         </div>
         {lastSavedSession && (
-          <div ref={savedFeedbackRef} className="mt-6 grid gap-6 md:hidden">
+          <div ref={savedFeedbackRef} className="mt-6 grid scroll-mt-24 gap-6 md:hidden">
             <SavedWorkoutPanel session={lastSavedSession} onEdit={() => onEditSession(lastSavedSession)} />
             <FlatPanel title="기록된 자극" kicker="방금 저장">
               <BodyMap scores={scoreSessions([lastSavedSession]).filter(item => item.score > 0)} />
@@ -3822,7 +3822,7 @@ function MemoEntryModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-md md:rounded-2xl">
+      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-md md:rounded-2xl">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className="text-sm font-medium text-[#7a7470]">운동 기록</p>
@@ -3910,7 +3910,7 @@ function ExerciseEntryModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-md md:rounded-2xl">
+      <div className="flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-md md:rounded-2xl">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>{exercise.category}</p>
@@ -4395,7 +4395,7 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                 <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => moveCalendar(-1)} aria-label="이전 달">
                   ‹
                 </button>
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => moveCalendar(1)} aria-label="다음 달">
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#3a3032] text-lg font-semibold text-[#fffdfb]" onClick={() => moveCalendar(1)} aria-label="다음 달">
                   ›
                 </button>
               </div>
@@ -4448,7 +4448,7 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                 <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(-1)} aria-label="이전 기간">
                   ‹
                 </button>
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => movePeriod(1)} aria-label="다음 기간">
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#3a3032] text-lg font-semibold text-[#fffdfb]" onClick={() => movePeriod(1)} aria-label="다음 기간">
                   ›
                 </button>
               </div>
@@ -4617,13 +4617,13 @@ function WorkoutHistoryModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-lg md:rounded-2xl">
+      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>운동 완료</p>
             <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
           </div>
-          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={onClose} aria-label="닫기">
+          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#3a3032] text-lg font-semibold text-[#fffdfb]" onClick={onClose} aria-label="닫기">
             ×
           </button>
         </div>
@@ -4842,7 +4842,7 @@ function ProfileView({
 
       {activeModal && (
         <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
-          <div className="flex max-h-[90svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-2xl md:max-w-lg md:rounded-2xl">
+          <div className="flex max-h-[90svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
             <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
               <div>
                 <p className={`text-sm font-medium ${UI.textMuted}`}>내 정보</p>
@@ -5169,7 +5169,7 @@ function MetricGrid({ items }: { items: Array<{ label: string; value: string }> 
 
 function FlatPanel({ title, kicker, children }: { title: string; kicker: string; children: React.ReactNode }) {
   return (
-    <section className={`border-t pt-5 ${UI.divider}`}>
+    <section className="rounded-[22px] bg-[#fffdfb] p-5 ring-1 ring-[#eadfda]">
       <p className={`text-sm font-medium ${UI.textMuted}`}>{kicker}</p>
       <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
       <div className="mt-5">{children}</div>
@@ -5181,7 +5181,7 @@ function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="mb-6">
       <p className={`text-sm font-medium ${UI.textMuted}`}>{kicker}</p>
-      <h1 className="mt-1 text-4xl font-black leading-tight md:text-6xl">{title}</h1>
+      <h1 className="mt-1 text-[34px] font-extrabold leading-tight md:text-6xl">{title}</h1>
     </div>
   );
 }
@@ -5197,7 +5197,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode; 
 
 function EmptyState({ text, action, onClick }: { text: string; action?: string; onClick?: () => void }) {
   return (
-    <div className={`${UI.surface} p-6`}>
+    <div className={`${UI.surface} rounded-[18px] p-6 ring-1 ring-[#eadfda]`}>
       <p className={`max-w-md text-base leading-7 ${UI.textBody}`}>{text}</p>
       {action && onClick && (
         <button className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base md:w-auto`} onClick={onClick}>
