@@ -108,7 +108,7 @@ const MUSCLE_OVERLAY_IMAGES: Record<string, string> = {
   cardio: "/images/muscles/cardio.png",
 };
 
-const MUSCLE_OVERLAY_VERSION = "20260531-combined2";
+const MUSCLE_OVERLAY_VERSION = "20260531-combined3";
 
 const MUSCLE_DETAIL_SHAPES: Record<string, MuscleDetailShape[]> = {
   chest: [
