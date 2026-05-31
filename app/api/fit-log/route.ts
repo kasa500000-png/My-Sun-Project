@@ -125,6 +125,63 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ session: mapSession(data) });
 }
 
+export async function PUT(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  const userId = String(body.user_id || "");
+  const id = String(body.id || "");
+  const sets = Array.isArray(body.sets) ? body.sets as SetPayload[] : [];
+  if (!id || !userId) return NextResponse.json({ error: "id, user_id required" }, { status: 400 });
+  if (sets.length === 0) return NextResponse.json({ error: "sets required" }, { status: 400 });
+
+  const sb = getServiceClient();
+  const sessionPayload = {
+    workout_date: body.date || todayKst(),
+    routine_name: asText(body.routineName || body.routine_name, 120) || "운동",
+    duration_minutes: asNumber(body.durationMinutes || body.duration_minutes, 0),
+    memo: asText(body.memo, 2000),
+  };
+
+  const { error: sessionError } = await sb
+    .from("fit_workout_sessions")
+    .update(sessionPayload)
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (sessionError) return NextResponse.json({ error: sessionError.message }, { status: 500 });
+
+  const { error: deleteError } = await sb
+    .from("fit_set_logs")
+    .delete()
+    .eq("session_id", id)
+    .eq("user_id", userId);
+
+  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+
+  const setPayload = sets.map((set, index) => ({
+    session_id: id,
+    user_id: userId,
+    exercise_id: asText(set.exerciseId || set.exercise_id, 120) || "unknown",
+    set_number: asNumber(set.setNumber || set.set_number, index + 1),
+    weight: asNumber(set.weight),
+    reps: asNumber(set.reps),
+    duration_seconds: asNumber(set.durationSeconds || set.duration_seconds),
+    memo: asText(set.memo, 1000),
+  }));
+
+  const { error: setsError } = await sb.from("fit_set_logs").insert(setPayload);
+  if (setsError) return NextResponse.json({ error: setsError.message }, { status: 500 });
+
+  const { data, error } = await sb
+    .from("fit_workout_sessions")
+    .select("*, fit_set_logs(*)")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ session: mapSession(data) });
+}
+
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id") || "";

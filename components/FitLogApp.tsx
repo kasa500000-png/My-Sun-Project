@@ -738,6 +738,23 @@ function workoutNameForSets(sets: Array<{ exerciseId: string }>, fallback = ROUT
   return "복합 루틴";
 }
 
+function draftSetsFromSession(session: WorkoutSession): DraftSet[] {
+  return session.sets.map(set => {
+    const exercise = exerciseById.get(set.exerciseId);
+    const isTime = exercise?.type === "time";
+    return {
+      exerciseId: set.exerciseId,
+      weight: isTime ? String(set.weight || 2) : String(set.weight || ""),
+      reps: isTime ? String(Math.round((set.durationSeconds || 0) / 60) || "") : String(set.reps || ""),
+      memo: set.memo || "",
+    };
+  });
+}
+
+function routineLabelFromSession(session: WorkoutSession) {
+  return ROUTINES.find(routine => routine.exercises.includes(session.sets[0]?.exerciseId || ""))?.label || ROUTINES[0].label;
+}
+
 function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
   if (muscleId === "biceps" || muscleId === "triceps") return "arms";
   if (muscleId in MUSCLE_FOCUS_IMAGES) return muscleId as MuscleIconKey;
@@ -751,6 +768,8 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [lastSavedSession, setLastSavedSession] = useState<WorkoutSession | null>(null);
   const [routineName, setRoutineName] = useState(ROUTINES[0].label);
   const [draftDate, setDraftDate] = useState(today());
   const [draftDuration, setDraftDuration] = useState("45");
@@ -762,10 +781,6 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   useEffect(() => {
     void loadSessions();
   }, [userId]);
-
-  useEffect(() => {
-    setSelectedExercise(defaultExerciseForRoutine(routineName));
-  }, [routineName]);
 
   useEffect(() => {
     if (!toast) return;
@@ -898,17 +913,22 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     setSaving(true);
     try {
       const res = await fetch("/api/fit-log", {
-        method: "POST",
+        method: editingSessionId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...nextSession, user_id: userId }),
+        body: JSON.stringify({ ...nextSession, id: editingSessionId || nextSession.id, user_id: userId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "운동 기록 저장에 실패했어요.");
-      setSessions(items => [data.session, ...items]);
+      setSessions(items => {
+        const exists = items.some(item => item.id === data.session.id);
+        if (exists) return items.map(item => (item.id === data.session.id ? data.session : item));
+        return [data.session, ...items];
+      });
+      setLastSavedSession(data.session);
+      setEditingSessionId(null);
       setDraftMemo("");
       setDraftSets(defaultDraft());
-      setActiveTab("balance");
-      setToast("운동 기록을 저장했어요.");
+      setToast(editingSessionId ? "운동 기록을 수정했어요." : "운동 기록을 저장했어요.");
     } catch (error) {
       setToast(error instanceof Error ? error.message : "운동 기록 저장에 실패했어요.");
     } finally {
@@ -926,7 +946,21 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       return;
     }
     setSessions(items => items.filter(item => item.id !== id));
+    if (lastSavedSession?.id === id) setLastSavedSession(null);
+    if (editingSessionId === id) setEditingSessionId(null);
     setToast("기록을 삭제했어요.");
+  }
+
+  function editSession(session: WorkoutSession) {
+    setEditingSessionId(session.id);
+    setRoutineName(routineLabelFromSession(session));
+    setDraftDate(session.date);
+    setDraftDuration(String(session.durationMinutes || 45));
+    setDraftMemo(session.memo || "");
+    setDraftSets(draftSetsFromSession(session));
+    setSelectedExercise(session.sets[0]?.exerciseId || defaultExerciseForRoutine(session.routineName));
+    setActiveTab("train");
+    setToast("수정할 운동을 불러왔어요.");
   }
 
   async function signOut() {
@@ -974,6 +1008,9 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
           updateDraftSet={updateDraftSet}
           currentDraftScores={currentDraftScores}
           finishWorkout={finishWorkout}
+          editingSessionId={editingSessionId}
+          lastSavedSession={lastSavedSession}
+          onEditSession={editSession}
           saving={saving}
         />
       )}
@@ -1398,6 +1435,9 @@ function WorkoutView({
   updateDraftSet,
   currentDraftScores,
   finishWorkout,
+  editingSessionId,
+  lastSavedSession,
+  onEditSession,
   saving,
 }: {
   routineName: string;
@@ -1416,6 +1456,9 @@ function WorkoutView({
   updateDraftSet: (index: number, patch: Partial<DraftSet>) => void;
   currentDraftScores: Array<Muscle & { score: number }>;
   finishWorkout: () => void | Promise<void>;
+  editingSessionId: string | null;
+  lastSavedSession: WorkoutSession | null;
+  onEditSession: (session: WorkoutSession) => void;
   saving: boolean;
 }) {
   const [exerciseSearch, setExerciseSearch] = useState("");
@@ -1584,12 +1627,20 @@ function WorkoutView({
             <textarea className="nike-input min-h-28 resize-none bg-white" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요." />
           </Field>
           <button className="mt-5 h-12 w-full rounded-full bg-[#111111] text-base font-medium text-white disabled:opacity-50" onClick={finishWorkout} disabled={saving}>
-            {saving ? "저장 중..." : "운동 저장"}
+            {saving ? "저장 중..." : editingSessionId ? "수정 저장" : "운동 저장"}
           </button>
         </div>
+        {lastSavedSession && (
+          <SavedWorkoutPanel session={lastSavedSession} onEdit={() => onEditSession(lastSavedSession)} />
+        )}
         <FlatPanel title="예상 자극" kicker="입력 중">
           <BodyMap scores={currentDraftScores} />
         </FlatPanel>
+        {lastSavedSession && (
+          <FlatPanel title="기록된 자극" kicker="방금 저장">
+            <BodyMap scores={scoreSessions([lastSavedSession]).filter(item => item.score > 0)} />
+          </FlatPanel>
+        )}
       </aside>
     </section>
   );
@@ -1609,6 +1660,38 @@ function IntensityPicker({ value, onChange }: { value: string; onChange: (value:
         </button>
       ))}
     </div>
+  );
+}
+
+function SavedWorkoutPanel({ session, onEdit }: { session: WorkoutSession; onEdit: () => void }) {
+  const stats = sessionStats(session);
+  const exercises = Array.from(new Set(session.sets.map(set => exerciseById.get(set.exerciseId)?.name || "운동")));
+
+  return (
+    <section className="bg-[#111111] p-5 text-white">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-white/60">방금 저장</p>
+          <h2 className="mt-1 text-2xl font-semibold">{session.routineName}</h2>
+          <p className="mt-1 text-sm font-medium text-white/60">{formatDate(session.date)}</p>
+        </div>
+        <button className="h-10 rounded-full bg-white px-4 text-sm font-semibold text-[#111111]" onClick={onEdit}>
+          수정
+        </button>
+      </div>
+      <div className="mt-5 grid grid-cols-3 gap-2">
+        <SmallStudioStat label="세트" value={`${stats.totalSets}`} />
+        <SmallStudioStat label="운동" value={`${stats.exercises}`} />
+        <SmallStudioStat label="시간" value={`${session.durationMinutes}분`} />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {exercises.map(exercise => (
+          <span key={exercise} className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">
+            {exercise}
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
 
