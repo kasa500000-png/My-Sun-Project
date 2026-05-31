@@ -1667,18 +1667,6 @@ function HomeDashboard({
           <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
             마이썬 운동일지
           </h1>
-          <div className="mt-5 max-w-md bg-white/12 p-4 backdrop-blur">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm font-semibold text-white/80">주간 운동 목표</p>
-              <p className="text-sm font-bold text-white">{weekProgress}/{weeklyGoal}회</p>
-            </div>
-            <div className="mt-3 h-2 bg-white/20">
-              <div className="h-full bg-white" style={{ width: `${weeklyGoalPercent}%` }} />
-            </div>
-            <p className="mt-3 text-xs font-medium text-white/75">
-              {weekProgress >= weeklyGoal ? "이번 주 목표를 달성했어요." : `${weeklyGoal - weekProgress}회만 더 기록하면 목표 달성입니다.`}
-            </p>
-          </div>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
             <button className="h-12 rounded-full bg-white px-6 text-base font-medium text-[#111111]" onClick={onStart}>
               운동 기록
@@ -1692,18 +1680,30 @@ function HomeDashboard({
 
       <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[1fr_1fr] md:px-8 md:py-10">
         <div>
-          <div className="mb-6 flex items-end justify-between gap-3">
-            <SectionTitle kicker={summaryRangeLabels[range]} title="운동 요약" />
-            <div className="mb-1 flex rounded-full bg-[#f5f5f5] p-1">
-              {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
-                <button
-                  key={item}
-                  className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#111111] text-white" : "text-[#111111]"}`}
-                  onClick={() => setRange(item)}
-                >
-                  {summaryRangeLabels[item]}
-                </button>
-              ))}
+          <div className="mb-6 grid gap-3">
+            <div className="rounded-2xl bg-[#f5f5f5] px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold text-[#707072]">주간 운동 목표</p>
+                <p className="text-sm font-black text-[#111111]">{weekProgress}/{weeklyGoal}회</p>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e5e5e5]">
+                <div className="h-full rounded-full bg-[#111111]" style={{ width: `${weeklyGoalPercent}%` }} />
+              </div>
+            </div>
+
+            <div className="flex items-end justify-between gap-3">
+              <SectionTitle kicker={summaryRangeLabels[range]} title="운동 요약" />
+              <div className="mb-1 flex rounded-full bg-[#f5f5f5] p-1">
+                {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
+                  <button
+                    key={item}
+                    className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#111111] text-white" : "text-[#111111]"}`}
+                    onClick={() => setRange(item)}
+                  >
+                    {summaryRangeLabels[item]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
