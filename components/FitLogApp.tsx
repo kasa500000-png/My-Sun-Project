@@ -16,7 +16,16 @@ type VolumeType =
   | "bodyweight_or_assist"
   | "bodyweight_or_added"
   | "machine_or_dumbbell"
-  | "dumbbell_or_cable";
+  | "dumbbell_or_cable"
+  | "barbell_or_dumbbell"
+  | "barbell_or_machine"
+  | "smith_machine"
+  | "single_weight"
+  | "weight_or_machine"
+  | "dumbbell_unilateral_lower"
+  | "machine_unilateral"
+  | "cable_unilateral"
+  | "bodyweight_factor_or_added";
 type HistoryRange = "day" | "week" | "month" | "year";
 type BodyFilter = "all" | "upper" | "lower" | "core";
 
@@ -289,7 +298,7 @@ const MUSCLES: Muscle[] = [
   { id: "biceps", name: "이두", group: "팔", color: "#9e9ea0" },
   { id: "triceps", name: "삼두", group: "팔", color: "#4b4b4d" },
   { id: "core", name: "코어", group: "코어", color: "#007d48" },
-  { id: "quads", name: "앞허벅지", group: "하체", color: "#111111" },
+  { id: "quads", name: "대퇴사두", group: "하체", color: "#111111" },
   { id: "adductors", name: "내전근", group: "하체", color: "#707072" },
   { id: "glutes", name: "둔근", group: "하체", color: "#d30005" },
   { id: "abductors", name: "중둔근", group: "하체", color: "#9e9ea0" },
@@ -299,6 +308,7 @@ const MUSCLES: Muscle[] = [
 ];
 
 const UPPER_SUB_TABS = ["전체", "Push", "Pull", "어깨", "팔", "체중운동"];
+const LOWER_SUB_TABS = ["전체", "대퇴사두", "햄스트링", "둔근/힙", "종아리", "체중운동", "머신"];
 
 const UPPER_EXERCISE_IDS = [
   "bench-press",
@@ -323,18 +333,59 @@ const UPPER_EXERCISE_IDS = [
   "overhead-triceps-extension",
 ];
 
+const LOWER_EXERCISE_IDS = [
+  "squat",
+  "leg-press",
+  "leg-extension",
+  "leg-curl",
+  "romanian-deadlift",
+  "hip-thrust",
+  "hip-abduction",
+  "hip-adduction",
+  "bulgarian-split-squat",
+  "lunge",
+  "step-up",
+  "glute-kickback",
+  "cable-kickback",
+  "smith-machine-squat",
+  "goblet-squat",
+  "calf-raise",
+  "hip-bridge",
+  "walking-lunge",
+  "sumo-squat",
+  "back-extension",
+];
+
+function isUpperRoutineTab(routine: { label: string; value: string }) {
+  return routine.value === "상체 밸런스" || routine.label === "상체";
+}
+
+function isLowerRoutineTab(routine: { label: string; value: string }) {
+  return routine.value === "하체 집중" || routine.label === "하체";
+}
+
+function routineSubTabs(routine: { label: string; value: string }) {
+  if (isUpperRoutineTab(routine)) return UPPER_SUB_TABS;
+  if (isLowerRoutineTab(routine)) return LOWER_SUB_TABS;
+  return [];
+}
+
 const EXERCISES: Exercise[] = [
   {
     id: "squat",
     name: "스쿼트",
     category: "하체",
     type: "weight",
-    defaultRestSeconds: 90,
+    defaultRestSeconds: 120,
+    subTabs: ["대퇴사두", "둔근/힙"],
+    detail: "대퇴사두 · 둔근 중심",
+    recordLabel: "바벨 총 중량 × 횟수 × 세트",
+    volumeType: "barbell",
     impacts: [
-      { muscleId: "quads", impactRatio: 0.4 },
+      { muscleId: "quads", impactRatio: 0.45 },
       { muscleId: "glutes", impactRatio: 0.3 },
       { muscleId: "hamstrings", impactRatio: 0.15 },
-      { muscleId: "core", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
     ],
   },
   {
@@ -343,10 +394,62 @@ const EXERCISES: Exercise[] = [
     category: "하체",
     type: "weight",
     defaultRestSeconds: 90,
+    subTabs: ["대퇴사두", "머신"],
+    detail: "대퇴사두 · 둔근 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
     impacts: [
       { muscleId: "quads", impactRatio: 0.5 },
       { muscleId: "glutes", impactRatio: 0.3 },
-      { muscleId: "hamstrings", impactRatio: 0.2 },
+      { muscleId: "hamstrings", impactRatio: 0.15 },
+      { muscleId: "calves", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "leg-extension",
+    name: "레그 익스텐션",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["대퇴사두", "머신"],
+    detail: "대퇴사두 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.95 },
+      { muscleId: "core", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "leg-curl",
+    name: "레그 컬",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["햄스트링", "머신"],
+    detail: "햄스트링 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
+    impacts: [
+      { muscleId: "hamstrings", impactRatio: 0.9 },
+      { muscleId: "calves", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "romanian-deadlift",
+    name: "루마니안 데드리프트",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["햄스트링", "둔근/힙"],
+    detail: "햄스트링 · 둔근 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "barbell_or_dumbbell",
+    impacts: [
+      { muscleId: "hamstrings", impactRatio: 0.4 },
+      { muscleId: "glutes", impactRatio: 0.35 },
+      { muscleId: "back", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
     ],
   },
   {
@@ -355,9 +458,13 @@ const EXERCISES: Exercise[] = [
     category: "하체",
     type: "weight",
     defaultRestSeconds: 90,
+    subTabs: ["둔근/힙"],
+    detail: "둔근 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "barbell_or_machine",
     impacts: [
-      { muscleId: "glutes", impactRatio: 0.7 },
-      { muscleId: "hamstrings", impactRatio: 0.2 },
+      { muscleId: "glutes", impactRatio: 0.75 },
+      { muscleId: "hamstrings", impactRatio: 0.15 },
       { muscleId: "core", impactRatio: 0.1 },
     ],
   },
@@ -367,6 +474,10 @@ const EXERCISES: Exercise[] = [
     category: "하체",
     type: "weight",
     defaultRestSeconds: 60,
+    subTabs: ["둔근/힙", "머신"],
+    detail: "내전근 · 안쪽 허벅지 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
     impacts: [
       { muscleId: "adductors", impactRatio: 0.8 },
       { muscleId: "quads", impactRatio: 0.1 },
@@ -379,10 +490,13 @@ const EXERCISES: Exercise[] = [
     category: "하체",
     type: "weight",
     defaultRestSeconds: 60,
+    subTabs: ["둔근/힙", "머신"],
+    detail: "중둔근 · 측면힙 중심",
+    recordLabel: "머신 중량 × 횟수 × 세트",
+    volumeType: "machine",
     impacts: [
-      { muscleId: "abductors", impactRatio: 0.65 },
-      { muscleId: "glutes", impactRatio: 0.25 },
-      { muscleId: "core", impactRatio: 0.1 },
+      { muscleId: "abductors", impactRatio: 0.8 },
+      { muscleId: "glutes", impactRatio: 0.2 },
     ],
   },
   {
@@ -391,11 +505,199 @@ const EXERCISES: Exercise[] = [
     category: "하체",
     type: "weight",
     defaultRestSeconds: 90,
+    subTabs: ["둔근/힙", "대퇴사두", "체중운동"],
+    detail: "둔근 · 대퇴사두 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 한쪽 횟수 × 세트 × 좌우",
+    volumeType: "dumbbell_unilateral_lower",
     impacts: [
+      { muscleId: "glutes", impactRatio: 0.4 },
       { muscleId: "quads", impactRatio: 0.35 },
+      { muscleId: "hamstrings", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "lunge",
+    name: "런지",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["대퇴사두", "둔근/힙", "체중운동"],
+    detail: "둔근 · 대퇴사두 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 한쪽 횟수 × 세트 × 좌우",
+    volumeType: "dumbbell_unilateral_lower",
+    impacts: [
       { muscleId: "glutes", impactRatio: 0.35 },
+      { muscleId: "quads", impactRatio: 0.35 },
       { muscleId: "hamstrings", impactRatio: 0.2 },
       { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "step-up",
+    name: "스텝업",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["둔근/힙", "대퇴사두", "체중운동"],
+    detail: "둔근 · 대퇴사두 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 한쪽 횟수 × 세트 × 좌우",
+    volumeType: "dumbbell_unilateral_lower",
+    impacts: [
+      { muscleId: "glutes", impactRatio: 0.4 },
+      { muscleId: "quads", impactRatio: 0.35 },
+      { muscleId: "hamstrings", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "glute-kickback",
+    name: "글루트 킥백",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["둔근/힙", "머신"],
+    detail: "둔근 중심",
+    recordLabel: "머신 중량 × 한쪽 횟수 × 세트 × 좌우",
+    volumeType: "machine_unilateral",
+    impacts: [
+      { muscleId: "glutes", impactRatio: 0.8 },
+      { muscleId: "hamstrings", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "cable-kickback",
+    name: "케이블 킥백",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["둔근/힙"],
+    detail: "둔근 중심",
+    recordLabel: "케이블 중량 × 한쪽 횟수 × 세트 × 좌우",
+    volumeType: "cable_unilateral",
+    impacts: [
+      { muscleId: "glutes", impactRatio: 0.8 },
+      { muscleId: "hamstrings", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "smith-machine-squat",
+    name: "스미스머신 스쿼트",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 90,
+    subTabs: ["대퇴사두", "둔근/힙", "머신"],
+    detail: "대퇴사두 · 둔근 중심",
+    recordLabel: "스미스머신 총 중량 × 횟수 × 세트",
+    volumeType: "smith_machine",
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.45 },
+      { muscleId: "glutes", impactRatio: 0.35 },
+      { muscleId: "hamstrings", impactRatio: 0.1 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "goblet-squat",
+    name: "고블릿 스쿼트",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["대퇴사두", "둔근/힙", "체중운동"],
+    detail: "대퇴사두 · 둔근 중심",
+    recordLabel: "양손으로 든 총 중량 × 횟수 × 세트",
+    volumeType: "single_weight",
+    impacts: [
+      { muscleId: "quads", impactRatio: 0.45 },
+      { muscleId: "glutes", impactRatio: 0.3 },
+      { muscleId: "core", impactRatio: 0.15 },
+      { muscleId: "adductors", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "calf-raise",
+    name: "카프 레이즈",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 60,
+    subTabs: ["종아리", "머신"],
+    detail: "종아리 중심",
+    recordLabel: "중량 × 횟수 × 세트",
+    volumeType: "weight_or_machine",
+    impacts: [
+      { muscleId: "calves", impactRatio: 0.95 },
+      { muscleId: "calves", impactRatio: 0.05 },
+    ],
+  },
+  {
+    id: "hip-bridge",
+    name: "힙 브릿지",
+    category: "하체",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["둔근/힙", "체중운동"],
+    detail: "둔근 중심",
+    recordLabel: "체중 × 0.50 × 횟수 × 세트",
+    volumeType: "bodyweight_factor_or_added",
+    bodyweightFactor: 0.5,
+    impacts: [
+      { muscleId: "glutes", impactRatio: 0.75 },
+      { muscleId: "hamstrings", impactRatio: 0.15 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "walking-lunge",
+    name: "워킹 런지",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["대퇴사두", "둔근/힙", "체중운동"],
+    detail: "둔근 · 대퇴사두 중심",
+    recordLabel: "덤벨 한 손 중량 × 2 × 한쪽 횟수 × 세트 × 좌우",
+    volumeType: "dumbbell_unilateral_lower",
+    impacts: [
+      { muscleId: "glutes", impactRatio: 0.35 },
+      { muscleId: "quads", impactRatio: 0.35 },
+      { muscleId: "hamstrings", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "sumo-squat",
+    name: "스모 스쿼트",
+    category: "하체",
+    type: "weight",
+    defaultRestSeconds: 75,
+    subTabs: ["둔근/힙", "대퇴사두", "체중운동"],
+    detail: "둔근 · 내전근 중심",
+    recordLabel: "양손으로 든 총 중량 × 횟수 × 세트",
+    volumeType: "single_weight",
+    impacts: [
+      { muscleId: "glutes", impactRatio: 0.35 },
+      { muscleId: "adductors", impactRatio: 0.3 },
+      { muscleId: "quads", impactRatio: 0.25 },
+      { muscleId: "core", impactRatio: 0.1 },
+    ],
+  },
+  {
+    id: "back-extension",
+    name: "백 익스텐션",
+    category: "하체",
+    type: "bodyweight",
+    defaultRestSeconds: 60,
+    subTabs: ["햄스트링", "둔근/힙"],
+    detail: "둔근 · 햄스트링 · 허리 중심",
+    recordLabel: "체중 × 0.45 × 횟수 × 세트",
+    volumeType: "bodyweight_factor_or_added",
+    bodyweightFactor: 0.45,
+    impacts: [
+      { muscleId: "back", impactRatio: 0.4 },
+      { muscleId: "glutes", impactRatio: 0.35 },
+      { muscleId: "hamstrings", impactRatio: 0.2 },
+      { muscleId: "core", impactRatio: 0.05 },
     ],
   },
   {
@@ -767,7 +1069,7 @@ const ROUTINES = [
     name: "LOWER BODY",
     label: "하체 집중",
     note: "둔근, 허벅지, 유산소까지 가볍게.",
-    exercises: ["squat", "leg-press", "hip-thrust", "hip-adduction", "hip-abduction", "bulgarian-split-squat", "stair-climber", "running"],
+    exercises: LOWER_EXERCISE_IDS,
   },
   {
     name: "UPPER BALANCE",
@@ -792,7 +1094,7 @@ const ROUTINE_TABS = [
   {
     label: "하체",
     value: "하체 집중",
-    exercises: ["squat", "leg-press", "hip-thrust", "hip-adduction", "hip-abduction", "bulgarian-split-squat", "stair-climber", "running"],
+    exercises: LOWER_EXERCISE_IDS,
   },
   {
     label: "코어",
@@ -802,7 +1104,7 @@ const ROUTINE_TABS = [
   {
     label: "전신",
     value: "전신",
-    exercises: ["squat", "push-up", "pull-up", "plank", "ab-slide", "running", "stair-climber"],
+    exercises: ["squat", "lunge", "hip-bridge", "push-up", "pull-up", "plank", "ab-slide", "running", "stair-climber"],
   },
   {
     label: "유산소",
@@ -1020,8 +1322,15 @@ function setVolume(set: SetLog) {
       return weight * 2 * reps;
     case "dumbbell_unilateral":
       return weight * reps * 2;
+    case "dumbbell_unilateral_lower":
+      return weight * 2 * reps * 2;
+    case "machine_unilateral":
+    case "cable_unilateral":
+      return weight * reps * 2;
     case "bodyweight_factor":
       return bodyWeight * (exercise.bodyweightFactor || 1) * reps;
+    case "bodyweight_factor_or_added":
+      return (bodyWeight * (exercise.bodyweightFactor || 1) + weight) * reps;
     case "bodyweight_or_added":
       return (bodyWeight * (exercise.bodyweightFactor || 1) + weight) * reps;
     case "bodyweight_or_assist":
@@ -1981,9 +2290,10 @@ function WorkoutEntryView({
 }) {
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
-  const [upperSubTab, setUpperSubTab] = useState(UPPER_SUB_TABS[0]);
+  const [routineSubTab, setRoutineSubTab] = useState("전체");
   const currentRoutine = ROUTINE_TABS.find(routine => routine.value === routineName || routine.label === routineName) || ROUTINE_TABS[0];
-  const isUpperRoutine = currentRoutine.value === "상체 밸런스" || currentRoutine.label === "상체";
+  const currentSubTabs = routineSubTabs(currentRoutine);
+  const hasSubTabs = currentSubTabs.length > 0;
   const searchQuery = normalizeSearchText(exerciseSearch);
   const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
   const draftByExerciseId = useMemo(() => {
@@ -1995,17 +2305,17 @@ function WorkoutEntryView({
     const routineIds = new Set(currentRoutine.exercises);
     return EXERCISES
       .filter(exercise => routineIds.has(exercise.id))
-      .filter(exercise => !isUpperRoutine || upperSubTab === "전체" || exercise.subTabs?.includes(upperSubTab))
+      .filter(exercise => !hasSubTabs || routineSubTab === "전체" || exercise.subTabs?.includes(routineSubTab))
       .filter(exercise => !searchQuery || exerciseSearchText(exercise).includes(searchQuery))
       .sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)) || a.name.localeCompare(b.name, "ko"));
-  }, [currentRoutine, favoriteSet, isUpperRoutine, searchQuery, upperSubTab]);
+  }, [currentRoutine, favoriteSet, hasSubTabs, routineSubTab, searchQuery]);
   const editingExercise = editingExerciseId ? exerciseById.get(editingExerciseId) : undefined;
   const editingDraft = editingExerciseId ? draftByExerciseId.get(editingExerciseId)?.draft : undefined;
 
   function handleRoutineTab(value: string) {
     setRoutineName(value);
     setExerciseSearch("");
-    setUpperSubTab(UPPER_SUB_TABS[0]);
+    setRoutineSubTab("전체");
     setEditingExerciseId(null);
   }
 
@@ -2058,14 +2368,14 @@ function WorkoutEntryView({
               ))}
             </div>
 
-            {isUpperRoutine && (
+            {hasSubTabs && (
               <div className="flex gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-[#e5e5e5] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {UPPER_SUB_TABS.map(tab => (
+                {currentSubTabs.map(tab => (
                   <button
                     key={tab}
                     type="button"
-                    className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${upperSubTab === tab ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#707072]"}`}
-                    onClick={() => setUpperSubTab(tab)}
+                    className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${routineSubTab === tab ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#707072]"}`}
+                    onClick={() => setRoutineSubTab(tab)}
                   >
                     {tab}
                   </button>
@@ -2206,9 +2516,10 @@ function ExerciseEntryModal({
     ? "강도"
     : exercise.volumeType === "bodyweight_or_assist"
       ? "보조중량(KG)"
-      : exercise.volumeType === "bodyweight_or_added"
+      : exercise.volumeType === "bodyweight_or_added" || exercise.volumeType === "bodyweight_factor_or_added"
         ? "추가중량(KG)"
         : "KG";
+  const isUnilateral = ["dumbbell_unilateral_lower", "machine_unilateral", "cable_unilateral"].includes(exercise.volumeType || "");
   const canSave = parseNumber(reps) > 0;
 
   function handleSave() {
@@ -2264,6 +2575,11 @@ function ExerciseEntryModal({
           <p className="text-xs font-semibold text-[#707072]">
             저장 시 {clampSetCount(setCount)}세트로 계산됩니다.
           </p>
+          {isUnilateral && (
+            <p className="text-xs font-semibold text-[#707072]">
+              편측 운동은 한쪽 반복 횟수를 입력하면 좌우 합산 Volume이 자동 계산됩니다.
+            </p>
+          )}
         </div>
 
         <div className="mt-6 grid grid-cols-[1fr_auto] gap-2">
@@ -2960,7 +3276,7 @@ function ProfileView({
   const [favoriteExerciseIds, setFavoriteExerciseIds] = useState<string[]>(settings.favoriteExerciseIds);
   const [activeModal, setActiveModal] = useState<"profile" | "goal" | "favorites" | null>(null);
   const [favoriteRoutineTab, setFavoriteRoutineTab] = useState(ROUTINE_TABS[0].value);
-  const [favoriteUpperSubTab, setFavoriteUpperSubTab] = useState(UPPER_SUB_TABS[0]);
+  const [favoriteSubTab, setFavoriteSubTab] = useState("전체");
   const [favoriteSearch, setFavoriteSearch] = useState("");
   const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
   const favoritePreview = useMemo(
@@ -2973,16 +3289,17 @@ function ProfileView({
   );
   const genderText = gender === "female" ? "여성" : gender === "male" ? "남성" : gender === "other" ? "기타" : "미입력";
   const favoriteRoutine = ROUTINE_TABS.find(routine => routine.value === favoriteRoutineTab || routine.label === favoriteRoutineTab) || ROUTINE_TABS[0];
-  const isFavoriteUpperRoutine = favoriteRoutine.value === "상체 밸런스" || favoriteRoutine.label === "상체";
+  const favoriteSubTabs = routineSubTabs(favoriteRoutine);
+  const hasFavoriteSubTabs = favoriteSubTabs.length > 0;
   const favoriteSearchQuery = normalizeSearchText(favoriteSearch);
   const visibleFavoriteExercises = useMemo(() => {
     const routineIds = new Set(favoriteRoutine.exercises);
     return EXERCISES
       .filter(exercise => routineIds.has(exercise.id))
-      .filter(exercise => !isFavoriteUpperRoutine || favoriteUpperSubTab === "전체" || exercise.subTabs?.includes(favoriteUpperSubTab))
+      .filter(exercise => !hasFavoriteSubTabs || favoriteSubTab === "전체" || exercise.subTabs?.includes(favoriteSubTab))
       .filter(exercise => !favoriteSearchQuery || exerciseSearchText(exercise).includes(favoriteSearchQuery))
       .sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)) || a.name.localeCompare(b.name, "ko"));
-  }, [favoriteRoutine, favoriteSet, favoriteSearchQuery, favoriteUpperSubTab, isFavoriteUpperRoutine]);
+  }, [favoriteRoutine, favoriteSet, favoriteSearchQuery, favoriteSubTab, hasFavoriteSubTabs]);
 
   useEffect(() => {
     syncLocalFromSettings();
@@ -3003,7 +3320,7 @@ function ProfileView({
 
   function handleFavoriteRoutineTab(value: string) {
     setFavoriteRoutineTab(value);
-    setFavoriteUpperSubTab(UPPER_SUB_TABS[0]);
+    setFavoriteSubTab("전체");
   }
 
   function toggleFavorite(exerciseId: string) {
@@ -3147,14 +3464,14 @@ function ProfileView({
                     ))}
                   </div>
 
-                  {isFavoriteUpperRoutine && (
+                  {hasFavoriteSubTabs && (
                     <div className="flex gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-[#e5e5e5] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                      {UPPER_SUB_TABS.map(tab => (
+                      {favoriteSubTabs.map(tab => (
                         <button
                           key={tab}
                           type="button"
-                          className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${favoriteUpperSubTab === tab ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#707072]"}`}
-                          onClick={() => setFavoriteUpperSubTab(tab)}
+                          className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${favoriteSubTab === tab ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#707072]"}`}
+                          onClick={() => setFavoriteSubTab(tab)}
                         >
                           {tab}
                         </button>
