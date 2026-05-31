@@ -483,13 +483,13 @@ const ROUTINES = [
     name: "LOWER BODY",
     label: "하체 집중",
     note: "둔근, 허벅지, 유산소까지 가볍게.",
-    exercises: ["squat", "leg-press", "hip-thrust", "hip-adduction", "hip-abduction", "bulgarian-split-squat", "stair-climber"],
+    exercises: ["squat", "leg-press", "hip-thrust", "hip-adduction", "hip-abduction", "bulgarian-split-squat", "stair-climber", "running"],
   },
   {
     name: "UPPER BALANCE",
     label: "상체 밸런스",
     note: "등, 가슴, 어깨를 균형 있게.",
-    exercises: ["lat-pulldown", "pull-up", "seated-row", "bench-press", "shoulder-press"],
+    exercises: ["lat-pulldown", "pull-up", "seated-row", "bench-press", "push-up", "shoulder-press", "lateral-raise"],
   },
   {
     name: "CORE RESET",
