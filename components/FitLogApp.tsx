@@ -2959,6 +2959,9 @@ function ProfileView({
   const [weightKg, setWeightKg] = useState(settings.weightKg == null ? "" : String(settings.weightKg));
   const [favoriteExerciseIds, setFavoriteExerciseIds] = useState<string[]>(settings.favoriteExerciseIds);
   const [activeModal, setActiveModal] = useState<"profile" | "goal" | "favorites" | null>(null);
+  const [favoriteRoutineTab, setFavoriteRoutineTab] = useState(ROUTINE_TABS[0].value);
+  const [favoriteUpperSubTab, setFavoriteUpperSubTab] = useState(UPPER_SUB_TABS[0]);
+  const [favoriteSearch, setFavoriteSearch] = useState("");
   const favoriteSet = useMemo(() => new Set(favoriteExerciseIds), [favoriteExerciseIds]);
   const favoritePreview = useMemo(
     () => favoriteExerciseIds
@@ -2969,6 +2972,17 @@ function ProfileView({
     [favoriteExerciseIds],
   );
   const genderText = gender === "female" ? "여성" : gender === "male" ? "남성" : gender === "other" ? "기타" : "미입력";
+  const favoriteRoutine = ROUTINE_TABS.find(routine => routine.value === favoriteRoutineTab || routine.label === favoriteRoutineTab) || ROUTINE_TABS[0];
+  const isFavoriteUpperRoutine = favoriteRoutine.value === "상체 밸런스" || favoriteRoutine.label === "상체";
+  const favoriteSearchQuery = normalizeSearchText(favoriteSearch);
+  const visibleFavoriteExercises = useMemo(() => {
+    const routineIds = new Set(favoriteRoutine.exercises);
+    return EXERCISES
+      .filter(exercise => routineIds.has(exercise.id))
+      .filter(exercise => !isFavoriteUpperRoutine || favoriteUpperSubTab === "전체" || exercise.subTabs?.includes(favoriteUpperSubTab))
+      .filter(exercise => !favoriteSearchQuery || exerciseSearchText(exercise).includes(favoriteSearchQuery))
+      .sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)) || a.name.localeCompare(b.name, "ko"));
+  }, [favoriteRoutine, favoriteSet, favoriteSearchQuery, favoriteUpperSubTab, isFavoriteUpperRoutine]);
 
   useEffect(() => {
     syncLocalFromSettings();
@@ -2985,6 +2999,11 @@ function ProfileView({
   function closeModal() {
     syncLocalFromSettings();
     setActiveModal(null);
+  }
+
+  function handleFavoriteRoutineTab(value: string) {
+    setFavoriteRoutineTab(value);
+    setFavoriteUpperSubTab(UPPER_SUB_TABS[0]);
   }
 
   function toggleFavorite(exerciseId: string) {
@@ -3105,8 +3124,52 @@ function ProfileView({
                 <p className="text-sm leading-6 text-[#707072]">
                   선택한 운동은 기록 탭 운동 목록 상단에 고정되고 즐겨찾기 표시가 붙습니다.
                 </p>
-                <div className="mt-4 grid max-h-[58svh] gap-2 overflow-y-auto pr-1">
-                  {EXERCISES.map(exercise => {
+                <div className="mt-4 grid gap-3">
+                  <Field label="검색">
+                    <input
+                      className="nike-input h-12 min-w-0 bg-white"
+                      value={favoriteSearch}
+                      onChange={event => setFavoriteSearch(event.target.value)}
+                      placeholder="운동 이름을 검색하세요"
+                    />
+                  </Field>
+
+                  <div className="grid grid-cols-5 gap-1 rounded-full bg-[#f5f5f5] p-1">
+                    {ROUTINE_TABS.map(routine => (
+                      <button
+                        key={routine.label}
+                        type="button"
+                        className={`h-10 rounded-full text-xs font-semibold ${routine.value === favoriteRoutine.value ? "bg-[#111111] text-white" : "text-[#707072]"}`}
+                        onClick={() => handleFavoriteRoutineTab(routine.value)}
+                      >
+                        {routine.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {isFavoriteUpperRoutine && (
+                    <div className="flex gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-[#e5e5e5] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {UPPER_SUB_TABS.map(tab => (
+                        <button
+                          key={tab}
+                          type="button"
+                          className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${favoriteUpperSubTab === tab ? "bg-[#111111] text-white" : "bg-[#f5f5f5] text-[#707072]"}`}
+                          onClick={() => setFavoriteUpperSubTab(tab)}
+                        >
+                          {tab}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-medium text-[#707072]">{favoriteSearch ? "검색 결과" : `${favoriteRoutine.label} 운동 목록`}</p>
+                    <span className="text-xs font-semibold text-[#707072]">{visibleFavoriteExercises.length}개</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid max-h-[48svh] gap-2 overflow-y-auto pr-1">
+                  {visibleFavoriteExercises.map(exercise => {
                     const selected = favoriteSet.has(exercise.id);
                     return (
                       <button
@@ -3125,6 +3188,11 @@ function ProfileView({
                       </button>
                     );
                   })}
+                  {visibleFavoriteExercises.length === 0 && (
+                    <div className="bg-[#f5f5f5] p-4 text-sm font-semibold text-[#707072]">
+                      검색 결과가 없습니다.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
