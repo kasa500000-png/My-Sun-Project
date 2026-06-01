@@ -3150,7 +3150,7 @@ function TopBar({
   return (
     <header className="sticky top-0 z-30 border-b border-[#eadfda] bg-[#fffdfb]/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 md:h-16 md:px-8">
-        <button className="text-base font-black md:text-xl" onClick={() => setActiveTab("home")}>
+        <button className="text-base font-bold md:text-xl" onClick={() => setActiveTab("home")}>
           마이썬 운동일지
         </button>
         <div className="flex items-center gap-2">
@@ -3266,7 +3266,7 @@ function HomeDashboard({
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/70 via-[#242124]/12 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
         <div className="relative mx-auto flex min-h-[58svh] max-w-[1440px] flex-col justify-end px-4 pb-6 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
           <p className="text-sm font-semibold text-[#fffdfb]/80">오늘도 천천히, 꾸준히</p>
-          <h1 className="mt-3 max-w-[720px] text-[40px] font-extrabold leading-[0.98] md:text-[82px]">
+          <h1 className="mt-3 max-w-[720px] text-[38px] font-bold leading-[0.98] md:text-[82px]">
             마이썬 운동일지
           </h1>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
@@ -3286,7 +3286,7 @@ function HomeDashboard({
             <div className="border-y border-[#eadfda] py-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold text-[#7a7470]">주간 운동 목표</p>
-                <p className="text-sm font-black text-[#242124]">{weekProgress}/{weeklyGoal}회</p>
+                <p className="text-sm font-bold text-[#242124]">{weekProgress}/{weeklyGoal}회</p>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eadfda]">
                 <div className="h-full rounded-full bg-[#242124]" style={{ width: `${weeklyGoalPercent}%` }} />
@@ -3312,11 +3312,11 @@ function HomeDashboard({
           <div className="grid grid-cols-2 gap-3">
             <button className="rounded-[18px] bg-[#faf4f1] p-5 text-left ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 횟수</p>
-              <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.count}회`}</p>
+              <p className="mt-4 text-[34px] font-semibold leading-none">{loading ? "-" : `${summary.count}회`}</p>
             </button>
             <button className="rounded-[18px] bg-[#faf4f1] p-5 text-left ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 시간</p>
-              <p className="mt-4 text-4xl font-semibold leading-none">{loading ? "-" : `${summary.minutes}분`}</p>
+              <p className="mt-4 text-[34px] font-semibold leading-none">{loading ? "-" : `${summary.minutes}분`}</p>
             </button>
             <button className="col-span-2 rounded-[18px] bg-[#faf4f1] p-5 text-left ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 밸런스</p>
@@ -3445,7 +3445,7 @@ function HomeView({
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/70 via-[#242124]/12 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
         <div className="relative mx-auto flex min-h-[72svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
           <p className="text-sm font-semibold text-[#fffdfb]/80">오늘도 천천히, 꾸준히</p>
-          <h1 className="mt-3 max-w-[720px] text-[44px] font-black leading-[0.95] md:text-[86px]">
+          <h1 className="mt-3 max-w-[720px] text-[40px] font-bold leading-[0.95] md:text-[86px]">
             마이썬 운동일지
           </h1>
           <p className="mt-4 max-w-sm text-base leading-7 text-[#fffdfb]/80">
@@ -3717,7 +3717,7 @@ function WorkoutEntryView({
                   {saved && <span className="absolute inset-y-0 left-0 w-1 bg-[#2f8c63]" />}
                   <span className="min-w-0 pl-1">
                     <span className="flex min-w-0 items-center gap-2">
-                      {favorite && <b className="shrink-0 rounded-full bg-[#edf8f1] px-2 py-0.5 text-[10px] font-black text-[#2f8c63]">즐겨찾기</b>}
+                      {favorite && <b className="shrink-0 rounded-full bg-[#edf8f1] px-2 py-0.5 text-[10px] font-bold text-[#2f8c63]">즐겨찾기</b>}
                       <span className="truncate text-base font-semibold">{exercise.name}</span>
                     </span>
                     <span className={`mt-1 block truncate text-xs font-semibold ${UI.textMuted}`}>
@@ -3725,7 +3725,7 @@ function WorkoutEntryView({
                     </span>
                     {saved && <span className="mt-1 block truncate text-xs font-semibold text-[#2f8c63]">{draftExerciseSummary(saved)}</span>}
                   </span>
-                  <span className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${saved ? "bg-[#fffdfb] text-[#2f8c63]" : "bg-[#242124] text-[#fffdfb]"}`}>
+                  <span className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold ${saved ? "bg-[#fffdfb] text-[#2f8c63]" : "bg-[#242124] text-[#fffdfb]"}`}>
                     {saved ? "수정" : "입력"}
                   </span>
                 </button>
@@ -4175,7 +4175,7 @@ function WorkoutView({
                             {exercise.category} / 휴식 {exercise.defaultRestSeconds}초
                           </span>
                         </span>
-                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black ${selected ? "bg-[#fffdfb] text-[#242124]" : "bg-[#fffdfb] text-[#7a7470]"}`}>
+                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${selected ? "bg-[#fffdfb] text-[#242124]" : "bg-[#fffdfb] text-[#7a7470]"}`}>
                           {selected ? "✓" : "+"}
                         </span>
                       </button>
@@ -5109,7 +5109,7 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
         <div className="grid h-32 w-32 place-items-center rounded-full bg-[#fffdfb] text-center">
           <div>
             <p className="text-sm font-medium text-[#7a7470]">합계</p>
-            <p className="text-3xl font-medium">{Math.round(total)}</p>
+            <p className="text-[30px] font-medium">{Math.round(total)}</p>
           </div>
         </div>
       </div>
@@ -5160,7 +5160,7 @@ function MetricGrid({ items }: { items: Array<{ label: string; value: string }> 
       {items.map(item => (
         <div key={item.label} className={`${UI.surface} rounded-[14px] p-4`}>
           <p className={`text-sm font-medium ${UI.textMuted}`}>{item.label}</p>
-          <p className="mt-4 text-3xl font-semibold leading-none">{item.value}</p>
+          <p className="mt-4 text-[30px] font-semibold leading-none">{item.value}</p>
         </div>
       ))}
     </div>
@@ -5181,7 +5181,7 @@ function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="mb-6">
       <p className={`text-sm font-medium ${UI.textMuted}`}>{kicker}</p>
-      <h1 className="mt-1 text-[34px] font-extrabold leading-tight md:text-6xl">{title}</h1>
+      <h1 className="mt-1 text-[32px] font-bold leading-tight md:text-6xl">{title}</h1>
     </div>
   );
 }

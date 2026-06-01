@@ -23,19 +23,23 @@ colors:
   blush-ink: "#8f4b5a"
 
 typography:
+  font-stack:
+    primary: "Pretendard Variable"
+    fallback: "Pretendard, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, system-ui, sans-serif"
+    rule: "Korean-first font stack. Do not let Inter lead the stack because Korean and numeric rhythm becomes inconsistent."
   screen-title:
     fontSize: 38px
-    fontWeight: 850
+    fontWeight: 700
     lineHeight: 1.02
     letterSpacing: 0
   section-title:
     fontSize: 24px
-    fontWeight: 760
+    fontWeight: 650
     lineHeight: 1.22
     letterSpacing: 0
   row-title:
     fontSize: 16px
-    fontWeight: 720
+    fontWeight: 600
     lineHeight: 1.35
     letterSpacing: 0
   body:
@@ -45,9 +49,12 @@ typography:
     letterSpacing: 0
   caption:
     fontSize: 12px
-    fontWeight: 620
+    fontWeight: 600
     lineHeight: 1.5
     letterSpacing: 0
+  numeric:
+    fontVariantNumeric: tabular-nums
+    usage: "Stats, percentages, duration, set count, reps, and volume values."
 
 spacing:
   xs: 4px
@@ -144,4 +151,4 @@ Home should motivate without covering the photo. Goals appear as a thin progress
 
 ## Typography Rules
 
-Screen titles can be strong, but not shouted. Keep headings slightly smaller and less heavy than the earlier Nike-style version. Compact panels, rows, tabs, and bottom navigation use 12-16px typography with 0 letter spacing.
+Use Pretendard Variable as the primary UI font. Screen titles can be confident, but not shouted: avoid `font-black`; use bold or semibold depending on hierarchy. Numeric values use tabular numbers so workout counts, time, percentages, and set values align cleanly in cards and lists. Compact panels, rows, tabs, and bottom navigation use 12-16px typography with 0 letter spacing.

@@ -119,7 +119,7 @@ export default function LoginPage() {
           <form className="w-full max-w-md rounded-[22px] bg-[#fffdfb] md:p-2" onSubmit={submit}>
             <div className="mb-8">
               <p className="text-sm font-medium text-[#7a7470]">마이썬 운동 일지</p>
-              <h1 className="mt-2 text-4xl font-semibold leading-tight">
+              <h1 className="mt-2 text-[34px] font-semibold leading-tight">
                 {mode === "login" ? "로그인" : "회원가입"}
               </h1>
             </div>
