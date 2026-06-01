@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 const UI = {
@@ -2302,13 +2302,55 @@ const ROUTINE_TABS = [
   },
 ];
 
-const tabItems: Array<{ id: Tab; label: string }> = [
-  { id: "home", label: "홈" },
-  { id: "train", label: "기록" },
-  { id: "log", label: "일지" },
-  { id: "balance", label: "분석" },
-  { id: "member", label: "내정보" },
+const tabItems: Array<{ id: Tab; label: string; icon: SoftIconName }> = [
+  { id: "home", label: "홈", icon: "home" },
+  { id: "train", label: "기록", icon: "record" },
+  { id: "log", label: "일지", icon: "log" },
+  { id: "balance", label: "분석", icon: "analysis" },
+  { id: "member", label: "내정보", icon: "member" },
 ];
+
+type SoftIconName =
+  | "home"
+  | "record"
+  | "log"
+  | "analysis"
+  | "member"
+  | "memo"
+  | "save"
+  | "edit"
+  | "check"
+  | "search";
+
+const softIconPaths: Record<SoftIconName, ReactNode> = {
+  home: <><path d="M4 10.5 12 4l8 6.5" /><path d="M6.5 10v9h11v-9" /><path d="M10 19v-5h4v5" /></>,
+  record: <><path d="M7 4.5h7l3 3V19H7z" /><path d="M13.5 4.5v4h4" /><path d="M9.5 13h5" /><path d="M9.5 16h5" /></>,
+  log: <><path d="M7 4.5h10" /><path d="M7 9h10" /><path d="M7 13.5h7" /><path d="M6 20h12" /><path d="M5 4.5v15" /></>,
+  analysis: <><path d="M5 18V9" /><path d="M12 18V5" /><path d="M19 18v-7" /><path d="M4 19h16" /></>,
+  member: <><path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
+  memo: <><path d="M5 5h14v12H8l-3 3z" /><path d="M8 9h8" /><path d="M8 12.5h6" /></>,
+  save: <><path d="M5 4.5h11l3 3V19H5z" /><path d="M8 4.5v5h7" /><path d="M8 16h8" /></>,
+  edit: <><path d="M4.5 19.5l4.5-1 9-9a2.1 2.1 0 0 0-3-3l-9 9z" /><path d="m13.5 8.5 2 2" /></>,
+  check: <path d="m5 12 4 4 10-10" />,
+  search: <><circle cx="11" cy="11" r="5.5" /><path d="m16 16 3.5 3.5" /></>,
+};
+
+function SoftIcon({ name, className = "h-4 w-4" }: { name: SoftIconName; className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {softIconPaths[name]}
+    </svg>
+  );
+}
 
 function today() {
   const date = new Date();
@@ -3636,8 +3678,10 @@ function WorkoutEntryView({
 
         <div className="sticky top-[57px] z-20 mb-4 flex items-center justify-between gap-3 rounded-[18px] border border-[#eadfda] bg-[#fffdfb]/95 px-4 py-3 shadow-[0_10px_28px_rgba(58,48,50,0.08)] backdrop-blur">
           <div className="min-w-0">
-            <p className={`text-xs font-semibold ${UI.textMuted}`}>운동 추가</p>
-            <p className="mt-0.5 truncate text-base font-semibold">{draftSets.length}개 운동 입력 중</p>
+            <p className={`text-xs font-semibold ${UI.textMuted}`}>오늘 담은 운동</p>
+            <p className="mt-0.5 truncate text-base font-semibold">
+              {draftSets.length > 0 ? `${draftSets.length}개 운동을 담았어요` : "운동을 선택해 오늘 루틴을 만들어요"}
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button
@@ -3645,7 +3689,10 @@ function WorkoutEntryView({
               className={`h-9 px-3 text-xs ${draftMemo.trim() ? `${UI.secondaryButton} ${UI.surfaceActive} ${UI.successText}` : UI.secondaryButton}`}
               onClick={() => setMemoModalOpen(true)}
             >
-              {draftMemo.trim() ? "메모 수정" : "메모"}
+              <span className="inline-flex items-center gap-1.5">
+                <SoftIcon name="memo" className="h-3.5 w-3.5" />
+                <span>{draftMemo.trim() ? "메모 수정" : "메모"}</span>
+              </span>
             </button>
             <button
               type="button"
@@ -3653,18 +3700,21 @@ function WorkoutEntryView({
               onClick={finishWorkout}
               disabled={saving}
             >
-              {saving ? "저장 중" : editingSessionId ? "수정 저장" : "저장"}
+              <span className="inline-flex items-center gap-1.5">
+                <SoftIcon name="save" className="h-3.5 w-3.5" />
+                <span>{saving ? "저장 중" : editingSessionId ? "수정 저장" : "저장"}</span>
+              </span>
             </button>
           </div>
         </div>
 
         <div className="grid gap-3">
-          <Field label="검색">
+          <Field label="운동 검색">
             <input
               className="nike-input h-12 min-w-0 bg-[#faf4f1]"
               value={exerciseSearch}
               onChange={event => setExerciseSearch(event.target.value)}
-              placeholder="운동 이름을 검색해 주세요."
+              placeholder="운동 이름을 검색해요"
             />
           </Field>
 
@@ -3707,6 +3757,7 @@ function WorkoutEntryView({
               const favorite = favoriteSet.has(exercise.id);
               const primaryPart = exercise.subTabs?.[0] || exercise.detail || exercise.category;
               const secondaryPart = exercise.subTabs?.[1] ? ` · ${exercise.subTabs[1]}` : "";
+              const partLabel = `${exercise.category} · ${primaryPart}${secondaryPart}`;
               return (
                 <button
                   key={exercise.id}
@@ -3717,16 +3768,23 @@ function WorkoutEntryView({
                   {saved && <span className="absolute inset-y-0 left-0 w-1 bg-[#2f8c63]" />}
                   <span className="min-w-0 pl-1">
                     <span className="flex min-w-0 items-center gap-2">
-                      {favorite && <b className="shrink-0 rounded-full bg-[#edf8f1] px-2 py-0.5 text-[10px] font-bold text-[#2f8c63]">즐겨찾기</b>}
+                      {favorite && <b className="shrink-0 rounded-full bg-[#edf8f1] px-2 py-0.5 text-[10px] font-bold text-[#2f8c63]">자주 하는 운동</b>}
                       <span className="truncate text-base font-semibold">{exercise.name}</span>
                     </span>
-                    <span className={`mt-1 block truncate text-xs font-semibold ${UI.textMuted}`}>
-                      {exercise.category} · {primaryPart}{secondaryPart}
+                    <span className={`mt-2 flex flex-wrap items-center gap-1.5 text-xs font-medium ${UI.textMuted}`}>
+                      <span className="truncate">{partLabel}</span>
+                      <span className="rounded-full bg-[#faf4f1] px-2 py-0.5">휴식 {exercise.defaultRestSeconds}초</span>
                     </span>
-                    {saved && <span className="mt-1 block truncate text-xs font-semibold text-[#2f8c63]">{draftExerciseSummary(saved)}</span>}
+                    {saved && (
+                      <span className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-[#fffdfb] px-2.5 py-1 text-xs font-semibold text-[#2f8c63] ring-1 ring-[#b9dfc5]">
+                        <SoftIcon name="check" className="h-3.5 w-3.5" />
+                        {draftExerciseSummary(saved)}
+                      </span>
+                    )}
                   </span>
-                  <span className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold ${saved ? "bg-[#fffdfb] text-[#2f8c63]" : "bg-[#242124] text-[#fffdfb]"}`}>
-                    {saved ? "수정" : "입력"}
+                  <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold ${saved ? "bg-[#fffdfb] text-[#2f8c63]" : "bg-[#242124] text-[#fffdfb]"}`}>
+                    <SoftIcon name={saved ? "edit" : "record"} className="h-3.5 w-3.5" />
+                    <span>{saved ? "수정" : "입력"}</span>
                   </span>
                 </button>
               );
@@ -3734,7 +3792,7 @@ function WorkoutEntryView({
 
             {visibleExercises.length === 0 && (
               <div className={`${UI.surface} rounded-[14px] p-4 text-sm font-semibold ${UI.textMuted}`}>
-                검색 결과가 없어요.
+                검색 결과가 없어요. 다른 이름으로 찾아보세요.
               </div>
             )}
           </div>
@@ -3927,13 +3985,13 @@ function ExerciseEntryModal({
             <div className={`grid gap-3 p-4 ${UI.surface}`}>
               {exercise.recordLabel && (
                 <div>
-                  <p className={`text-xs font-semibold ${UI.textMuted}`}>기록 방식</p>
-                  <p className="mt-1 text-sm font-semibold leading-5 text-[#242124]">{exercise.recordLabel}</p>
+                  <p className={`text-xs font-semibold ${UI.textMuted}`}>이렇게 기록해요</p>
+                  <p className="mt-1 text-sm font-medium leading-5 text-[#242124]">{exercise.recordLabel}</p>
                 </div>
               )}
               <div>
-                <p className={`text-xs font-semibold ${UI.textMuted}`}>주요 자극</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-[#242124]">{exerciseImpactSummary(exercise)}</p>
+                <p className={`text-xs font-semibold ${UI.textMuted}`}>자극 부위</p>
+                <p className="mt-1 text-sm font-medium leading-6 text-[#242124]">{exerciseImpactSummary(exercise)}</p>
               </div>
             </div>
 
@@ -5224,10 +5282,11 @@ function MobileTabBar({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTa
         {tabItems.map(tab => (
           <button
             key={tab.id}
-            className={`h-11 rounded-full text-[11px] font-semibold ${activeTab === tab.id ? "bg-[#242124] text-[#fffdfb]" : "bg-[#faf4f1] text-[#4b4541]"}`}
+            className={`flex h-12 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-semibold transition ${activeTab === tab.id ? "bg-[#242124] text-[#fffdfb]" : "bg-[#faf4f1] text-[#4b4541]"}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            {tab.label}
+            <SoftIcon name={tab.icon} className="h-4 w-4" />
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>

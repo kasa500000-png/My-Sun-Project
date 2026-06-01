@@ -152,3 +152,11 @@ Home should motivate without covering the photo. Goals appear as a thin progress
 ## Typography Rules
 
 Use Pretendard Variable as the primary UI font. Screen titles can be confident, but not shouted: avoid `font-black`; use bold or semibold depending on hierarchy. Numeric values use tabular numbers so workout counts, time, percentages, and set values align cleanly in cards and lists. Compact panels, rows, tabs, and bottom navigation use 12-16px typography with 0 letter spacing.
+
+
+## Copy And Icon Rules
+
+- Korean microcopy should be short, direct, and supportive. Avoid technical wording in primary actions.
+- Icons are used as secondary cues beside text labels, especially in bottom navigation and compact action buttons.
+- Exercise list cards should prioritize name, body-part context, rest time, and input state. Long formulas stay inside the entry modal.
+- Saved exercise states use soft green emphasis and a clear check cue so selected items remain visible while moving across routine tabs.
