@@ -58,12 +58,38 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    if (mode === "login") {
+    try {
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          setMessage(authMessage(error.message));
+          return;
+        }
+
+        window.location.href = "/";
+        return;
+      }
+
+      const signupRes = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const signupData = await signupRes.json().catch(() => ({}));
+
+      if (!signupRes.ok) {
+        setMessage(signupData.error || "회원가입 처리 중 문제가 발생했습니다.");
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      setLoading(false);
 
       if (error) {
         setMessage(authMessage(error.message));
@@ -71,34 +97,11 @@ export default function LoginPage() {
       }
 
       window.location.href = "/";
-      return;
-    }
-
-    const signupRes = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const signupData = await signupRes.json().catch(() => ({}));
-
-    if (!signupRes.ok) {
+    } catch {
+      setMessage("네트워크 연결을 확인한 뒤 다시 시도해 주세요.");
+    } finally {
       setLoading(false);
-      setMessage(signupData.error || "회원가입 처리 중 문제가 발생했습니다.");
-      return;
     }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
-
-    if (error) {
-      setMessage(authMessage(error.message));
-      return;
-    }
-
-    window.location.href = "/";
   }
 
   return (
@@ -107,7 +110,7 @@ export default function LoginPage() {
         <section className="relative min-h-[36vh] overflow-hidden bg-[#242124] md:min-h-screen">
           <div
             className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
-            style={{ backgroundImage: "url('/images/mysun-login-hero.jpg')" }}
+            style={{ backgroundImage: "image-set(url('/images/mysun-login-hero.webp') type('image/webp'), url('/images/mysun-login-hero.jpg') type('image/jpeg'))" }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/62 via-[#242124]/10 to-transparent md:bg-gradient-to-r md:from-[#242124]/56 md:via-[#242124]/10" />
           <div className="relative flex min-h-[36vh] flex-col justify-end p-6 text-[#fffdfb] md:min-h-screen md:p-10">
@@ -186,12 +189,12 @@ export default function LoginPage() {
               )}
             </div>
 
-            <button className="mt-6 h-12 w-full rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb] shadow-[0_10px_24px_rgba(58,48,50,0.14)] disabled:opacity-50" disabled={loading}>
-              {loading ? "처리 중..." : mode === "login" ? "로그인" : "회원가입"}
+            <button className="mt-6 h-12 w-full rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb] shadow-[0_10px_24px_rgba(58,48,50,0.14)] disabled:opacity-50" disabled={loading} aria-busy={loading}>
+              {loading ? "처리 중" : mode === "login" ? "로그인" : "회원가입"}
             </button>
 
             {message && (
-              <p className="mt-5 rounded-[14px] bg-[#faf4f1] p-4 text-sm font-medium leading-6 text-[#242124] ring-1 ring-[#eadfda]">
+              <p className="mt-5 rounded-[14px] bg-[#faf4f1] p-4 text-sm font-medium leading-6 text-[#242124] ring-1 ring-[#eadfda]" role="alert">
                 {message}
               </p>
             )}

@@ -160,3 +160,12 @@ Use Pretendard Variable as the primary UI font. Screen titles can be confident, 
 - Icons are used as secondary cues beside text labels, especially in bottom navigation and compact action buttons.
 - Exercise list cards should prioritize name, body-part context, rest time, and input state. Long formulas stay inside the entry modal.
 - Saved exercise states use soft green emphasis and a clear check cue so selected items remain visible while moving across routine tabs.
+
+
+## Mobile PWA Quality Rules
+
+- All primary taps should have at least a 44px touch target and immediate pressed feedback.
+- Network failures should never expose raw database or server messages to users. Show a short Korean recovery action instead.
+- Destructive actions require confirmation before data is removed.
+- PWA assets must include a manifest, 192px and 512px icons, portrait orientation, and a standalone display mode.
+- Heavy hero images should prefer WebP with JPG fallback. Secondary muscle-card images should lazy-load.

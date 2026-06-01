@@ -47,10 +47,19 @@ function isMissingTable(error: any) {
   return error?.code === "42P01" || String(error?.message || "").includes("fit_user_settings");
 }
 
+function userError(message: string, status = 400) {
+  return NextResponse.json({ error: message }, { status });
+}
+
+function serverError(error: unknown, fallback: string) {
+  console.error("[fit-settings]", error);
+  return NextResponse.json({ error: fallback }, { status: 500 });
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("user_id") || "";
-  if (!userId) return NextResponse.json({ error: "user_id required" }, { status: 400 });
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
 
   const sb = getServiceClient();
   const { data, error } = await sb
@@ -61,7 +70,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     if (isMissingTable(error)) return NextResponse.json({ settings: DEFAULT_SETTINGS, setupRequired: true });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error, "내 정보 설정을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
   }
 
   return NextResponse.json({ settings: data ? mapSettings(data) : DEFAULT_SETTINGS });
@@ -70,7 +79,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const userId = String(body.user_id || "");
-  if (!userId) return NextResponse.json({ error: "user_id required" }, { status: 400 });
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
 
   const payload = {
     user_id: userId,
@@ -91,9 +100,9 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     if (isMissingTable(error)) {
-      return NextResponse.json({ error: "fit_user_settings table is missing. Run supabase/migration-fit-log.sql first." }, { status: 500 });
+      return userError("내 정보 저장 테이블이 아직 준비되지 않았어요. 관리자에게 설정 확인을 요청해 주세요.", 500);
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error, "내 정보 설정 저장에 실패했어요. 잠시 후 다시 시도해 주세요.");
   }
 
   return NextResponse.json({ settings: mapSettings(data) });

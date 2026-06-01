@@ -2864,11 +2864,23 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [savingSettings, setSavingSettings] = useState(false);
   const [toast, setToast] = useState("");
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     void loadSessions();
     void loadSettings();
   }, [userId]);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const updateOnline = () => setIsOnline(navigator.onLine);
+    window.addEventListener("online", updateOnline);
+    window.addEventListener("offline", updateOnline);
+    return () => {
+      window.removeEventListener("online", updateOnline);
+      window.removeEventListener("offline", updateOnline);
+    };
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -2959,6 +2971,11 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }
 
   async function saveSettings(nextSettings: UserSettings) {
+    if (!isOnline) {
+      setToast("인터넷 연결을 확인한 뒤 다시 저장해 주세요.");
+      return;
+    }
+
     const normalized = {
       weeklyGoal: clampWeeklyGoal(nextSettings.weeklyGoal),
       favoriteExerciseIds: sanitizeExerciseIds(nextSettings.favoriteExerciseIds),
@@ -3023,6 +3040,13 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }
 
   async function finishWorkout() {
+    if (saving) return;
+
+    if (!isOnline) {
+      setToast("인터넷 연결을 확인한 뒤 다시 저장해 주세요.");
+      return;
+    }
+
     const validSets = expandDraftSets(draftSets, `${Date.now()}`)
       .filter(set => (set.durationSeconds || 0) > 0 || (set.reps || 0) > 0);
 
@@ -3067,18 +3091,27 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }
 
   async function deleteSession(id: string) {
-    const res = await fetch(`/api/fit-log?id=${encodeURIComponent(id)}&user_id=${encodeURIComponent(userId)}`, {
-      method: "DELETE",
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setToast(data.error || "기록 삭제에 실패했어요.");
+    if (!isOnline) {
+      setToast("인터넷 연결을 확인한 뒤 다시 삭제해 주세요.");
       return;
     }
-    setSessions(items => items.filter(item => item.id !== id));
-    if (lastSavedSession?.id === id) setLastSavedSession(null);
-    if (editingSessionId === id) setEditingSessionId(null);
-    setToast("기록을 삭제했어요.");
+
+    try {
+      const res = await fetch(`/api/fit-log?id=${encodeURIComponent(id)}&user_id=${encodeURIComponent(userId)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setToast(data.error || "기록 삭제에 실패했어요.");
+        return;
+      }
+      setSessions(items => items.filter(item => item.id !== id));
+      if (lastSavedSession?.id === id) setLastSavedSession(null);
+      if (editingSessionId === id) setEditingSessionId(null);
+      setToast("기록을 삭제했어요.");
+    } catch {
+      setToast("네트워크 문제로 기록을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   function editSession(session: WorkoutSession) {
@@ -3094,14 +3127,23 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }
 
   async function signOut() {
-    const supabase = createSupabaseBrowser();
-    await supabase?.auth.signOut();
-    window.location.href = "/login";
+    try {
+      const supabase = createSupabaseBrowser();
+      await supabase?.auth.signOut();
+    } finally {
+      window.location.href = "/login";
+    }
   }
 
   return (
     <main className="min-h-screen bg-[#fffdfb] text-[#242124]">
       <TopBar userEmail={userEmail} onSignOut={signOut} setActiveTab={selectTab} />
+
+      {!isOnline && (
+        <div className="sticky top-[57px] z-30 border-y border-[#eadfda] bg-[#fff6d8] px-4 py-2 text-center text-sm font-semibold text-[#5f4a22]" role="status">
+          오프라인 상태입니다. 기록 저장은 연결 후 다시 시도해 주세요.
+        </div>
+      )}
 
       {activeTab === "home" && (
         <HomeDashboard
@@ -3172,7 +3214,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       <MobileTabBar activeTab={activeTab} setActiveTab={selectTab} />
 
       {toast && (
-        <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 rounded-full bg-[#242124] px-5 py-3 text-center text-sm font-medium text-[#fffdfb]">
+        <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 rounded-full bg-[#242124] px-5 py-3 text-center text-sm font-medium text-[#fffdfb]" role="status" aria-live="polite">
           {toast}
         </div>
       )}
@@ -3303,7 +3345,7 @@ function HomeDashboard({
       <section className="relative min-h-[58svh] overflow-hidden bg-[#242124] md:min-h-[680px]">
         <div
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
-          style={{ backgroundImage: "url('/images/mysun-home-hero.jpg')" }}
+          style={{ backgroundImage: "image-set(url('/images/mysun-home-hero.webp') type('image/webp'), url('/images/mysun-home-hero.jpg') type('image/jpeg'))" }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/70 via-[#242124]/12 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
         <div className="relative mx-auto flex min-h-[58svh] max-w-[1440px] flex-col justify-end px-4 pb-6 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
@@ -3482,7 +3524,7 @@ function HomeView({
       <section className="relative min-h-[72svh] overflow-hidden bg-[#242124] md:min-h-[680px]">
         <div
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
-          style={{ backgroundImage: "url('/images/mysun-home-hero.jpg')" }}
+          style={{ backgroundImage: "image-set(url('/images/mysun-home-hero.webp') type('image/webp'), url('/images/mysun-home-hero.jpg') type('image/jpeg'))" }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/70 via-[#242124]/12 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
         <div className="relative mx-auto flex min-h-[72svh] max-w-[1440px] flex-col justify-end px-4 pb-7 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
@@ -3699,6 +3741,7 @@ function WorkoutEntryView({
               className={`${UI.primaryButton} h-9 px-4 text-xs`}
               onClick={finishWorkout}
               disabled={saving}
+              aria-busy={saving}
             >
               <span className="inline-flex items-center gap-1.5">
                 <SoftIcon name="save" className="h-3.5 w-3.5" />
@@ -3762,7 +3805,7 @@ function WorkoutEntryView({
                 <button
                   key={exercise.id}
                   type="button"
-                  className={`relative grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-[16px] border border-[#eadfda] bg-[#fffdfb] p-3 text-left transition active:bg-[#faf4f1] ${saved ? "border-[#b9dfc5] bg-[#edf8f1]" : ""}`}
+                  className={`relative grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-[16px] border border-[#eadfda] bg-[#fffdfb] p-3 text-left transition active:bg-[#faf4f1] [contain-intrinsic-size:92px] [content-visibility:auto] ${saved ? "border-[#b9dfc5] bg-[#edf8f1]" : ""}`}
                   onClick={() => setEditingExerciseId(exercise.id)}
                 >
                   {saved && <span className="absolute inset-y-0 left-0 w-1 bg-[#2f8c63]" />}
@@ -4310,7 +4353,7 @@ function WorkoutView({
             <textarea className="nike-input min-h-28 resize-none bg-[#fffdfb]" value={draftMemo} onChange={event => setDraftMemo(event.target.value)} placeholder="컨디션, 통증, 다음에 기억할 점을 적어주세요." />
           </Field>
           <button className="mt-5 h-12 w-full rounded-full bg-[#242124] text-base font-medium text-[#fffdfb] disabled:opacity-50" onClick={finishWorkout} disabled={saving}>
-            {saving ? "저장 중..." : editingSessionId ? "수정 저장" : "운동 저장"}
+            {saving ? "저장 중" : editingSessionId ? "수정 저장" : "운동 저장"}
           </button>
         </div>
         {lastSavedSession && (
@@ -4616,7 +4659,12 @@ function WorkoutSessionDetailCard({
           <h3 className="mt-1 truncate text-xl font-semibold">{session.routineName}</h3>
         </div>
         {deleteSession && (
-          <button className={`shrink-0 text-sm font-semibold ${UI.dangerText}`} onClick={() => deleteSession(session.id)}>
+          <button
+            className={`shrink-0 rounded-full bg-[#fffdfb] px-3 text-sm font-semibold ${UI.dangerText}`}
+            onClick={() => {
+              if (window.confirm("이 운동 기록을 삭제할까요?")) deleteSession(session.id);
+            }}
+          >
             삭제
           </button>
         )}
@@ -5031,7 +5079,7 @@ function ProfileView({
             )}
 
             <button className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base`} onClick={handleSave} disabled={saving}>
-              {saving ? "저장 중..." : "저장"}
+              {saving ? "저장 중" : "저장"}
             </button>
             </div>
           </div>
@@ -5119,6 +5167,8 @@ function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: numbe
         src={imageSrc}
         alt=""
         aria-hidden="true"
+        loading="lazy"
+        decoding="async"
       />
       <div className="mt-3 flex items-center justify-between gap-2">
         <span className="truncate text-sm font-semibold">{index + 1}. {item.name}</span>
@@ -5277,13 +5327,14 @@ function SmallStudioStat({ label, value }: { label: string; value: string }) {
 
 function MobileTabBar({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: (tab: Tab) => void }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eadfda] bg-[#fffdfb]/95 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eadfda] bg-[#fffdfb]/95 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden" aria-label="하단 메뉴">
       <div className="grid grid-cols-5 gap-1">
         {tabItems.map(tab => (
           <button
             key={tab.id}
             className={`flex h-12 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-semibold transition ${activeTab === tab.id ? "bg-[#242124] text-[#fffdfb]" : "bg-[#faf4f1] text-[#4b4541]"}`}
             onClick={() => setActiveTab(tab.id)}
+            aria-current={activeTab === tab.id ? "page" : undefined}
           >
             <SoftIcon name={tab.icon} className="h-4 w-4" />
             <span>{tab.label}</span>

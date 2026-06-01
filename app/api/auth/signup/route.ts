@@ -34,15 +34,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "비밀번호는 6자 이상으로 입력해 주세요." }, { status: 400 });
   }
 
-  const supabase = getServiceClient();
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
+  let data;
+  try {
+    const supabase = getServiceClient();
+    const result = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    data = result.data;
 
-  if (error) {
-    return NextResponse.json({ error: authMessage(error.message) }, { status: 400 });
+    if (result.error) {
+      return NextResponse.json({ error: authMessage(result.error.message) }, { status: 400 });
+    }
+  } catch (error) {
+    console.error("[auth-signup]", error);
+    return NextResponse.json({ error: "회원가입 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, userId: data.user?.id });

@@ -55,10 +55,19 @@ function mapSession(row: any) {
   };
 }
 
+function userError(message: string, status = 400) {
+  return NextResponse.json({ error: message }, { status });
+}
+
+function serverError(error: unknown, fallback: string) {
+  console.error("[fit-log]", error);
+  return NextResponse.json({ error: fallback }, { status: 500 });
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("user_id") || "";
-  if (!userId) return NextResponse.json({ error: "user_id required" }, { status: 400 });
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
 
   const sb = getServiceClient();
   const { data, error } = await sb
@@ -69,7 +78,7 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(300);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return serverError(error, "운동 기록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
   return NextResponse.json({ sessions: (data || []).map(mapSession) });
 }
 
@@ -77,8 +86,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const userId = String(body.user_id || "");
   const sets = Array.isArray(body.sets) ? body.sets as SetPayload[] : [];
-  if (!userId) return NextResponse.json({ error: "user_id required" }, { status: 400 });
-  if (sets.length === 0) return NextResponse.json({ error: "sets required" }, { status: 400 });
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
+  if (sets.length === 0) return userError("저장할 운동을 하나 이상 입력해 주세요.");
 
   const sb = getServiceClient();
   const sessionPayload = {
@@ -95,7 +104,7 @@ export async function POST(req: NextRequest) {
     .select("*")
     .single();
 
-  if (sessionError) return NextResponse.json({ error: sessionError.message }, { status: 500 });
+  if (sessionError) return serverError(sessionError, "운동 기록 저장에 실패했어요. 잠시 후 다시 시도해 주세요.");
 
   const setPayload = sets.map((set, index) => ({
     session_id: session.id,
@@ -111,7 +120,7 @@ export async function POST(req: NextRequest) {
   const { error: setsError } = await sb.from("fit_set_logs").insert(setPayload);
   if (setsError) {
     await sb.from("fit_workout_sessions").delete().eq("id", session.id).eq("user_id", userId);
-    return NextResponse.json({ error: setsError.message }, { status: 500 });
+    return serverError(setsError, "운동 세트 저장에 실패했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.");
   }
 
   const { data, error } = await sb
@@ -121,7 +130,7 @@ export async function POST(req: NextRequest) {
     .eq("user_id", userId)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return serverError(error, "저장된 운동 기록을 다시 불러오지 못했어요. 새로고침 후 확인해 주세요.");
   return NextResponse.json({ session: mapSession(data) });
 }
 
@@ -130,8 +139,8 @@ export async function PUT(req: NextRequest) {
   const userId = String(body.user_id || "");
   const id = String(body.id || "");
   const sets = Array.isArray(body.sets) ? body.sets as SetPayload[] : [];
-  if (!id || !userId) return NextResponse.json({ error: "id, user_id required" }, { status: 400 });
-  if (sets.length === 0) return NextResponse.json({ error: "sets required" }, { status: 400 });
+  if (!id || !userId) return userError("수정할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
+  if (sets.length === 0) return userError("저장할 운동을 하나 이상 입력해 주세요.");
 
   const sb = getServiceClient();
   const sessionPayload = {
@@ -147,7 +156,7 @@ export async function PUT(req: NextRequest) {
     .eq("id", id)
     .eq("user_id", userId);
 
-  if (sessionError) return NextResponse.json({ error: sessionError.message }, { status: 500 });
+  if (sessionError) return serverError(sessionError, "운동 기록 수정에 실패했어요. 잠시 후 다시 시도해 주세요.");
 
   const { error: deleteError } = await sb
     .from("fit_set_logs")
@@ -155,7 +164,7 @@ export async function PUT(req: NextRequest) {
     .eq("session_id", id)
     .eq("user_id", userId);
 
-  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  if (deleteError) return serverError(deleteError, "기존 세트를 정리하지 못했어요. 잠시 후 다시 시도해 주세요.");
 
   const setPayload = sets.map((set, index) => ({
     session_id: id,
@@ -169,7 +178,7 @@ export async function PUT(req: NextRequest) {
   }));
 
   const { error: setsError } = await sb.from("fit_set_logs").insert(setPayload);
-  if (setsError) return NextResponse.json({ error: setsError.message }, { status: 500 });
+  if (setsError) return serverError(setsError, "운동 세트 수정에 실패했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.");
 
   const { data, error } = await sb
     .from("fit_workout_sessions")
@@ -178,7 +187,7 @@ export async function PUT(req: NextRequest) {
     .eq("user_id", userId)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return serverError(error, "수정된 기록을 다시 불러오지 못했어요. 새로고침 후 확인해 주세요.");
   return NextResponse.json({ session: mapSession(data) });
 }
 
@@ -186,7 +195,7 @@ export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id") || "";
   const userId = searchParams.get("user_id") || "";
-  if (!id || !userId) return NextResponse.json({ error: "id, user_id required" }, { status: 400 });
+  if (!id || !userId) return userError("삭제할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
 
   const sb = getServiceClient();
   const { error } = await sb
@@ -195,6 +204,6 @@ export async function DELETE(req: NextRequest) {
     .eq("id", id)
     .eq("user_id", userId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return serverError(error, "기록 삭제에 실패했어요. 잠시 후 다시 시도해 주세요.");
   return NextResponse.json({ ok: true });
 }
