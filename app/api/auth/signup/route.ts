@@ -18,7 +18,7 @@ function authMessage(message: string) {
     return "이미 가입된 아이디입니다. 로그인으로 진행해 주세요.";
   }
   if (lower.includes("password")) return "비밀번호는 6자 이상으로 입력해 주세요.";
-  return message || "회원가입 처리 중 문제가 발생했습니다.";
+  return "회원가입 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
 export async function POST(req: NextRequest) {
