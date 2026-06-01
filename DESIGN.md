@@ -10,7 +10,7 @@ description: |
 colors:
   ink: "#242124"
   canvas: "#fffdfb"
-  warm-surface: "#faf4f1"
+  warm-surface: "#f8f4f0"
   warm-surface-pressed: "#f2e8e3"
   charcoal: "#4b4541"
   mute: "#7a7470"
@@ -144,6 +144,8 @@ Input and memo modals are bottom sheets on mobile. Header is fixed, content scro
 ## Card Rules
 
 Cards should feel light and tactile. Use warm-gray fill, subtle borders, and 12-14px radius. Avoid heavy shadows, hard rectangles, and oversized black blocks. Large black panels should be rare and reserved for important summary or account states.
+
+After the mobile polish pass, large black panels should be avoided even more aggressively. Use warm ivory cards with a thin ring and soft shadow for account, saved-workout, and coach-note surfaces. Reserve dark ink for primary action buttons, selected tabs, and small navigation anchors.
 
 ## Home / Log / Member Rules
 

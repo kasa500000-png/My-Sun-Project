@@ -127,7 +127,7 @@ export default function LoginPage() {
               </h1>
             </div>
 
-            <div className="grid grid-cols-2 rounded-full bg-[#faf4f1] p-1 ring-1 ring-[#eadfda]">
+            <div className="grid grid-cols-2 rounded-full bg-[#f8f4f0] p-1 ring-1 ring-[#eadfda]">
               <button
                 type="button"
                 className={`h-11 rounded-full text-sm font-medium ${mode === "login" ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
@@ -194,7 +194,7 @@ export default function LoginPage() {
             </button>
 
             {message && (
-              <p className="mt-5 rounded-[14px] bg-[#faf4f1] p-4 text-sm font-medium leading-6 text-[#242124] ring-1 ring-[#eadfda]" role="alert">
+              <p className="mt-5 rounded-[14px] bg-[#f8f4f0] p-4 text-sm font-medium leading-6 text-[#242124] ring-1 ring-[#eadfda]" role="alert">
                 {message}
               </p>
             )}

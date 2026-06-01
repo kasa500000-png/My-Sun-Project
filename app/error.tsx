@@ -9,7 +9,7 @@ export default function Error({
 }) {
   return (
     <main className="grid min-h-screen place-items-center bg-[#fffdfb] px-5 text-[#242124]">
-      <section className="w-full max-w-sm rounded-[24px] bg-[#faf4f1] p-6 text-center ring-1 ring-[#eadfda]">
+      <section className="w-full max-w-sm rounded-[24px] bg-[#fffdfb] p-6 text-center shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
         <p className="text-sm font-semibold text-[#7a7470]">잠시 멈췄어요</p>
         <h1 className="mt-2 text-2xl font-semibold leading-tight">화면을 다시 불러와 주세요</h1>
         <p className="mt-4 text-sm leading-6 text-[#4b4541]">

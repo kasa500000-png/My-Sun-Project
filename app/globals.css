@@ -38,6 +38,7 @@ body {
   font-family: inherit;
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
+  overscroll-behavior-y: none;
 }
 
 button,
@@ -48,7 +49,6 @@ textarea {
 }
 
 button {
-  min-width: 44px;
   min-height: 44px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -110,6 +110,6 @@ textarea {
   }
 
   .nike-secondary {
-    @apply rounded-full bg-[#faf4f1] text-sm font-medium text-[#242124];
+    @apply rounded-full bg-[#f8f4f0] text-sm font-medium text-[#242124];
   }
 }
