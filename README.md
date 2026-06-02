@@ -24,6 +24,34 @@ npm run dev
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_DB_URL=
 ```
 
 운동 기록을 저장하기 전에 Supabase SQL Editor에서 `supabase/migration-fit-log.sql`을 실행합니다.
+
+DB URL을 `.env.local`에 넣은 경우 아래 명령으로도 실행할 수 있습니다.
+
+```bash
+npm run db:migrate
+```
+
+## 검증
+
+배포 전에는 아래 명령을 기준으로 확인합니다.
+
+```bash
+npm run validate
+```
+
+검증에는 TypeScript, ESLint, PWA/보안/근육 카드 자산 품질 체크, Next.js 빌드가 포함됩니다.
+
+## 배포
+
+GitHub `main` 브랜치에 푸시하면 Vercel 프로덕션 배포가 실행됩니다.
+
+배포 후 확인할 항목:
+
+- `/login` 페이지가 정상 렌더링되는지
+- `/manifest.webmanifest`가 `application/manifest+json`으로 응답하는지
+- `/sw.js`가 `no-store`와 `Service-Worker-Allowed: /` 헤더를 갖는지
+- `/api/fit-log`가 인증 없이 접근될 때 401을 반환하는지
