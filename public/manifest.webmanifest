@@ -1,7 +1,7 @@
 {
   "name": "마이썬 운동일지",
   "short_name": "마이썬",
-  "id": "/?source=pwa",
+  "id": "/",
   "description": "운동 기록과 근육 자극을 모바일에서 빠르게 확인하는 운동 일지",
   "start_url": "/",
   "scope": "/",
