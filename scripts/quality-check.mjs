@@ -101,6 +101,11 @@ if (!serviceWorkerHeaders.some(item => item.key === "Cache-Control" && item.valu
 const fitApp = read("components/FitLogApp.tsx");
 const loginPage = read("app/login/page.tsx");
 const rootLayout = read("app/layout.tsx");
+const serviceSupabase = read("lib/supabase.ts");
+if (!serviceSupabase.includes("cachedServiceClient")) {
+  fail("Supabase service client should be cached at module scope");
+}
+
 for (const layoutToken of [
   "metadataBase",
   "appleWebApp",
