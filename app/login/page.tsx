@@ -145,7 +145,7 @@ export default function LoginPage() {
         <section className="relative min-h-[36vh] overflow-hidden bg-[#242124] md:min-h-screen">
           <div
             className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
-            style={{ backgroundImage: "image-set(url('/images/mysun-login-hero.webp') type('image/webp'), url('/images/mysun-login-hero.jpg') type('image/jpeg'))" }}
+            style={{ backgroundImage: "url('/images/mysun-login-hero.webp')" }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/62 via-[#242124]/10 to-transparent md:bg-gradient-to-r md:from-[#242124]/56 md:via-[#242124]/10" />
           <div className="relative flex min-h-[36vh] flex-col justify-end p-6 text-[#fffdfb] md:min-h-screen md:p-10">

@@ -154,6 +154,13 @@ if (!rootLayout.includes('rel="preconnect"') || !rootLayout.includes("https://cd
   fail("layout must preconnect to the font CDN used by global CSS");
 }
 
+for (const heroPath of ["/images/mysun-home-hero.webp", "/images/mysun-login-hero.webp"]) {
+  if (!existsPublicAsset(heroPath)) fail(`hero image is missing: ${heroPath}`);
+}
+if (fitApp.includes(".jpg") || loginPage.includes(".jpg")) {
+  fail("hero backgrounds should use WebP-only assets for mobile performance");
+}
+
 const clientSources = [fitApp, loginPage, read("components/ServiceWorkerBridge.tsx")].join("\n");
 for (const forbiddenStorageApi of ["localStorage", "sessionStorage", "indexedDB"]) {
   if (clientSources.includes(forbiddenStorageApi)) {

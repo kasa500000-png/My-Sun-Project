@@ -3437,7 +3437,7 @@ function HomeDashboard({
       <section className="relative min-h-[52svh] overflow-hidden bg-[#242124] md:min-h-[640px]">
         <div
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
-          style={{ backgroundImage: "image-set(url('/images/mysun-home-hero.webp') type('image/webp'), url('/images/mysun-home-hero.jpg') type('image/jpeg'))" }}
+          style={{ backgroundImage: "url('/images/mysun-home-hero.webp')" }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/64 via-[#242124]/8 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
         <div className="relative mx-auto flex min-h-[52svh] max-w-[1440px] flex-col justify-end px-4 pb-5 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
