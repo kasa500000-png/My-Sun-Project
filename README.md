@@ -35,6 +35,8 @@ DB URL을 `.env.local`에 넣은 경우 아래 명령으로도 실행할 수 있
 npm run db:migrate
 ```
 
+`SUPABASE_DB_URL`은 Supabase Postgres 직접 연결 문자열입니다. Vercel 클라이언트 환경변수나 `NEXT_PUBLIC_` 값으로 노출하지 말고, 로컬 또는 서버 환경변수로만 설정합니다. 이 값이 없으면 `npm run db:migrate`는 실행되지 않습니다.
+
 ## 검증
 
 배포 전에는 아래 명령을 기준으로 확인합니다.
