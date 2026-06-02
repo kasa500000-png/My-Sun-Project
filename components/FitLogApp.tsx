@@ -837,8 +837,7 @@ const EXERCISES: Exercise[] = [
     recordLabel: "중량 × 횟수 × 세트",
     volumeType: "weight_or_machine",
     impacts: [
-      { muscleId: "calves", impactRatio: 0.95 },
-      { muscleId: "calves", impactRatio: 0.05 },
+      { muscleId: "calves", impactRatio: 1 },
     ],
   },
   {
@@ -921,10 +920,9 @@ const EXERCISES: Exercise[] = [
     recordLabel: "머신 중량 × 횟수 × 세트",
     volumeType: "machine",
     impacts: [
-      { muscleId: "back", impactRatio: 0.6 },
+      { muscleId: "back", impactRatio: 0.65 },
       { muscleId: "biceps", impactRatio: 0.25 },
       { muscleId: "shoulders", impactRatio: 0.1 },
-      { muscleId: "back", impactRatio: 0.05 },
     ],
   },
   {

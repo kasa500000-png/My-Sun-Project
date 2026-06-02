@@ -179,6 +179,22 @@ for (const muscleId of muscleIds) {
   if (!muscleImageKeys.has(muscleId)) fail(`exercise muscleId has no focus card image mapping: ${muscleId}`);
 }
 
+const exerciseImpactBlocks = [...fitApp.matchAll(/id:\s*"([^"]+)"[\s\S]*?impacts:\s*\[([\s\S]*?)\]/g)];
+for (const [, exerciseId, body] of exerciseImpactBlocks) {
+  const impactMuscleIds = [...body.matchAll(/muscleId:\s*"([^"]+)"/g)].map(match => match[1]);
+  const duplicateMuscleIds = impactMuscleIds.filter((id, index) => impactMuscleIds.indexOf(id) !== index);
+  if (duplicateMuscleIds.length > 0) {
+    fail(`exercise has duplicate muscle impact ids: ${exerciseId}`);
+  }
+
+  const impactSum = [...body.matchAll(/impactRatio:\s*([0-9.]+)/g)]
+    .map(match => Number(match[1]))
+    .reduce((total, value) => total + value, 0);
+  if (Math.abs(impactSum - 1) > 0.011) {
+    fail(`exercise impact ratios must add up to 1: ${exerciseId}`);
+  }
+}
+
 for (const dir of ["public/images", "public/images/muscle-focus-cards"]) {
   for (const fileName of fs.readdirSync(path.join(root, dir))) {
     const filePath = path.join(root, dir, fileName);
