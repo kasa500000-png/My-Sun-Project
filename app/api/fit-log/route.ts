@@ -123,6 +123,56 @@ function isNoRows(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error && error.code === "PGRST116";
 }
 
+function sessionSnapshotPayload(session: SessionRow) {
+  return {
+    workout_date: asWorkoutDate(session.workout_date || session.date),
+    routine_name: asText(session.routine_name, 120) || "운동",
+    duration_minutes: asDurationMinutes(session.duration_minutes),
+    memo: asText(session.memo, 2000),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function setSnapshotPayload(session: SessionRow, userId: string) {
+  return (session.fit_set_logs || []).map((set, index) => ({
+    session_id: session.id,
+    user_id: userId,
+    exercise_id: asText(set.exercise_id, 120) || "unknown",
+    set_number: asBoundedInteger(set.set_number, 1, MAX_SETS_PER_SESSION, index + 1),
+    weight: asBoundedNumber(set.weight, 0, 100000),
+    reps: asBoundedInteger(set.reps, 0, 100000, 0),
+    duration_seconds: asBoundedInteger(set.duration_seconds, 0, 86400, 0),
+    memo: asText(set.memo, 1000),
+  }));
+}
+
+async function restoreSessionSnapshot(sb: ReturnType<typeof getServiceClient>, session: SessionRow, userId: string) {
+  const { error: sessionRestoreError } = await sb
+    .from("fit_workout_sessions")
+    .update(sessionSnapshotPayload(session))
+    .eq("id", session.id)
+    .eq("user_id", userId);
+
+  if (sessionRestoreError) console.error("[fit-log] restore session failed", sessionRestoreError);
+
+  const { error: cleanupError } = await sb
+    .from("fit_set_logs")
+    .delete()
+    .eq("session_id", session.id)
+    .eq("user_id", userId);
+
+  if (cleanupError) {
+    console.error("[fit-log] restore cleanup failed", cleanupError);
+    return;
+  }
+
+  const restoreSets = setSnapshotPayload(session, userId);
+  if (restoreSets.length === 0) return;
+
+  const { error: setsRestoreError } = await sb.from("fit_set_logs").insert(restoreSets);
+  if (setsRestoreError) console.error("[fit-log] restore sets failed", setsRestoreError);
+}
+
 async function currentUserId() {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -216,6 +266,18 @@ export async function PUT(req: NextRequest) {
     updated_at: new Date().toISOString(),
   };
 
+  const { data: existingSession, error: existingError } = await sb
+    .from("fit_workout_sessions")
+    .select("*, fit_set_logs(*)")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (existingError) {
+    if (isNoRows(existingError)) return userError("수정할 운동 기록을 찾을 수 없습니다. 새로고침 후 다시 확인해 주세요.", 404);
+    return serverError(existingError, "기존 운동 기록을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
+  }
+
   const { error: sessionError } = await sb
     .from("fit_workout_sessions")
     .update(sessionPayload)
@@ -235,7 +297,10 @@ export async function PUT(req: NextRequest) {
     .eq("session_id", id)
     .eq("user_id", userId);
 
-  if (deleteError) return serverError(deleteError, "기존 세트를 정리하지 못했어요. 잠시 후 다시 시도해 주세요.");
+  if (deleteError) {
+    await restoreSessionSnapshot(sb, existingSession, userId);
+    return serverError(deleteError, "기존 세트를 정리하지 못했어요. 기존 기록은 복원했습니다. 잠시 후 다시 시도해 주세요.");
+  }
 
   const setPayload = sets.map((set, index) => ({
     session_id: id,
@@ -249,7 +314,10 @@ export async function PUT(req: NextRequest) {
   }));
 
   const { error: setsError } = await sb.from("fit_set_logs").insert(setPayload);
-  if (setsError) return serverError(setsError, "운동 세트 수정에 실패했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.");
+  if (setsError) {
+    await restoreSessionSnapshot(sb, existingSession, userId);
+    return serverError(setsError, "운동 세트 수정에 실패했어요. 기존 기록은 복원했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.");
+  }
 
   const { data, error } = await sb
     .from("fit_workout_sessions")

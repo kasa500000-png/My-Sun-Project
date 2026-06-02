@@ -21,6 +21,7 @@ const manifest = JSON.parse(read("public/manifest.webmanifest"));
 const packageJson = JSON.parse(read("package.json"));
 const envExample = read(".env.example");
 const fitLogMigration = read("supabase/migration-fit-log.sql");
+const fitLogRoute = read("app/api/fit-log/route.ts");
 
 for (const routePath of [
   "app/api/fit-log/route.ts",
@@ -31,6 +32,14 @@ for (const routePath of [
   if (!read(routePath).includes('runtime = "nodejs"')) {
     fail(`${routePath} must explicitly use the nodejs runtime`);
   }
+}
+
+for (const token of [
+  "restoreSessionSnapshot",
+  "existingSession",
+  "기존 기록은 복원했습니다",
+]) {
+  if (!fitLogRoute.includes(token)) fail(`fit-log PUT update rollback guard is missing ${token}`);
 }
 
 for (const key of [
