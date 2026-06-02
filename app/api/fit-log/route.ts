@@ -30,6 +30,16 @@ function asNumber(value: unknown, fallback: number | null = null) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function asBoundedNumber(value: unknown, min: number, max: number, fallback: number | null = null) {
+  const number = asNumber(value, fallback);
+  if (number == null) return fallback;
+  return Math.min(Math.max(number, min), max);
+}
+
+function asBoundedInteger(value: unknown, min: number, max: number, fallback: number) {
+  return Math.round(asBoundedNumber(value, min, max, fallback) || fallback);
+}
+
 function todayKst() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
@@ -132,10 +142,10 @@ export async function POST(req: NextRequest) {
     session_id: session.id,
     user_id: userId,
     exercise_id: asText(set.exerciseId || set.exercise_id, 120) || "unknown",
-    set_number: asNumber(set.setNumber || set.set_number, index + 1),
-    weight: asNumber(set.weight),
-    reps: asNumber(set.reps),
-    duration_seconds: asNumber(set.durationSeconds || set.duration_seconds),
+    set_number: asBoundedInteger(set.setNumber || set.set_number, 1, MAX_SETS_PER_SESSION, index + 1),
+    weight: asBoundedNumber(set.weight, 0, 100000),
+    reps: asBoundedInteger(set.reps, 0, 100000, 0),
+    duration_seconds: asBoundedInteger(set.durationSeconds || set.duration_seconds, 0, 86400, 0),
     memo: asText(set.memo, 1000),
   }));
 
@@ -171,6 +181,7 @@ export async function PUT(req: NextRequest) {
     routine_name: asText(body.routineName || body.routine_name, 120) || "운동",
     duration_minutes: asDurationMinutes(body.durationMinutes || body.duration_minutes),
     memo: asText(body.memo, 2000),
+    updated_at: new Date().toISOString(),
   };
 
   const { error: sessionError } = await sb
@@ -193,10 +204,10 @@ export async function PUT(req: NextRequest) {
     session_id: id,
     user_id: userId,
     exercise_id: asText(set.exerciseId || set.exercise_id, 120) || "unknown",
-    set_number: asNumber(set.setNumber || set.set_number, index + 1),
-    weight: asNumber(set.weight),
-    reps: asNumber(set.reps),
-    duration_seconds: asNumber(set.durationSeconds || set.duration_seconds),
+    set_number: asBoundedInteger(set.setNumber || set.set_number, 1, MAX_SETS_PER_SESSION, index + 1),
+    weight: asBoundedNumber(set.weight, 0, 100000),
+    reps: asBoundedInteger(set.reps, 0, 100000, 0),
+    duration_seconds: asBoundedInteger(set.durationSeconds || set.duration_seconds, 0, 86400, 0),
     memo: asText(set.memo, 1000),
   }));
 
