@@ -5,6 +5,13 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 type AuthMode = "login" | "signup";
 
+function safeNextPath() {
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next") || "/";
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("\\\\")) return "/";
+  return next;
+}
+
 function authMessage(message: string) {
   const lower = message.toLowerCase();
   if (lower.includes("invalid login credentials")) return "아이디 또는 비밀번호가 올바르지 않습니다.";
@@ -26,7 +33,7 @@ export default function LoginPage() {
     const supabase = createSupabaseBrowser();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) window.location.href = "/";
+      if (data.user) window.location.href = safeNextPath();
     });
   }, []);
 
@@ -70,7 +77,7 @@ export default function LoginPage() {
           return;
         }
 
-        window.location.href = "/";
+        window.location.href = safeNextPath();
         return;
       }
 
@@ -96,7 +103,7 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.href = "/";
+      window.location.href = safeNextPath();
     } catch {
       setMessage("네트워크 연결을 확인한 뒤 다시 시도해 주세요.");
     } finally {
