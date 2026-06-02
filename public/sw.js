@@ -1,4 +1,4 @@
-const CACHE_NAME = "mysun-fit-log-v2";
+const CACHE_NAME = "mysun-fit-log-v3";
 const PRECACHE_URLS = [
   "/offline",
   "/manifest.webmanifest",
@@ -41,7 +41,7 @@ self.addEventListener("fetch", event => {
           caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => null);
           return response;
         })
-        .catch(() => caches.match(request).then(cached => cached || caches.match("/offline")))
+        .catch(() => caches.match(request).then(cached => cached || caches.match("/offline")).then(response => response || Response.error()))
     );
     return;
   }
@@ -55,7 +55,7 @@ self.addEventListener("fetch", event => {
             caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => null);
             return response;
           })
-          .catch(() => cached);
+          .catch(() => cached || Response.error());
 
         return cached || refresh;
       })
