@@ -188,6 +188,12 @@ for (const authModeLabel of ["로그인 모드 선택", "회원가입 모드 선
   }
 }
 
+for (const source of [fitApp, loginPage]) {
+  if (!source.includes("네트워크 연결이 불안정합니다")) {
+    fail("client fetch failures must show a Korean network error message");
+  }
+}
+
 const dialogOverlays = [...fitApp.matchAll(/<div[^>]*role="dialog"[^>]*>/g)];
 if (dialogOverlays.length === 0) {
   fail("FitLogApp must expose modal dialogs with role=dialog");

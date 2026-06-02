@@ -17,7 +17,7 @@ async function authFetch(input: RequestInfo | URL, init?: RequestInit) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("응답이 지연되고 있습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.");
     }
-    throw error;
+    throw new Error("네트워크 연결이 불안정합니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.");
   } finally {
     window.clearTimeout(timeout);
   }
