@@ -3292,11 +3292,11 @@ function TopBar({
   return (
     <header className="sticky top-0 z-30 border-b border-[#eadfda] bg-[#fffdfb]/92 shadow-[0_8px_24px_rgba(58,48,50,0.05)] backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 md:h-16 md:px-8">
-        <button className="inline-flex items-center gap-2 text-[15px] font-extrabold tracking-[-0.01em] md:text-xl" onClick={() => setActiveTab("home")}><span className="h-2.5 w-2.5 rounded-full bg-[#9cc9ac]" aria-hidden="true" />마이썬 운동일지</button>
+        <button type="button" className="inline-flex items-center gap-2 text-[15px] font-extrabold tracking-[-0.01em] md:text-xl" onClick={() => setActiveTab("home")}><span className="h-2.5 w-2.5 rounded-full bg-[#9cc9ac]" aria-hidden="true" />마이썬 운동일지</button>
         <div className="flex items-center gap-2">
           <span className="hidden max-w-[220px] truncate text-xs font-medium text-[#7a7470] md:inline">{userEmail}</span>
-          <button className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#242124] px-4 text-sm font-semibold text-[#fffdfb] shadow-[0_8px_18px_rgba(36,33,36,0.16)]" onClick={() => setActiveTab("train")}><SoftIcon name="record" className="h-3.5 w-3.5" />기록</button>
-          <button className="hidden h-9 rounded-full bg-[#f8f4f0] px-4 text-sm font-semibold text-[#242124] md:inline" onClick={onSignOut}>
+          <button type="button" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#242124] px-4 text-sm font-semibold text-[#fffdfb] shadow-[0_8px_18px_rgba(36,33,36,0.16)]" onClick={() => setActiveTab("train")}><SoftIcon name="record" className="h-3.5 w-3.5" />기록</button>
+          <button type="button" className="hidden h-9 rounded-full bg-[#f8f4f0] px-4 text-sm font-semibold text-[#242124] md:inline" onClick={onSignOut}>
             로그아웃
           </button>
         </div>
@@ -5038,7 +5038,7 @@ function EmptyState({ text, action, onClick }: { text: string; action?: string; 
     <div className={`${UI.surface} rounded-[18px] p-6 ring-1 ring-[#eadfda]`}>
       <p className={`max-w-md text-base leading-7 ${UI.textBody}`}>{text}</p>
       {action && onClick && (
-        <button className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base md:w-auto`} onClick={onClick}>
+        <button type="button" className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base md:w-auto`} onClick={onClick}>
           {action}
         </button>
       )}
@@ -5062,6 +5062,7 @@ function MobileTabBar({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTa
         {tabItems.map(tab => (
           <button
             key={tab.id}
+            type="button"
             className={`flex h-12 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-semibold transition ${activeTab === tab.id ? "bg-[#242124] text-[#fffdfb]" : "bg-[#f8f4f0] text-[#4b4541]"}`}
             onClick={() => setActiveTab(tab.id)}
             aria-current={activeTab === tab.id ? "page" : undefined}
