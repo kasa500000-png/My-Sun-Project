@@ -43,6 +43,48 @@ ALTER TABLE fit_user_settings
   ADD COLUMN IF NOT EXISTS height_cm NUMERIC,
   ADD COLUMN IF NOT EXISTS weight_kg NUMERIC;
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fit_sessions_duration_minutes_range'
+  ) THEN
+    ALTER TABLE fit_workout_sessions
+      ADD CONSTRAINT fit_sessions_duration_minutes_range
+      CHECK (duration_minutes BETWEEN 0 AND 1440) NOT VALID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fit_sets_set_number_range'
+  ) THEN
+    ALTER TABLE fit_set_logs
+      ADD CONSTRAINT fit_sets_set_number_range
+      CHECK (set_number BETWEEN 1 AND 200) NOT VALID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fit_sets_non_negative_metrics'
+  ) THEN
+    ALTER TABLE fit_set_logs
+      ADD CONSTRAINT fit_sets_non_negative_metrics
+      CHECK (
+        (weight IS NULL OR weight >= 0)
+        AND (reps IS NULL OR reps >= 0)
+        AND (duration_seconds IS NULL OR duration_seconds >= 0)
+      ) NOT VALID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fit_settings_body_metrics_range'
+  ) THEN
+    ALTER TABLE fit_user_settings
+      ADD CONSTRAINT fit_settings_body_metrics_range
+      CHECK (
+        (height_cm IS NULL OR height_cm BETWEEN 80 AND 230)
+        AND (weight_kg IS NULL OR weight_kg BETWEEN 20 AND 250)
+      ) NOT VALID;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_fit_sessions_user_date
   ON fit_workout_sessions(user_id, workout_date DESC);
 

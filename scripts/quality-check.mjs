@@ -20,6 +20,7 @@ function existsPublicAsset(src) {
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
 const packageJson = JSON.parse(read("package.json"));
 const envExample = read(".env.example");
+const fitLogMigration = read("supabase/migration-fit-log.sql");
 
 for (const key of [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -28,6 +29,15 @@ for (const key of [
   "SUPABASE_DB_URL",
 ]) {
   if (!envExample.includes(`${key}=`)) fail(`.env.example is missing ${key}`);
+}
+
+for (const constraintName of [
+  "fit_sessions_duration_minutes_range",
+  "fit_sets_set_number_range",
+  "fit_sets_non_negative_metrics",
+  "fit_settings_body_metrics_range",
+]) {
+  if (!fitLogMigration.includes(constraintName)) fail(`migration is missing constraint ${constraintName}`);
 }
 
 if (!packageJson.scripts?.validate?.includes("npm run quality")) {
