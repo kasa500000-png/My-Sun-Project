@@ -14,9 +14,9 @@ const UI = {
   textBody: "text-[#4b4541]",
   successText: "text-[#2f8c63]",
   dangerText: "text-[#c84653]",
-  primaryButton: "rounded-full bg-[#242124] font-semibold text-[#fffdfb] disabled:opacity-40",
-  secondaryButton: "rounded-full bg-[#f8f4f0] font-semibold text-[#242124] active:bg-[#efe7e2]",
-  dangerButton: "rounded-full bg-[#f8f4f0] font-semibold text-[#c84653]",
+  primaryButton: "rounded-full bg-[#242124] font-semibold text-[#fffdfb] transition disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none active:scale-[0.99]",
+  secondaryButton: "rounded-full bg-[#f8f4f0] font-semibold text-[#242124] transition disabled:cursor-not-allowed disabled:opacity-45 active:bg-[#efe7e2]",
+  dangerButton: "rounded-full bg-[#f8f4f0] font-semibold text-[#c84653] transition disabled:cursor-not-allowed disabled:opacity-45",
   pill: "rounded-full px-3 py-2 text-sm font-semibold",
 };
 
@@ -4805,7 +4805,7 @@ function ProfileView({
               </div>
             )}
 
-            <button className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base`} onClick={handleSave} disabled={saving}>
+            <button className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base`} onClick={handleSave} disabled={saving} aria-busy={saving}>
               {saving ? "저장 중" : "저장"}
             </button>
             </div>
