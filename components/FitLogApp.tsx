@@ -69,6 +69,23 @@ function tabFromSearchParam(value: string | null): Tab | null {
   return value && TAB_VALUES.includes(value as Tab) ? value as Tab : null;
 }
 
+function redirectToLoginWithCurrentPath() {
+  if (typeof window === "undefined") return;
+  const next = `${window.location.pathname}${window.location.search}` || "/";
+  window.location.href = `/login?next=${encodeURIComponent(next)}`;
+}
+
+function assertApiResponse(response: Response, data: any, fallback: string) {
+  if (response.status === 401) {
+    redirectToLoginWithCurrentPath();
+    throw new Error(data?.error || "로그인이 만료되었습니다. 다시 로그인해 주세요.");
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || fallback);
+  }
+}
+
 function useEscapeToClose(enabled: boolean, onClose: () => void) {
   useEffect(() => {
     if (!enabled) return;
@@ -2931,7 +2948,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     try {
       const res = await fetch(`/api/fit-log?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "운동 기록을 불러오지 못했어요.");
+      assertApiResponse(res, data, "운동 기록을 불러오지 못했어요.");
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
     } catch (error) {
       setToast(error instanceof Error ? error.message : "운동 기록을 불러오지 못했어요.");
@@ -2984,7 +3001,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     try {
       const res = await fetch(`/api/fit-settings?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "설정을 불러오지 못했어요.");
+      assertApiResponse(res, data, "설정을 불러오지 못했어요.");
       setSettings({
         weeklyGoal: clampWeeklyGoal(data.settings?.weeklyGoal),
         favoriteExerciseIds: sanitizeExerciseIds(data.settings?.favoriteExerciseIds),
@@ -3019,7 +3036,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
         body: JSON.stringify({ user_id: userId, ...normalized }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "설정 저장에 실패했어요.");
+      assertApiResponse(res, data, "설정 저장에 실패했어요.");
       setSettings(data.settings || normalized);
       setToast("내 정보 설정을 저장했어요.");
     } catch (error) {
@@ -3098,8 +3115,8 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...nextSession, id: editingSessionId || nextSession.id, user_id: userId }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "운동 기록 저장에 실패했어요.");
+      const data = await res.json().catch(() => ({}));
+      assertApiResponse(res, data, "운동 기록 저장에 실패했어요.");
       setSessions(items => {
         const exists = items.some(item => item.id === data.session.id);
         if (exists) return items.map(item => (item.id === data.session.id ? data.session : item));
@@ -3128,10 +3145,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
         method: "DELETE",
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setToast(data.error || "기록 삭제에 실패했어요.");
-        return;
-      }
+      assertApiResponse(res, data, "기록 삭제에 실패했어요.");
       setSessions(items => items.filter(item => item.id !== id));
       if (lastSavedSession?.id === id) setLastSavedSession(null);
       if (editingSessionId === id) setEditingSessionId(null);
