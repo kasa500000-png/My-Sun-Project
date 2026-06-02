@@ -194,6 +194,9 @@ for (const source of [fitApp, loginPage]) {
     fail("client fetch failures must show a Korean network error message");
   }
 }
+if (!loginPage.includes("error instanceof Error ? error.message")) {
+  fail("login submit catch must preserve specific error messages");
+}
 
 for (const token of ["SIGNUP_RATE_LIMIT_MAX", "Retry-After", "status: 429"]) {
   if (!signupRoute.includes(token)) fail(`signup route must include rate limiting token: ${token}`);
