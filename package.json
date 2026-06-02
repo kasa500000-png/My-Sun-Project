@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run typecheck && npm run lint && npm run build",
+    "quality": "node scripts/quality-check.mjs",
+    "validate": "npm run typecheck && npm run lint && npm run quality && npm run build",
     "start": "next start",
     "db:migrate": "node scripts/run-supabase-sql.mjs supabase/migration-fit-log.sql",
     "lint": "eslint . --max-warnings=0"
