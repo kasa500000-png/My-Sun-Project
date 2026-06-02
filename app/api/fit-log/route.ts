@@ -98,6 +98,10 @@ function serverError(error: unknown, fallback: string) {
   return NextResponse.json({ error: fallback }, { status: 500 });
 }
 
+function isNoRows(error: any) {
+  return error?.code === "PGRST116";
+}
+
 async function currentUserId() {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -195,9 +199,14 @@ export async function PUT(req: NextRequest) {
     .from("fit_workout_sessions")
     .update(sessionPayload)
     .eq("id", id)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .select("id")
+    .single();
 
-  if (sessionError) return serverError(sessionError, "운동 기록 수정에 실패했어요. 잠시 후 다시 시도해 주세요.");
+  if (sessionError) {
+    if (isNoRows(sessionError)) return userError("수정할 운동 기록을 찾을 수 없습니다. 새로고침 후 다시 확인해 주세요.", 404);
+    return serverError(sessionError, "운동 기록 수정에 실패했어요. 잠시 후 다시 시도해 주세요.");
+  }
 
   const { error: deleteError } = await sb
     .from("fit_set_logs")
@@ -240,12 +249,15 @@ export async function DELETE(req: NextRequest) {
   if (!id) return userError("삭제할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
 
   const sb = getServiceClient();
-  const { error } = await sb
+  const { data, error } = await sb
     .from("fit_workout_sessions")
     .delete()
     .eq("id", id)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .select("id")
+    .maybeSingle();
 
   if (error) return serverError(error, "기록 삭제에 실패했어요. 잠시 후 다시 시도해 주세요.");
+  if (!data) return userError("삭제할 운동 기록을 찾을 수 없습니다. 새로고침 후 다시 확인해 주세요.", 404);
   return NextResponse.json({ ok: true });
 }
