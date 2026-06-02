@@ -151,6 +151,12 @@ if (!loginPage.includes('type="submit"')) {
   fail("login page must have an explicit submit button");
 }
 
+for (const authModeLabel of ["로그인 모드 선택", "회원가입 모드 선택"]) {
+  if (!loginPage.includes(`aria-label="${authModeLabel}"`)) {
+    fail(`login mode toggle is missing aria-label: ${authModeLabel}`);
+  }
+}
+
 const dialogOverlays = [...fitApp.matchAll(/<div[^>]*role="dialog"[^>]*>/g)];
 if (dialogOverlays.length === 0) {
   fail("FitLogApp must expose modal dialogs with role=dialog");

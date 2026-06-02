@@ -162,6 +162,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 className={`h-11 rounded-full text-sm font-medium ${mode === "login" ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                aria-label="로그인 모드 선택"
                 aria-pressed={mode === "login"}
                 onClick={() => switchMode("login")}
               >
@@ -170,6 +171,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 className={`h-11 rounded-full text-sm font-medium ${mode === "signup" ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                aria-label="회원가입 모드 선택"
                 aria-pressed={mode === "signup"}
                 onClick={() => switchMode("signup")}
               >
