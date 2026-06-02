@@ -3297,7 +3297,7 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
       <MobileTabBar activeTab={activeTab} setActiveTab={selectTab} />
 
       {toast && (
-        <div className="fixed bottom-24 left-1/2 z-50 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 rounded-full bg-[#242124] px-5 py-3 text-center text-sm font-medium text-[#fffdfb]" role="status" aria-live="polite">
+        <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 rounded-full bg-[#242124] px-5 py-3 text-center text-sm font-medium text-[#fffdfb]" role="status" aria-live="polite">
           {toast}
         </div>
       )}

@@ -171,6 +171,9 @@ if (!fitApp.includes("return false;") || !fitApp.includes("if (saved) setActiveM
 if (!fitApp.includes("삭제 후에는 복구할 수 없습니다")) {
   fail("workout deletion must require an explicit confirmation");
 }
+if (!fitApp.includes("bottom-[calc(6rem+env(safe-area-inset-bottom))]")) {
+  fail("toast placement must account for mobile safe-area insets");
+}
 
 const buttonsWithoutType = [...fitApp.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
 if (buttonsWithoutType.length > 0) {
