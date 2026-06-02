@@ -4,6 +4,10 @@ import { getServiceClient } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+const SIGNUP_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const SIGNUP_RATE_LIMIT_MAX = 8;
+const signupAttempts = new Map<string, { count: number; resetAt: number }>();
+
 function asText(value: unknown) {
   if (value == null) return "";
   return String(value).trim();
@@ -22,7 +26,39 @@ function authMessage(message: string) {
   return "회원가입 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
+function signupClientKey(req: NextRequest) {
+  const forwardedFor = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  return forwardedFor || realIp || "unknown";
+}
+
+function rateLimitSignup(req: NextRequest) {
+  const now = Date.now();
+  for (const [key, value] of signupAttempts) {
+    if (value.resetAt <= now) signupAttempts.delete(key);
+  }
+
+  const key = signupClientKey(req);
+  const current = signupAttempts.get(key);
+  if (!current || current.resetAt <= now) {
+    signupAttempts.set(key, { count: 1, resetAt: now + SIGNUP_RATE_LIMIT_WINDOW_MS });
+    return null;
+  }
+
+  current.count += 1;
+  signupAttempts.set(key, current);
+  if (current.count <= SIGNUP_RATE_LIMIT_MAX) return null;
+
+  return NextResponse.json(
+    { error: "회원가입 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
+    { status: 429, headers: { "Retry-After": String(Math.ceil((current.resetAt - now) / 1000)) } },
+  );
+}
+
 export async function POST(req: NextRequest) {
+  const rateLimited = rateLimitSignup(req);
+  if (rateLimited) return rateLimited;
+
   const body = await req.json().catch(() => ({}));
   const emailText = asText(body.email);
   const password = asText(body.password);

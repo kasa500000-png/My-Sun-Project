@@ -130,6 +130,7 @@ const fitApp = read("components/FitLogApp.tsx");
 const loginPage = read("app/login/page.tsx");
 const rootLayout = read("app/layout.tsx");
 const serviceSupabase = read("lib/supabase.ts");
+const signupRoute = read("app/api/auth/signup/route.ts");
 if (!serviceSupabase.includes("cachedServiceClient")) {
   fail("Supabase service client should be cached at module scope");
 }
@@ -192,6 +193,10 @@ for (const source of [fitApp, loginPage]) {
   if (!source.includes("네트워크 연결이 불안정합니다")) {
     fail("client fetch failures must show a Korean network error message");
   }
+}
+
+for (const token of ["SIGNUP_RATE_LIMIT_MAX", "Retry-After", "status: 429"]) {
+  if (!signupRoute.includes(token)) fail(`signup route must include rate limiting token: ${token}`);
 }
 
 const dialogOverlays = [...fitApp.matchAll(/<div[^>]*role="dialog"[^>]*>/g)];
