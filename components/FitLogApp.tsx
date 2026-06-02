@@ -3752,7 +3752,7 @@ function WorkoutEntryView({
                 <button
                   key={tab}
                   type="button"
-                  className={`h-8 shrink-0 rounded-full px-3 text-xs font-semibold ${routineSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : "bg-[#f8f4f0] text-[#7a7470]"}`}
+                  className={`h-10 shrink-0 rounded-full px-4 text-xs font-semibold ${routineSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : "bg-[#f8f4f0] text-[#7a7470]"}`}
                   aria-pressed={routineSubTab === tab}
                   onClick={() => setRoutineSubTab(tab)}
                 >
