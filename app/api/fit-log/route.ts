@@ -51,6 +51,13 @@ function asWorkoutDate(value: unknown) {
   return text && /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : todayKst();
 }
 
+function asUuid(value: unknown) {
+  const text = asText(value, 64);
+  return text && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(text)
+    ? text
+    : "";
+}
+
 function asDurationMinutes(value: unknown) {
   const n = asNumber(value, 0) || 0;
   return Math.min(Math.max(Math.round(n), 0), 1440);
@@ -169,7 +176,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const userId = await currentUserId();
-  const id = String(body.id || "");
+  const id = asUuid(body.id);
   const sets = asSetPayloads(body.sets);
   if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
   if (!id) return userError("수정할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
@@ -227,7 +234,7 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id") || "";
+  const id = asUuid(searchParams.get("id"));
   const userId = await currentUserId();
   if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
   if (!id) return userError("삭제할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
