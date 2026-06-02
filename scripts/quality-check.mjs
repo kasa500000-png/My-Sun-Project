@@ -94,6 +94,9 @@ const serviceWorker = read("public/sw.js");
 for (const token of ["install", "activate", "fetch", "CACHE_NAME"]) {
   if (!serviceWorker.includes(token)) fail(`service worker is missing ${token}`);
 }
+if (!serviceWorker.includes('url.pathname.startsWith("/auth/")')) {
+  fail("service worker must not cache auth callback routes");
+}
 
 const headers = await config.headers();
 const globalHeaders = new Set(headers.find(item => item.source === "/:path*")?.headers.map(item => item.key));
@@ -111,6 +114,11 @@ for (const key of [
 const apiHeaders = headers.find(item => item.source === "/api/:path*")?.headers || [];
 if (!apiHeaders.some(item => item.key === "Cache-Control" && item.value.includes("no-store"))) {
   fail("fit APIs must be served with Cache-Control: no-store");
+}
+
+const authHeaders = headers.find(item => item.source === "/auth/:path*")?.headers || [];
+if (!authHeaders.some(item => item.key === "Cache-Control" && item.value.includes("no-store"))) {
+  fail("auth callback routes must be served with Cache-Control: no-store");
 }
 
 const serviceWorkerHeaders = headers.find(item => item.source === "/sw.js")?.headers || [];
