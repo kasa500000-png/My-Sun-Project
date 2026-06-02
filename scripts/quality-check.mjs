@@ -168,6 +168,9 @@ if (/\bany\b/.test(fitApp)) {
 if (!fitApp.includes("return false;") || !fitApp.includes("if (saved) setActiveModal(null)")) {
   fail("profile settings modal must stay open when saving fails");
 }
+if (!fitApp.includes("삭제 후에는 복구할 수 없습니다")) {
+  fail("workout deletion must require an explicit confirmation");
+}
 
 const buttonsWithoutType = [...fitApp.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
 if (buttonsWithoutType.length > 0) {
