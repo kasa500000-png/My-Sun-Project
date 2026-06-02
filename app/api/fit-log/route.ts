@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
@@ -80,10 +81,15 @@ function serverError(error: unknown, fallback: string) {
   return NextResponse.json({ error: fallback }, { status: 500 });
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("user_id") || "";
-  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
+async function currentUserId() {
+  const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+}
+
+export async function GET() {
+  const userId = await currentUserId();
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
 
   const sb = getServiceClient();
   const { data, error } = await sb
@@ -100,9 +106,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  const userId = String(body.user_id || "");
+  const userId = await currentUserId();
   const sets = asSetPayloads(body.sets);
-  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
   if (sets.length === 0) return userError("저장할 운동을 하나 이상 입력해 주세요.");
 
   const sb = getServiceClient();
@@ -152,10 +158,11 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  const userId = String(body.user_id || "");
+  const userId = await currentUserId();
   const id = String(body.id || "");
   const sets = asSetPayloads(body.sets);
-  if (!id || !userId) return userError("수정할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
+  if (!id) return userError("수정할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
   if (sets.length === 0) return userError("저장할 운동을 하나 이상 입력해 주세요.");
 
   const sb = getServiceClient();
@@ -210,8 +217,9 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id") || "";
-  const userId = searchParams.get("user_id") || "";
-  if (!id || !userId) return userError("삭제할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
+  const userId = await currentUserId();
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
+  if (!id) return userError("삭제할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
 
   const sb = getServiceClient();
   const { error } = await sb

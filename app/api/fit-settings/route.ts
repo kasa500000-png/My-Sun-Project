@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
@@ -68,10 +69,15 @@ function serverError(error: unknown, fallback: string) {
   return NextResponse.json({ error: fallback }, { status: 500 });
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("user_id") || "";
-  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
+async function currentUserId() {
+  const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+}
+
+export async function GET() {
+  const userId = await currentUserId();
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
 
   const sb = getServiceClient();
   const { data, error } = await sb
@@ -90,8 +96,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  const userId = String(body.user_id || "");
-  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
+  const userId = await currentUserId();
+  if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
 
   const payload = {
     user_id: userId,
