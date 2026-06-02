@@ -72,8 +72,25 @@ for (const key of [
   if (!globalHeaders.has(key)) fail(`global security header is missing ${key}`);
 }
 
+const apiHeaders = headers.find(item => item.source === "/api/:path*")?.headers || [];
+if (!apiHeaders.some(item => item.key === "Cache-Control" && item.value.includes("no-store"))) {
+  fail("fit APIs must be served with Cache-Control: no-store");
+}
+
+const serviceWorkerHeaders = headers.find(item => item.source === "/sw.js")?.headers || [];
+if (!serviceWorkerHeaders.some(item => item.key === "Cache-Control" && item.value.includes("no-store"))) {
+  fail("service worker must be served with no-store cache headers");
+}
+
 const fitApp = read("components/FitLogApp.tsx");
 const loginPage = read("app/login/page.tsx");
+const clientSources = [fitApp, loginPage, read("components/ServiceWorkerBridge.tsx")].join("\n");
+for (const forbiddenStorageApi of ["localStorage", "sessionStorage", "indexedDB"]) {
+  if (clientSources.includes(forbiddenStorageApi)) {
+    fail(`client must not use browser-local workout storage: ${forbiddenStorageApi}`);
+  }
+}
+
 if (/user_id\s*[=:]/.test(fitApp) || /user_id=/.test(fitApp)) {
   fail("FitLogApp must not send user_id to fit APIs");
 }
