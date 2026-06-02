@@ -3,9 +3,9 @@ import { getServiceClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-function asText(value: unknown, max = 320) {
+function asText(value: unknown) {
   if (value == null) return "";
-  return String(value).trim().slice(0, max);
+  return String(value).trim();
 }
 
 function isValidEmail(email: string) {
@@ -23,8 +23,18 @@ function authMessage(message: string) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  const email = asText(body.email).toLowerCase();
-  const password = asText(body.password, 200);
+  const emailText = asText(body.email);
+  const password = asText(body.password);
+
+  if (emailText.length > 320) {
+    return NextResponse.json({ error: "아이디는 320자 이하의 이메일 주소로 입력해 주세요." }, { status: 400 });
+  }
+
+  if (password.length > 128) {
+    return NextResponse.json({ error: "비밀번호는 128자 이하로 입력해 주세요." }, { status: 400 });
+  }
+
+  const email = emailText.toLowerCase();
 
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "아이디는 이메일 주소 형식으로 입력해 주세요." }, { status: 400 });
@@ -34,7 +44,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "비밀번호는 6자 이상으로 입력해 주세요." }, { status: 400 });
   }
 
-  let data;
   try {
     const supabase = getServiceClient();
     const result = await supabase.auth.admin.createUser({
@@ -42,7 +51,6 @@ export async function POST(req: NextRequest) {
       password,
       email_confirm: true,
     });
-    data = result.data;
 
     if (result.error) {
       return NextResponse.json({ error: authMessage(result.error.message) }, { status: 400 });
@@ -52,5 +60,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "회원가입 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, userId: data.user?.id });
+  return NextResponse.json({ ok: true });
 }
