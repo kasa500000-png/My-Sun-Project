@@ -48,6 +48,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const notice = params.get("message");
+    if (notice) setMessage(notice.slice(0, 180));
+
     const supabase = createSupabaseBrowser();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data }) => {
