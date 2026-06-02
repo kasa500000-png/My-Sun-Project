@@ -4,7 +4,9 @@ import { normalizeSupabaseUrl } from "@/lib/supabase-url";
 
 function safeNextPath(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\\\")) return "/";
-  return value;
+  const url = new URL(value, "https://local.app");
+  if (url.pathname !== "/") return "/";
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 function loginWithMessage(request: NextRequest, message: string) {

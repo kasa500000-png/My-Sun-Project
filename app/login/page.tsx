@@ -27,7 +27,9 @@ function safeNextPath() {
   const params = new URLSearchParams(window.location.search);
   const next = params.get("next") || "/";
   if (!next.startsWith("/") || next.startsWith("//") || next.includes("\\\\")) return "/";
-  return next;
+  const url = new URL(next, window.location.origin);
+  if (url.origin !== window.location.origin || url.pathname !== "/") return "/";
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 function authMessage(message: string) {
