@@ -3642,6 +3642,10 @@ function WorkoutEntryView({
   }, [currentRoutine, favoriteSet, hasSubTabs, routineSubTab, searchQuery]);
   const editingExercise = editingExerciseId ? exerciseById.get(editingExerciseId) : undefined;
   const editingDraft = editingExerciseId ? draftByExerciseId.get(editingExerciseId)?.draft : undefined;
+  const savedScores = useMemo(
+    () => (lastSavedSession ? scoreSessions([lastSavedSession]).filter(item => item.score > 0) : []),
+    [lastSavedSession],
+  );
   const savedFeedbackRef = useRef<HTMLDivElement | null>(null);
   const lastScrolledSavedId = useRef<string | null>(lastSavedSession?.id || null);
   const [memoModalOpen, setMemoModalOpen] = useState(false);
@@ -3835,7 +3839,7 @@ function WorkoutEntryView({
           <div ref={savedFeedbackRef} className="mt-6 grid scroll-mt-24 gap-6 md:hidden">
             <SavedWorkoutPanel session={lastSavedSession} onEdit={() => onEditSession(lastSavedSession)} />
             <FlatPanel title="기록된 자극" kicker="방금 저장">
-              <BodyMap scores={scoreSessions([lastSavedSession]).filter(item => item.score > 0)} />
+              <BodyMap scores={savedScores} />
             </FlatPanel>
           </div>
         )}
@@ -3847,7 +3851,7 @@ function WorkoutEntryView({
         )}
         {lastSavedSession && (
           <FlatPanel title="기록된 자극" kicker="방금 저장">
-            <BodyMap scores={scoreSessions([lastSavedSession]).filter(item => item.score > 0)} />
+            <BodyMap scores={savedScores} />
           </FlatPanel>
         )}
       </aside>
