@@ -73,6 +73,7 @@ for (const key of [
 }
 
 const fitApp = read("components/FitLogApp.tsx");
+const loginPage = read("app/login/page.tsx");
 if (/user_id\s*[=:]/.test(fitApp) || /user_id=/.test(fitApp)) {
   fail("FitLogApp must not send user_id to fit APIs");
 }
@@ -80,6 +81,15 @@ if (/user_id\s*[=:]/.test(fitApp) || /user_id=/.test(fitApp)) {
 const buttonsWithoutType = [...fitApp.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
 if (buttonsWithoutType.length > 0) {
   fail(`FitLogApp has ${buttonsWithoutType.length} button(s) without explicit type`);
+}
+
+const loginButtonsWithoutType = [...loginPage.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
+if (loginButtonsWithoutType.length > 0) {
+  fail(`login page has ${loginButtonsWithoutType.length} button(s) without explicit type`);
+}
+
+if (!loginPage.includes('type="submit"')) {
+  fail("login page must have an explicit submit button");
 }
 
 const muscleImageEntries = [...fitApp.matchAll(/([a-zA-Z][\w]*):\s*"\/images\/muscle-focus-cards\/([^"]+)"/g)];

@@ -220,7 +220,7 @@ export default function LoginPage() {
               )}
             </div>
 
-            <button className="mt-6 h-12 w-full rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb] shadow-[0_10px_24px_rgba(58,48,50,0.14)] disabled:opacity-50" disabled={loading} aria-busy={loading}>
+            <button type="submit" className="mt-6 h-12 w-full rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb] shadow-[0_10px_24px_rgba(58,48,50,0.14)] disabled:opacity-50" disabled={loading} aria-busy={loading}>
               {loading ? "처리 중" : mode === "login" ? "로그인" : "회원가입"}
             </button>
 
