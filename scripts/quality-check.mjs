@@ -18,6 +18,22 @@ function existsPublicAsset(src) {
 }
 
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
+const packageJson = JSON.parse(read("package.json"));
+const envExample = read(".env.example");
+
+for (const key of [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_DB_URL",
+]) {
+  if (!envExample.includes(`${key}=`)) fail(`.env.example is missing ${key}`);
+}
+
+if (!packageJson.scripts?.validate?.includes("npm run quality")) {
+  fail("package validate script must include npm run quality");
+}
+
 const requiredManifestFields = ["name", "short_name", "id", "start_url", "scope", "display", "icons"];
 
 for (const field of requiredManifestFields) {
