@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run lint && npm run build",
     "start": "next start",
     "db:migrate": "node scripts/run-supabase-sql.mjs supabase/migration-fit-log.sql",
-    "lint": "next lint"
+    "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {
     "@supabase/ssr": "^0.4.0",
