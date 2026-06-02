@@ -22,5 +22,5 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   if (!user) redirect(loginRedirectFor(await searchParams));
 
-  return <FitLogApp userId={user.id} userEmail={user.email} />;
+  return <FitLogApp userEmail={user.email} />;
 }

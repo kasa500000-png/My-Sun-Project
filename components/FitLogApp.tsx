@@ -183,7 +183,6 @@ type Muscle = {
 };
 
 type FitLogAppProps = {
-  userId: string;
   userEmail?: string | null;
 };
 
@@ -2902,7 +2901,7 @@ function muscleIconKey(muscleId: string, group?: string): MuscleIconKey {
   return "cardio";
 }
 
-export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
+export default function FitLogApp({ userEmail }: FitLogAppProps) {
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
@@ -2923,7 +2922,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   useEffect(() => {
     void loadSessions();
     void loadSettings();
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     const tab = tabFromSearchParam(new URLSearchParams(window.location.search).get("tab"));
@@ -2964,7 +2963,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   async function loadSessions() {
     setLoadingSessions(true);
     try {
-      const res = await appFetch(`/api/fit-log?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
+      const res = await appFetch("/api/fit-log", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       assertApiResponse(res, data, "운동 기록을 불러오지 못했어요.");
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
@@ -3017,7 +3016,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
   async function loadSettings() {
     try {
-      const res = await appFetch(`/api/fit-settings?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
+      const res = await appFetch("/api/fit-settings", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       assertApiResponse(res, data, "설정을 불러오지 못했어요.");
       setSettings({
@@ -3051,7 +3050,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       const res = await appFetch("/api/fit-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, ...normalized }),
+        body: JSON.stringify(normalized),
       });
       const data = await res.json().catch(() => ({}));
       assertApiResponse(res, data, "설정 저장에 실패했어요.");
@@ -3131,7 +3130,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
       const res = await appFetch("/api/fit-log", {
         method: editingSessionId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...nextSession, id: editingSessionId || nextSession.id, user_id: userId }),
+        body: JSON.stringify({ ...nextSession, id: editingSessionId || nextSession.id }),
       });
       const data = await res.json().catch(() => ({}));
       assertApiResponse(res, data, "운동 기록 저장에 실패했어요.");
@@ -3159,7 +3158,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     }
 
     try {
-      const res = await appFetch(`/api/fit-log?id=${encodeURIComponent(id)}&user_id=${encodeURIComponent(userId)}`, {
+      const res = await appFetch(`/api/fit-log?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
       const data = await res.json().catch(() => ({}));
