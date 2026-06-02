@@ -33,13 +33,25 @@ function sanitizeBodyNumber(value: unknown) {
   return Math.round(number * 10) / 10;
 }
 
+function sanitizeHeight(value: unknown) {
+  const number = sanitizeBodyNumber(value);
+  if (number == null) return null;
+  return number >= 80 && number <= 230 ? number : null;
+}
+
+function sanitizeWeight(value: unknown) {
+  const number = sanitizeBodyNumber(value);
+  if (number == null) return null;
+  return number >= 20 && number <= 250 ? number : null;
+}
+
 function mapSettings(row: any) {
   return {
     weeklyGoal: clampWeeklyGoal(row?.weekly_goal),
     favoriteExerciseIds: sanitizeExerciseIds(row?.favorite_exercise_ids),
     gender: sanitizeGender(row?.gender),
-    heightCm: sanitizeBodyNumber(row?.height_cm),
-    weightKg: sanitizeBodyNumber(row?.weight_kg),
+    heightCm: sanitizeHeight(row?.height_cm),
+    weightKg: sanitizeWeight(row?.weight_kg),
   };
 }
 
@@ -86,8 +98,8 @@ export async function POST(req: NextRequest) {
     weekly_goal: clampWeeklyGoal(body.weeklyGoal ?? body.weekly_goal),
     favorite_exercise_ids: sanitizeExerciseIds(body.favoriteExerciseIds ?? body.favorite_exercise_ids),
     gender: sanitizeGender(body.gender),
-    height_cm: sanitizeBodyNumber(body.heightCm ?? body.height_cm),
-    weight_kg: sanitizeBodyNumber(body.weightKg ?? body.weight_kg),
+    height_cm: sanitizeHeight(body.heightCm ?? body.height_cm),
+    weight_kg: sanitizeWeight(body.weightKg ?? body.weight_kg),
     updated_at: new Date().toISOString(),
   };
 

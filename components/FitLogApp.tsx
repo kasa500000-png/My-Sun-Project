@@ -63,6 +63,12 @@ type VolumeType =
 type HistoryRange = "day" | "week" | "month" | "year";
 type BodyFilter = "all" | "upper" | "lower" | "core";
 
+const TAB_VALUES: Tab[] = ["home", "train", "log", "balance", "member"];
+
+function tabFromSearchParam(value: string | null): Tab | null {
+  return value && TAB_VALUES.includes(value as Tab) ? value as Tab : null;
+}
+
 type MuscleImpact = {
   muscleId: string;
   impactRatio: number;
@@ -2872,6 +2878,11 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   }, [userId]);
 
   useEffect(() => {
+    const tab = tabFromSearchParam(new URLSearchParams(window.location.search).get("tab"));
+    if (tab) setActiveTab(tab);
+  }, []);
+
+  useEffect(() => {
     setIsOnline(navigator.onLine);
     const updateOnline = () => setIsOnline(navigator.onLine);
     window.addEventListener("online", updateOnline);
@@ -2894,6 +2905,9 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
   function selectTab(tab: Tab) {
     setActiveTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState(null, "", url);
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
@@ -2903,7 +2917,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     setLoadingSessions(true);
     try {
       const res = await fetch(`/api/fit-log?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "운동 기록을 불러오지 못했어요.");
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
     } catch (error) {

@@ -15,6 +15,8 @@ type SetPayload = {
   memo?: string | null;
 };
 
+const MAX_SETS_PER_SESSION = 200;
+
 function asText(value: unknown, max = 1000) {
   if (value == null) return null;
   const text = String(value).trim();
@@ -31,6 +33,20 @@ function todayKst() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   return kst.toISOString().slice(0, 10);
+}
+
+function asWorkoutDate(value: unknown) {
+  const text = asText(value, 10);
+  return text && /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : todayKst();
+}
+
+function asDurationMinutes(value: unknown) {
+  const n = asNumber(value, 0) || 0;
+  return Math.min(Math.max(Math.round(n), 0), 1440);
+}
+
+function asSetPayloads(value: unknown) {
+  return (Array.isArray(value) ? value as SetPayload[] : []).slice(0, MAX_SETS_PER_SESSION);
 }
 
 function mapSession(row: any) {
@@ -85,16 +101,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const userId = String(body.user_id || "");
-  const sets = Array.isArray(body.sets) ? body.sets as SetPayload[] : [];
+  const sets = asSetPayloads(body.sets);
   if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
   if (sets.length === 0) return userError("저장할 운동을 하나 이상 입력해 주세요.");
 
   const sb = getServiceClient();
   const sessionPayload = {
     user_id: userId,
-    workout_date: body.date || todayKst(),
+    workout_date: asWorkoutDate(body.date),
     routine_name: asText(body.routineName || body.routine_name, 120) || "운동",
-    duration_minutes: asNumber(body.durationMinutes || body.duration_minutes, 0),
+    duration_minutes: asDurationMinutes(body.durationMinutes || body.duration_minutes),
     memo: asText(body.memo, 2000),
   };
 
@@ -138,15 +154,15 @@ export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const userId = String(body.user_id || "");
   const id = String(body.id || "");
-  const sets = Array.isArray(body.sets) ? body.sets as SetPayload[] : [];
+  const sets = asSetPayloads(body.sets);
   if (!id || !userId) return userError("수정할 기록 정보를 확인할 수 없습니다. 다시 시도해 주세요.");
   if (sets.length === 0) return userError("저장할 운동을 하나 이상 입력해 주세요.");
 
   const sb = getServiceClient();
   const sessionPayload = {
-    workout_date: body.date || todayKst(),
+    workout_date: asWorkoutDate(body.date),
     routine_name: asText(body.routineName || body.routine_name, 120) || "운동",
-    duration_minutes: asNumber(body.durationMinutes || body.duration_minutes, 0),
+    duration_minutes: asDurationMinutes(body.durationMinutes || body.duration_minutes),
     memo: asText(body.memo, 2000),
   };
 
