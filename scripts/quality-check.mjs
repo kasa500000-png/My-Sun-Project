@@ -61,4 +61,25 @@ if (/user_id\s*[=:]/.test(fitApp) || /user_id=/.test(fitApp)) {
   fail("FitLogApp must not send user_id to fit APIs");
 }
 
+const muscleImageEntries = [...fitApp.matchAll(/([a-zA-Z][\w]*):\s*"\/images\/muscle-focus-cards\/([^"]+)"/g)];
+const muscleImageKeys = new Set(muscleImageEntries.map(match => match[1]));
+for (const [, key, fileName] of muscleImageEntries) {
+  const relativePath = `/images/muscle-focus-cards/${fileName}`;
+  if (!existsPublicAsset(relativePath)) fail(`muscle card image is missing for ${key}: ${relativePath}`);
+}
+
+const muscleIds = new Set([...fitApp.matchAll(/muscleId:\s*"([^"]+)"/g)].map(match => match[1]));
+for (const muscleId of muscleIds) {
+  if (!muscleImageKeys.has(muscleId)) fail(`exercise muscleId has no focus card image mapping: ${muscleId}`);
+}
+
+for (const dir of ["public/images", "public/images/muscle-focus-cards"]) {
+  for (const fileName of fs.readdirSync(path.join(root, dir))) {
+    const filePath = path.join(root, dir, fileName);
+    if (!fs.statSync(filePath).isFile()) continue;
+    const size = fs.statSync(filePath).size;
+    if (size > 2 * 1024 * 1024) fail(`image exceeds 2MB mobile budget: ${path.relative(root, filePath)}`);
+  }
+}
+
 if (!process.exitCode) console.log("quality-check: ok");
