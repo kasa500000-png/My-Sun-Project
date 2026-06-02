@@ -4895,6 +4895,8 @@ function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: numbe
         src={imageSrc}
         alt=""
         aria-hidden="true"
+        width={236}
+        height={236}
         loading="lazy"
         decoding="async"
       />
