@@ -2938,6 +2938,7 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
   const [savingSettings, setSavingSettings] = useState(false);
   const [toast, setToast] = useState("");
   const [isOnline, setIsOnline] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     void loadSessions();
@@ -2987,8 +2988,11 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
       const data = await res.json().catch(() => ({}));
       assertApiResponse(res, data, "운동 기록을 불러오지 못했어요.");
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
+      setLoadError("");
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "운동 기록을 불러오지 못했어요.");
+      const message = error instanceof Error ? error.message : "운동 기록을 불러오지 못했어요.";
+      setLoadError(message);
+      setToast(message);
       setSessions([]);
     } finally {
       setLoadingSessions(false);
@@ -3225,6 +3229,15 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
       {!isOnline && (
         <div className="sticky top-[57px] z-30 border-y border-[#eadfda] bg-[#fff6d8] px-4 py-2 text-center text-sm font-semibold text-[#5f4a22]" role="status">
           오프라인 상태입니다. 기록 저장은 연결 후 다시 시도해 주세요.
+        </div>
+      )}
+
+      {loadError && (
+        <div className="sticky top-[57px] z-30 flex items-center justify-between gap-3 border-y border-[#eadfda] bg-[#fff6d8] px-4 py-2 text-sm font-semibold text-[#5f4a22]" role="alert">
+          <span className="min-w-0">{loadError}</span>
+          <button type="button" className="shrink-0 rounded-full bg-[#fffdfb] px-3 py-2 text-xs font-bold text-[#242124]" onClick={() => void loadSessions()}>
+            다시 시도
+          </button>
         </div>
       )}
 

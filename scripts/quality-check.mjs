@@ -178,6 +178,9 @@ if (!fitApp.includes("삭제 후에는 복구할 수 없습니다")) {
 if (!fitApp.includes("bottom-[calc(6rem+env(safe-area-inset-bottom))]")) {
   fail("toast placement must account for mobile safe-area insets");
 }
+if (!fitApp.includes("loadError") || !fitApp.includes('role="alert"') || !fitApp.includes("다시 시도")) {
+  fail("session loading failures must show a persistent retry alert");
+}
 
 const buttonsWithoutType = [...fitApp.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
 if (buttonsWithoutType.length > 0) {
