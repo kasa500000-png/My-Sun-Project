@@ -221,4 +221,19 @@ for (const dir of ["public/images", "public/images/muscle-focus-cards"]) {
   }
 }
 
+function publicAssetBytes(relativeDir) {
+  const absoluteDir = path.join(root, relativeDir);
+  return fs.readdirSync(absoluteDir, { withFileTypes: true }).reduce((total, entry) => {
+    const entryPath = path.join(relativeDir, entry.name);
+    if (entry.isDirectory()) return total + publicAssetBytes(entryPath);
+    return total + fs.statSync(path.join(root, entryPath)).size;
+  }, 0);
+}
+
+const publicAssetBudgetBytes = 10 * 1024 * 1024;
+const publicAssetTotalBytes = publicAssetBytes("public");
+if (publicAssetTotalBytes > publicAssetBudgetBytes) {
+  fail(`public assets exceed 10MB mobile budget: ${Math.round(publicAssetTotalBytes / 1024)}KB`);
+}
+
 if (!process.exitCode) console.log("quality-check: ok");
