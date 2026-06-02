@@ -3178,13 +3178,13 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
   }
 
   async function deleteSession(id: string) {
-    const confirmed = window.confirm("이 운동 기록을 삭제할까요? 삭제 후에는 복구할 수 없습니다.");
-    if (!confirmed) return;
-
     if (!isOnline) {
       setToast("인터넷 연결을 확인한 뒤 다시 삭제해 주세요.");
       return;
     }
+
+    const confirmed = window.confirm("이 운동 기록을 삭제할까요? 삭제 후에는 복구할 수 없습니다.");
+    if (!confirmed) return;
 
     try {
       const res = await appFetch(`/api/fit-log?id=${encodeURIComponent(id)}`, {
