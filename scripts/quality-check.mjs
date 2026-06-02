@@ -234,6 +234,8 @@ for (const [, key, fileName] of muscleImageEntries) {
   if (!fileName.endsWith(".webp")) fail(`muscle card image should use WebP for mobile performance: ${key}`);
   const relativePath = `/images/muscle-focus-cards/${fileName}`;
   if (!existsPublicAsset(relativePath)) fail(`muscle card image is missing for ${key}: ${relativePath}`);
+  const size = fs.statSync(path.join(root, "public", relativePath.replace(/^\//, ""))).size;
+  if (size > 100 * 1024) fail(`muscle card image is too large for mobile: ${relativePath}`);
 }
 
 const muscleIds = new Set([...fitApp.matchAll(/muscleId:\s*"([^"]+)"/g)].map(match => match[1]));
