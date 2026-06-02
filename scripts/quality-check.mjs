@@ -150,6 +150,10 @@ for (const layoutToken of [
   if (!rootLayout.includes(layoutToken)) fail(`layout metadata is missing ${layoutToken}`);
 }
 
+if (!/maximumScale:\s*5/.test(rootLayout) || !/userScalable:\s*true/.test(rootLayout)) {
+  fail("mobile viewport must allow pinch zoom for accessibility");
+}
+
 if (!rootLayout.includes('rel="preconnect"') || !rootLayout.includes("https://cdn.jsdelivr.net")) {
   fail("layout must preconnect to the font CDN used by global CSS");
 }
