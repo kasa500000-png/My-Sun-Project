@@ -20,6 +20,8 @@ const UI = {
   pill: "rounded-full px-3 py-2 text-sm font-semibold",
 };
 
+const API_TIMEOUT_MS = 15000;
+
 type Tab = "home" | "train" | "log" | "balance" | "member";
 type ExerciseType = "weight" | "time" | "bodyweight";
 type VolumeType =
@@ -83,6 +85,22 @@ function assertApiResponse(response: Response, data: any, fallback: string) {
 
   if (!response.ok) {
     throw new Error(data?.error || fallback);
+  }
+}
+
+async function appFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, { ...init, signal: init?.signal || controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("응답이 지연되고 있습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
   }
 }
 
@@ -2946,7 +2964,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
   async function loadSessions() {
     setLoadingSessions(true);
     try {
-      const res = await fetch(`/api/fit-log?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
+      const res = await appFetch(`/api/fit-log?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       assertApiResponse(res, data, "운동 기록을 불러오지 못했어요.");
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
@@ -2999,7 +3017,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
   async function loadSettings() {
     try {
-      const res = await fetch(`/api/fit-settings?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
+      const res = await appFetch(`/api/fit-settings?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       assertApiResponse(res, data, "설정을 불러오지 못했어요.");
       setSettings({
@@ -3030,7 +3048,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
     setSavingSettings(true);
     try {
-      const res = await fetch("/api/fit-settings", {
+      const res = await appFetch("/api/fit-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, ...normalized }),
@@ -3110,7 +3128,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/fit-log", {
+      const res = await appFetch("/api/fit-log", {
         method: editingSessionId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...nextSession, id: editingSessionId || nextSession.id, user_id: userId }),
@@ -3141,7 +3159,7 @@ export default function FitLogApp({ userId, userEmail }: FitLogAppProps) {
     }
 
     try {
-      const res = await fetch(`/api/fit-log?id=${encodeURIComponent(id)}&user_id=${encodeURIComponent(userId)}`, {
+      const res = await appFetch(`/api/fit-log?id=${encodeURIComponent(id)}&user_id=${encodeURIComponent(userId)}`, {
         method: "DELETE",
       });
       const data = await res.json().catch(() => ({}));

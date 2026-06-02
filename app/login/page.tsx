@@ -5,6 +5,24 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 type AuthMode = "login" | "signup";
 
+const AUTH_TIMEOUT_MS = 15000;
+
+async function authFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, { ...init, signal: init?.signal || controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("응답이 지연되고 있습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 function safeNextPath() {
   const params = new URLSearchParams(window.location.search);
   const next = params.get("next") || "/";
@@ -81,7 +99,7 @@ export default function LoginPage() {
         return;
       }
 
-      const signupRes = await fetch("/api/auth/signup", {
+      const signupRes = await authFetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
