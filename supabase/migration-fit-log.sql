@@ -49,6 +49,9 @@ CREATE INDEX IF NOT EXISTS idx_fit_sessions_user_date
 CREATE INDEX IF NOT EXISTS idx_fit_sets_session
   ON fit_set_logs(session_id, set_number);
 
+CREATE INDEX IF NOT EXISTS idx_fit_sets_user_session
+  ON fit_set_logs(user_id, session_id);
+
 ALTER TABLE fit_workout_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fit_set_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fit_user_settings ENABLE ROW LEVEL SECURITY;
