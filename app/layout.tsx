@@ -57,6 +57,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        <link rel="preload" href="/images/mysun-login-hero.webp" as="image" type="image/webp" />
+        <link rel="preload" href="/images/mysun-home-hero.webp" as="image" type="image/webp" />
       </head>
       <body>
         <ServiceWorkerBridge />
