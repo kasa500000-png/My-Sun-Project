@@ -213,6 +213,7 @@ for (const match of dialogOverlays) {
 const muscleImageEntries = [...fitApp.matchAll(/([a-zA-Z][\w]*):\s*"\/images\/muscle-focus-cards\/([^"]+)"/g)];
 const muscleImageKeys = new Set(muscleImageEntries.map(match => match[1]));
 for (const [, key, fileName] of muscleImageEntries) {
+  if (!fileName.endsWith(".webp")) fail(`muscle card image should use WebP for mobile performance: ${key}`);
   const relativePath = `/images/muscle-focus-cards/${fileName}`;
   if (!existsPublicAsset(relativePath)) fail(`muscle card image is missing for ${key}: ${relativePath}`);
 }
