@@ -14,6 +14,7 @@ body {
 }
 
 html {
+  background: #fffdfb;
   font-family:
     "Pretendard Variable",
     Pretendard,
@@ -33,12 +34,22 @@ html {
 
 body {
   margin: 0;
+  min-height: 100svh;
   background: #fffdfb;
   color: #242124;
   font-family: inherit;
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
   overscroll-behavior-y: none;
+}
+
+img,
+svg {
+  display: block;
+}
+
+img {
+  max-width: 100%;
 }
 
 button,
