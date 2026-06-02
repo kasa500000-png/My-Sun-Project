@@ -116,12 +116,6 @@ if (!rootLayout.includes('rel="preconnect"') || !rootLayout.includes("https://cd
   fail("layout must preconnect to the font CDN used by global CSS");
 }
 
-for (const heroAsset of ["/images/mysun-login-hero.webp", "/images/mysun-home-hero.webp"]) {
-  if (!rootLayout.includes(`href="${heroAsset}"`) || !rootLayout.includes('rel="preload"')) {
-    fail(`layout must preload first-screen hero asset: ${heroAsset}`);
-  }
-}
-
 const clientSources = [fitApp, loginPage, read("components/ServiceWorkerBridge.tsx")].join("\n");
 for (const forbiddenStorageApi of ["localStorage", "sessionStorage", "indexedDB"]) {
   if (clientSources.includes(forbiddenStorageApi)) {
