@@ -195,6 +195,23 @@ for (const [, exerciseId, body] of exerciseImpactBlocks) {
   }
 }
 
+const exerciseListStart = fitApp.indexOf("const EXERCISES: Exercise[]");
+const exerciseListEnd = fitApp.indexOf("const ROUTINES");
+const exerciseListSource = fitApp.slice(exerciseListStart, exerciseListEnd);
+const exerciseIds = [...exerciseListSource.matchAll(/id:\s*"([^"]+)"/g)].map(match => match[1]);
+const routineExerciseIds = [...fitApp.matchAll(/const [A-Z_]+_EXERCISE_IDS = \[([\s\S]*?)\];/g)]
+  .flatMap(match => [...match[1].matchAll(/"([^"]+)"/g)].map(idMatch => idMatch[1]));
+const exerciseIdSet = new Set(exerciseIds);
+const routineExerciseIdSet = new Set(routineExerciseIds);
+
+for (const routineExerciseId of routineExerciseIdSet) {
+  if (!exerciseIdSet.has(routineExerciseId)) fail(`routine references unknown exercise id: ${routineExerciseId}`);
+}
+
+for (const exerciseId of exerciseIds) {
+  if (!routineExerciseIdSet.has(exerciseId)) fail(`exercise is not visible in any routine tab: ${exerciseId}`);
+}
+
 for (const dir of ["public/images", "public/images/muscle-focus-cards"]) {
   for (const fileName of fs.readdirSync(path.join(root, dir))) {
     const filePath = path.join(root, dir, fileName);
