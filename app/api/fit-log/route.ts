@@ -16,6 +16,26 @@ type SetPayload = {
   memo?: string | null;
 };
 
+type SetRow = {
+  id: string;
+  exercise_id: string;
+  set_number: number | string | null;
+  weight: number | string | null;
+  reps: number | string | null;
+  duration_seconds: number | string | null;
+  memo: string | null;
+};
+
+type SessionRow = {
+  id: string;
+  workout_date: string | null;
+  date?: string | null;
+  routine_name: string | null;
+  duration_minutes: number | string | null;
+  memo: string | null;
+  fit_set_logs?: SetRow[] | null;
+};
+
 const MAX_SETS_PER_SESSION = 200;
 
 function asText(value: unknown, max = 1000) {
@@ -67,7 +87,7 @@ function asSetPayloads(value: unknown) {
   return (Array.isArray(value) ? value as SetPayload[] : []).slice(0, MAX_SETS_PER_SESSION);
 }
 
-function mapSession(row: any) {
+function mapSession(row: SessionRow) {
   return {
     id: row.id,
     date: String(row.workout_date || row.date || todayKst()).slice(0, 10),
@@ -76,8 +96,8 @@ function mapSession(row: any) {
     memo: row.memo || undefined,
     sets: (row.fit_set_logs || [])
       .slice()
-      .sort((a: any, b: any) => Number(a.set_number || 0) - Number(b.set_number || 0))
-      .map((set: any) => ({
+      .sort((a, b) => Number(a.set_number || 0) - Number(b.set_number || 0))
+      .map((set) => ({
         id: set.id,
         exerciseId: set.exercise_id,
         setNumber: Number(set.set_number || 1),
@@ -98,8 +118,8 @@ function serverError(error: unknown, fallback: string) {
   return NextResponse.json({ error: fallback }, { status: 500 });
 }
 
-function isNoRows(error: any) {
-  return error?.code === "PGRST116";
+function isNoRows(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "PGRST116";
 }
 
 async function currentUserId() {

@@ -12,6 +12,14 @@ const DEFAULT_SETTINGS = {
   weightKg: null as number | null,
 };
 
+type SettingsRow = {
+  weekly_goal: number | string | null;
+  favorite_exercise_ids: unknown;
+  gender: string | null;
+  height_cm: number | string | null;
+  weight_kg: number | string | null;
+};
+
 function clampWeeklyGoal(value: unknown) {
   const goal = Math.floor(Number(value) || DEFAULT_SETTINGS.weeklyGoal);
   return Math.min(Math.max(goal, 1), 14);
@@ -46,7 +54,7 @@ function sanitizeWeight(value: unknown) {
   return number >= 20 && number <= 250 ? number : null;
 }
 
-function mapSettings(row: any) {
+function mapSettings(row: SettingsRow | null) {
   return {
     weeklyGoal: clampWeeklyGoal(row?.weekly_goal),
     favoriteExerciseIds: sanitizeExerciseIds(row?.favorite_exercise_ids),
@@ -56,8 +64,11 @@ function mapSettings(row: any) {
   };
 }
 
-function isMissingTable(error: any) {
-  return error?.code === "42P01" || String(error?.message || "").includes("fit_user_settings");
+function isMissingTable(error: unknown) {
+  if (typeof error !== "object" || error === null) return false;
+  const code = "code" in error ? error.code : "";
+  const message = "message" in error ? error.message : "";
+  return code === "42P01" || String(message || "").includes("fit_user_settings");
 }
 
 function userError(message: string, status = 400) {
