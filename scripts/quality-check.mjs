@@ -71,11 +71,15 @@ for (const field of requiredManifestFields) {
 }
 
 if (manifest.display !== "standalone") fail("manifest display must be standalone");
+if (!Array.isArray(manifest.display_override) || !manifest.display_override.includes("standalone")) {
+  fail("manifest display_override must include standalone");
+}
 if (manifest.orientation !== "portrait") fail("manifest orientation must be portrait");
 if (manifest.lang !== "ko-KR") fail("manifest lang must be ko-KR");
 if (manifest.id !== "/") fail("manifest id must use the app root");
 if (manifest.start_url !== "/") fail("manifest start_url must use the app root");
 if (manifest.scope !== "/") fail("manifest scope must use the app root");
+if (manifest.prefer_related_applications !== false) fail("manifest should prefer this PWA over related apps");
 if (manifest.theme_color !== "#fffdfb") fail("manifest theme_color must match the app surface");
 if (manifest.background_color !== "#fffdfb") fail("manifest background_color must match the app surface");
 if (!Array.isArray(manifest.icons) || manifest.icons.length < 2) fail("manifest must include install icons");
