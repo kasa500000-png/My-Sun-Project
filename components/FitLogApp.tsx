@@ -77,14 +77,20 @@ function redirectToLoginWithCurrentPath() {
   window.location.href = `/login?next=${encodeURIComponent(next)}`;
 }
 
-function assertApiResponse(response: Response, data: any, fallback: string) {
+function apiErrorMessage(data: unknown) {
+  if (typeof data !== "object" || data === null || !("error" in data)) return null;
+  const message = data.error;
+  return typeof message === "string" && message.trim() ? message : null;
+}
+
+function assertApiResponse(response: Response, data: unknown, fallback: string) {
   if (response.status === 401) {
     redirectToLoginWithCurrentPath();
-    throw new Error(data?.error || "로그인이 만료되었습니다. 다시 로그인해 주세요.");
+    throw new Error(apiErrorMessage(data) || "로그인이 만료되었습니다. 다시 로그인해 주세요.");
   }
 
   if (!response.ok) {
-    throw new Error(data?.error || fallback);
+    throw new Error(apiErrorMessage(data) || fallback);
   }
 }
 

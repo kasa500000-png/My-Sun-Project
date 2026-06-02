@@ -116,6 +116,10 @@ if (/user_id\s*[=:]/.test(fitApp) || /user_id=/.test(fitApp)) {
   fail("FitLogApp must not send user_id to fit APIs");
 }
 
+if (/\bany\b/.test(fitApp)) {
+  fail("FitLogApp must avoid any in client data handling");
+}
+
 const buttonsWithoutType = [...fitApp.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
 if (buttonsWithoutType.length > 0) {
   fail(`FitLogApp has ${buttonsWithoutType.length} button(s) without explicit type`);
