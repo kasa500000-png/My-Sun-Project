@@ -3223,7 +3223,7 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#fffdfb] text-[#242124]">
+    <main className="mysun-page min-h-screen">
       <TopBar userEmail={userEmail} onSignOut={signOut} setActiveTab={selectTab} />
 
       {!isOnline && (
@@ -3459,7 +3459,7 @@ function HomeDashboard({
       <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[1fr_1fr] md:px-8 md:py-10">
         <div>
           <div className="mb-6 grid gap-3">
-            <div className="rounded-[16px] border border-[#eadfda] bg-[#fffdfb] px-4 py-3 shadow-[0_10px_28px_rgba(58,48,50,0.05)]">
+            <div className="mysun-card px-4 py-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold text-[#7a7470]">주간 운동 목표</p>
                 <p className="text-sm font-bold text-[#242124]">{weekProgress}/{weeklyGoal}회</p>
@@ -3471,11 +3471,12 @@ function HomeDashboard({
 
             <div className="flex items-end justify-between gap-3">
               <SectionTitle kicker={summaryRangeLabels[range]} title="운동 요약" />
-              <div className="mb-1 flex rounded-full bg-[#f8f4f0] p-1 ring-1 ring-[#eadfda]">
+              <div className="mysun-tabbar mb-1">
                 {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
-                  <button type="button"
+                  <button
+                    type="button"
                     key={item}
-                    className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                    className={`mysun-tab px-3 ${range === item ? "mysun-tab-active" : "mysun-tab-idle"}`}
                     aria-pressed={range === item}
                     onClick={() => setRange(item)}
                   >
@@ -3487,25 +3488,25 @@ function HomeDashboard({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <button type="button" className="rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
+            <button type="button" className="mysun-card p-5 text-left" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 횟수</p>
               <p className="mt-4 text-[34px] font-semibold leading-none">{loading ? "-" : `${summary.count}회`}</p>
             </button>
-            <button type="button" className="rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
+            <button type="button" className="mysun-card p-5 text-left" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 시간</p>
               <p className="mt-4 text-[34px] font-semibold leading-none">{loading ? "-" : `${summary.minutes}분`}</p>
             </button>
-            <button type="button" className="col-span-2 rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
+            <button type="button" className="mysun-card col-span-2 p-5 text-left" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 밸런스</p>
               <BalanceBars balance={summary.balance} />
             </button>
           </div>
 
-          <div className="mt-7 rounded-[20px] bg-[#fffdfb] p-5 shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
+          <div className="mysun-card mt-7 p-5">
             <p className="text-sm font-medium text-[#7a7470]">추천 루틴</p>
             <h2 className="mt-2 text-2xl font-semibold">{recommendedRoutine}</h2>
             <p className="mt-2 text-sm leading-6 text-[#4b4541]">{routineNote(recommendedRoutine)}</p>
-            <button type="button" className="mt-5 h-12 w-full rounded-full bg-[#242124] px-8 text-base font-semibold text-[#fffdfb] md:w-auto" onClick={onStart}>
+            <button type="button" className="mysun-primary-action mt-5 w-full text-base md:w-auto" onClick={onStart}>
               이 루틴으로 시작
             </button>
           </div>
@@ -3711,7 +3712,7 @@ function WorkoutEntryView({
   }
 
   return (
-    <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-6 pb-32 md:grid-cols-[minmax(0,1fr)_360px] md:px-8 md:py-10">
+    <section className="mysun-section grid gap-6 pb-32 md:grid-cols-[minmax(0,1fr)_360px]">
       <div>
         <SectionTitle kicker="운동 기록" title="오늘 운동" />
         <div className="mb-5 grid gap-3">
@@ -3725,7 +3726,7 @@ function WorkoutEntryView({
           </div>
         </div>
 
-        <div className="sticky top-[57px] z-20 mb-4 flex items-center justify-between gap-3 rounded-[16px] border border-[#eadfda] bg-[#fffdfb]/94 px-3 py-2.5 shadow-[0_10px_28px_rgba(58,48,50,0.07)] backdrop-blur">
+        <div className="mysun-sticky-actions sticky top-[57px] z-20 mb-4 flex items-center justify-between gap-3 px-3 py-2.5">
           <div className="min-w-0">
             <p className={`text-xs font-semibold ${UI.textMuted}`}>오늘 담은 운동</p>
             <p className="mt-0.5 truncate text-base font-semibold">
@@ -3735,7 +3736,7 @@ function WorkoutEntryView({
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              className={`h-9 px-3 text-xs ${draftMemo.trim() ? `${UI.secondaryButton} ${UI.surfaceActive} ${UI.successText}` : UI.secondaryButton}`}
+              className={`mysun-secondary-action min-h-9 px-3 text-xs ${draftMemo.trim() ? `${UI.surfaceActive} ${UI.successText}` : ""}`}
               onClick={() => setMemoModalOpen(true)}
             >
               <span className="inline-flex items-center gap-1.5">
@@ -3745,7 +3746,7 @@ function WorkoutEntryView({
             </button>
             <button
               type="button"
-              className={`${UI.primaryButton} h-9 px-3.5 text-xs shadow-[0_8px_18px_rgba(36,33,36,0.14)]`}
+              className="mysun-primary-action min-h-9 px-3.5 text-xs"
               onClick={finishWorkout}
               disabled={saving}
               aria-busy={saving}
@@ -3768,12 +3769,12 @@ function WorkoutEntryView({
             />
           </Field>
 
-          <div className="flex gap-1 overflow-x-auto rounded-full bg-[#f8f4f0] p-1 ring-1 ring-[#eadfda] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mysun-tabbar">
             {ROUTINE_TABS.map(routine => (
               <button
                 key={routine.label}
                 type="button"
-                className={`h-10 shrink-0 rounded-full px-5 text-xs font-semibold ${routine.value === routineName || routine.label === routineName ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
+                className={`mysun-tab ${routine.value === routineName || routine.label === routineName ? "mysun-tab-active" : "mysun-tab-idle"}`}
                 aria-pressed={routine.value === routineName || routine.label === routineName}
                 onClick={() => handleRoutineTab(routine.value)}
               >
@@ -3783,12 +3784,12 @@ function WorkoutEntryView({
           </div>
 
           {hasSubTabs && (
-            <div className="flex gap-1 overflow-x-auto border-b border-[#eadfda] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mysun-subtabbar">
               {currentSubTabs.map(tab => (
                 <button
                   key={tab}
                   type="button"
-                  className={`h-10 shrink-0 rounded-full px-4 text-xs font-semibold ${routineSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : "bg-[#f8f4f0] text-[#7a7470]"}`}
+                  className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${routineSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : "bg-[#f8f4f0] text-[#7a7470]"}`}
                   aria-pressed={routineSubTab === tab}
                   onClick={() => setRoutineSubTab(tab)}
                 >
@@ -3814,7 +3815,7 @@ function WorkoutEntryView({
                 <button
                   key={exercise.id}
                   type="button"
-                  className={`relative grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-[16px] border border-[#eadfda] bg-[#fffdfb] p-3 text-left shadow-[0_8px_22px_rgba(58,48,50,0.045)] transition active:bg-[#f8f4f0] [contain-intrinsic-size:92px] [content-visibility:auto] ${saved ? "border-[#b9dfc5] bg-[#edf8f1]" : ""}`}
+                  className={`mysun-exercise-row ${saved ? "mysun-exercise-row-active" : ""}`}
                   onClick={() => setEditingExerciseId(exercise.id)}
                 >
                   {saved && <span className="absolute inset-y-0 left-0 w-1 bg-[#2f8c63]" />}
@@ -3856,7 +3857,7 @@ function WorkoutEntryView({
                 {draftSets.map((draft, index) => {
                   const exercise = exerciseById.get(draft.exerciseId);
                   return (
-                    <div key={draft.exerciseId} className={`flex items-center justify-between gap-3 p-3 ${UI.surface}`}>
+                    <div key={draft.exerciseId} className="mysun-panel flex items-center justify-between gap-3 p-3">
                       <button className="min-w-0 flex-1 text-left" type="button" onClick={() => setEditingExerciseId(draft.exerciseId)}>
                         <span className="block truncate text-sm font-semibold">{exercise?.name || "운동"}</span>
                         <span className={`mt-1 block text-xs font-semibold ${UI.textMuted}`}>{draftExerciseSummary(draft)}</span>
@@ -3934,7 +3935,7 @@ function MemoEntryModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 메모 입력" onClick={onClose}>
-      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-md md:rounded-[22px]" onClick={event => event.stopPropagation()}>
+      <div className="mysun-bottom-sheet md:max-h-[88svh]" onClick={event => event.stopPropagation()}>
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className="text-sm font-medium text-[#7a7470]">운동 기록</p>
@@ -3953,7 +3954,7 @@ function MemoEntryModal({
             />
           </Field>
         </div>
-        <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#eadfda] bg-[#fffdfb] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="mysun-sheet-footer">
             <button type="button" className={`${UI.primaryButton} h-12 text-base`} onClick={onClose}>
             완료
           </button>
@@ -4022,7 +4023,7 @@ function ExerciseEntryModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label={`${exercise.name} 운동 입력`} onClick={onClose}>
-      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[90svh] md:max-w-md md:rounded-[22px]" onClick={event => event.stopPropagation()}>
+      <div className="mysun-bottom-sheet" onClick={event => event.stopPropagation()}>
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>{exercise.category}</p>
@@ -4112,7 +4113,7 @@ function ExerciseEntryModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#eadfda] bg-[#fffdfb] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="mysun-sheet-footer">
           <button type="button" className={`${UI.primaryButton} h-12 text-base`} onClick={handleSave} disabled={!canSave}>
             입력 저장
           </button>

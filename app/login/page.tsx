@@ -140,7 +140,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fffdfb] text-[#242124]">
+    <main className="mysun-page min-h-screen">
       <div className="grid min-h-screen md:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
         <section className="relative min-h-[36vh] overflow-hidden bg-[#242124] md:min-h-screen">
           <div
@@ -153,8 +153,8 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="flex items-center px-5 py-10 md:px-10">
-          <form className="w-full max-w-md rounded-[22px] bg-[#fffdfb] md:p-2" onSubmit={submit}>
+        <section className="flex items-center px-5 py-8 md:px-10">
+          <form className="mysun-card w-full max-w-md p-5 md:p-6" onSubmit={submit}>
             <div className="mb-8">
               <p className="text-sm font-medium text-[#7a7470]">마이썬 운동 일지</p>
               <h1 className="mt-2 text-[34px] font-semibold leading-tight">
@@ -162,10 +162,10 @@ export default function LoginPage() {
               </h1>
             </div>
 
-            <div className="grid grid-cols-2 rounded-full bg-[#f8f4f0] p-1 ring-1 ring-[#eadfda]">
+            <div className="mysun-tabbar grid grid-cols-2">
               <button
                 type="button"
-                className={`h-11 rounded-full text-sm font-medium ${mode === "login" ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                className={`mysun-tab ${mode === "login" ? "mysun-tab-active" : "mysun-tab-idle"}`}
                 aria-label="로그인 모드 선택"
                 aria-pressed={mode === "login"}
                 onClick={() => switchMode("login")}
@@ -174,7 +174,7 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
-                className={`h-11 rounded-full text-sm font-medium ${mode === "signup" ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                className={`mysun-tab ${mode === "signup" ? "mysun-tab-active" : "mysun-tab-idle"}`}
                 aria-label="회원가입 모드 선택"
                 aria-pressed={mode === "signup"}
                 onClick={() => switchMode("signup")}
@@ -228,7 +228,7 @@ export default function LoginPage() {
               )}
             </div>
 
-            <button type="submit" className="mt-6 h-12 w-full rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb] shadow-[0_10px_24px_rgba(58,48,50,0.14)] disabled:opacity-50" disabled={loading} aria-busy={loading}>
+            <button type="submit" className="mysun-primary-action mt-6 w-full text-base" disabled={loading} aria-busy={loading}>
               {loading ? "처리 중" : mode === "login" ? "로그인" : "회원가입"}
             </button>
 

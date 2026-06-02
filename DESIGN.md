@@ -155,6 +155,75 @@ Home should motivate without covering the photo. Goals appear as a thin progress
 
 Use Pretendard Variable as the primary UI font. Screen titles can be confident, but not shouted: avoid `font-black`; use bold or semibold depending on hierarchy. Numeric values use tabular numbers so workout counts, time, percentages, and set values align cleanly in cards and lists. Compact panels, rows, tabs, and bottom navigation use 12-16px typography with 0 letter spacing.
 
+## Fixed Implementation Tokens
+
+The app must use shared mobile tokens before per-screen styling. These values are now treated as implementation rules, not suggestions:
+
+- Mobile header height: 56px.
+- Horizontal screen padding: 16px.
+- Main tab height: 40px.
+- Sub tab height: 36px.
+- Input/control height: 48px.
+- Exercise row minimum height: 76px.
+- Standard card radius: 14px.
+- Panel radius: 18px.
+- Bottom sheet radius: 22px top corners.
+- Primary action position: near the current decision area, not at the bottom after long lists.
+
+Core reusable classes:
+
+- `.mysun-section` for mobile page padding and bottom navigation clearance.
+- `.mysun-card` for white content cards.
+- `.mysun-panel` for warm grouped surfaces.
+- `.mysun-sticky-actions` for record-page memo/save actions.
+- `.mysun-tabbar` and `.mysun-tab` for routine tabs.
+- `.mysun-subtabbar` for secondary category filters.
+- `.mysun-exercise-row` for exercise list rows.
+- `.mysun-bottom-sheet` and `.mysun-sheet-footer` for modal input flows.
+
+Any new screen should reuse these classes first. Only add one-off Tailwind classes when the shared rule cannot express the layout.
+
+## Mobile Wireframe Priority
+
+Redesign work should happen in this order:
+
+1. Record tab
+   - Header and date inputs.
+   - Sticky memo/save action strip.
+   - Search.
+   - Main routine tabs.
+   - Sub tabs.
+   - Exercise rows.
+   - Bottom-sheet exercise input.
+   - Saved workout feedback.
+2. Home tab
+   - Photo hero.
+   - Small weekly goal strip below the hero content, not over the face or main subject.
+   - Summary range tabs.
+   - Summary cards.
+   - Recent record.
+   - Muscle impact section.
+3. Login tab
+   - Photo first.
+   - `For mysun` only as emotional copy.
+   - Auth card.
+   - Login/signup segmented control.
+   - Inputs.
+   - Primary submit.
+
+Do not redesign all tabs at once. Each pass should pick one screen, align it to the shared classes, run validation, and only then move to the next screen.
+
+## Core Screen Acceptance Checklist
+
+- No horizontal overflow at mobile width.
+- Primary action is visible near the current task.
+- Every touch target is at least 44px high.
+- Tabs use one shared height and selected state.
+- Exercise rows use one shared row shape.
+- Modal input uses bottom sheet structure with sticky footer.
+- Empty and error states use Korean recovery copy.
+- A screen can be scanned in 5 seconds: title, current task, next action, saved state.
+
 
 ## Copy And Icon Rules
 

@@ -20,6 +20,7 @@ function existsPublicAsset(src) {
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
 const packageJson = JSON.parse(read("package.json"));
 const envExample = read(".env.example");
+const designDoc = read("DESIGN.md");
 const fitLogMigration = read("supabase/migration-fit-log.sql");
 const fitLogRoute = read("app/api/fit-log/route.ts");
 
@@ -62,6 +63,10 @@ for (const constraintName of [
 
 if (!packageJson.scripts?.validate?.includes("npm run quality")) {
   fail("package validate script must include npm run quality");
+}
+
+for (const token of ["Fixed Implementation Tokens", "Mobile Wireframe Priority", "Core Screen Acceptance Checklist"]) {
+  if (!designDoc.includes(token)) fail(`DESIGN.md is missing mobile design governance section: ${token}`);
 }
 
 const requiredManifestFields = ["name", "short_name", "id", "start_url", "scope", "display", "icons"];
@@ -133,6 +138,7 @@ if (!serviceWorkerHeaders.some(item => item.key === "Cache-Control" && item.valu
 const fitApp = read("components/FitLogApp.tsx");
 const loginPage = read("app/login/page.tsx");
 const rootLayout = read("app/layout.tsx");
+const globalCss = read("app/globals.css");
 const serviceSupabase = read("lib/supabase.ts");
 const signupRoute = read("app/api/auth/signup/route.ts");
 if (!serviceSupabase.includes("cachedServiceClient")) {
@@ -156,6 +162,27 @@ if (!/maximumScale:\s*5/.test(rootLayout) || !/userScalable:\s*true/.test(rootLa
 
 if (!rootLayout.includes('rel="preconnect"') || !rootLayout.includes("https://cdn.jsdelivr.net")) {
   fail("layout must preconnect to the font CDN used by global CSS");
+}
+
+for (const token of [
+  "--mysun-radius-card",
+  "--mysun-tab-height",
+  "--mysun-control-height",
+  ".mysun-tabbar",
+  ".mysun-exercise-row",
+  ".mysun-primary-action",
+  ".mysun-secondary-action",
+  ".mysun-bottom-sheet",
+]) {
+  if (!globalCss.includes(token)) fail(`global design system token is missing: ${token}`);
+}
+
+for (const token of ["mysun-section", "mysun-sticky-actions", "mysun-exercise-row", "mysun-primary-action"]) {
+  if (!fitApp.includes(token)) fail(`FitLogApp must use shared mobile design system class: ${token}`);
+}
+
+for (const token of ["mysun-card", "mysun-tabbar", "mysun-primary-action"]) {
+  if (!loginPage.includes(token)) fail(`login page must use shared mobile design system class: ${token}`);
 }
 
 for (const heroPath of ["/images/mysun-home-hero.webp", "/images/mysun-login-hero.webp"]) {

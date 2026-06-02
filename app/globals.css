@@ -4,6 +4,34 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --mysun-ink: #242124;
+  --mysun-canvas: #fffdfb;
+  --mysun-surface: #f8f4f0;
+  --mysun-surface-pressed: #f2e8e3;
+  --mysun-body: #4b4541;
+  --mysun-muted: #7a7470;
+  --mysun-line: #eadfda;
+  --mysun-line-strong: #ded4cf;
+  --mysun-success: #2f8c63;
+  --mysun-success-surface: #edf8f1;
+  --mysun-danger: #c84653;
+  --mysun-focus: #8f4b5a;
+  --mysun-blush: #f7dde2;
+  --mysun-radius-card: 14px;
+  --mysun-radius-panel: 18px;
+  --mysun-radius-sheet: 22px;
+  --mysun-radius-pill: 9999px;
+  --mysun-screen-x: 16px;
+  --mysun-section-gap: 24px;
+  --mysun-tab-height: 40px;
+  --mysun-subtab-height: 36px;
+  --mysun-control-height: 48px;
+  --mysun-header-height: 56px;
+  --mysun-shadow-card: 0 10px 28px rgba(58, 48, 50, 0.055);
+  --mysun-shadow-panel: 0 14px 36px rgba(58, 48, 50, 0.065);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -35,8 +63,8 @@ html {
 body {
   margin: 0;
   min-height: 100svh;
-  background: #fffdfb;
-  color: #242124;
+  background: var(--mysun-canvas);
+  color: var(--mysun-ink);
   font-family: inherit;
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
@@ -85,7 +113,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 3px solid #8f4b5a;
+  outline: 3px solid var(--mysun-focus);
   outline-offset: 3px;
 }
 
@@ -113,7 +141,12 @@ textarea {
 
 @layer components {
   .nike-input {
-    @apply h-12 w-full rounded-[24px] border border-[#ded4cf] bg-[#fffdfb] px-4 text-base text-[#242124] outline-none transition placeholder:text-[#b0a6a0];
+    min-height: var(--mysun-control-height);
+    border-radius: var(--mysun-radius-pill);
+    border: 1px solid var(--mysun-line-strong);
+    background: var(--mysun-canvas);
+    color: var(--mysun-ink);
+    @apply w-full px-4 text-base outline-none transition placeholder:text-[#b0a6a0];
   }
 
   .nike-input:focus {
@@ -122,5 +155,108 @@ textarea {
 
   .nike-secondary {
     @apply rounded-full bg-[#f8f4f0] text-sm font-medium text-[#242124];
+  }
+
+  .mysun-page {
+    background: var(--mysun-canvas);
+    color: var(--mysun-ink);
+  }
+
+  .mysun-section {
+    @apply mx-auto max-w-[1440px] px-4 py-6 pb-28 md:px-8 md:py-10;
+  }
+
+  .mysun-card {
+    border-radius: var(--mysun-radius-card);
+    background: var(--mysun-canvas);
+    border: 1px solid var(--mysun-line);
+    box-shadow: var(--mysun-shadow-card);
+  }
+
+  .mysun-panel {
+    border-radius: var(--mysun-radius-panel);
+    background: var(--mysun-surface);
+    border: 1px solid var(--mysun-line);
+  }
+
+  .mysun-sticky-actions {
+    border-radius: var(--mysun-radius-panel);
+    background: color-mix(in srgb, var(--mysun-canvas) 94%, transparent);
+    border: 1px solid var(--mysun-line);
+    box-shadow: var(--mysun-shadow-card);
+    backdrop-filter: blur(16px);
+  }
+
+  .mysun-tabbar {
+    min-height: var(--mysun-tab-height);
+    border-radius: var(--mysun-radius-pill);
+    background: var(--mysun-surface);
+    border: 1px solid var(--mysun-line);
+    @apply flex gap-1 overflow-x-auto p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+  }
+
+  .mysun-tab {
+    min-height: 38px;
+    border-radius: var(--mysun-radius-card);
+    @apply shrink-0 px-5 text-xs font-semibold;
+  }
+
+  .mysun-tab-active {
+    background: var(--mysun-ink);
+    color: var(--mysun-canvas);
+  }
+
+  .mysun-tab-idle {
+    color: var(--mysun-muted);
+  }
+
+  .mysun-subtabbar {
+    min-height: var(--mysun-subtab-height);
+    border-bottom: 1px solid var(--mysun-line);
+    @apply flex gap-1 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+  }
+
+  .mysun-exercise-row {
+    min-height: 76px;
+    border-radius: var(--mysun-radius-card);
+    background: var(--mysun-canvas);
+    border: 1px solid var(--mysun-line);
+    box-shadow: 0 6px 18px rgba(58, 48, 50, 0.04);
+    @apply relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden p-3 text-left transition active:bg-[#f8f4f0] [contain-intrinsic-size:92px] [content-visibility:auto];
+  }
+
+  .mysun-primary-action {
+    min-height: var(--mysun-control-height);
+    border-radius: var(--mysun-radius-pill);
+    background: var(--mysun-ink);
+    color: var(--mysun-canvas);
+    box-shadow: 0 10px 24px rgba(58, 48, 50, 0.14);
+    @apply inline-flex items-center justify-center gap-2 px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none;
+  }
+
+  .mysun-secondary-action {
+    min-height: 40px;
+    border-radius: var(--mysun-radius-pill);
+    background: var(--mysun-surface);
+    color: var(--mysun-ink);
+    @apply inline-flex items-center justify-center gap-2 px-4 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45;
+  }
+
+  .mysun-exercise-row-active {
+    background: var(--mysun-success-surface);
+    border-color: #b9dfc5;
+  }
+
+  .mysun-bottom-sheet {
+    border-radius: var(--mysun-radius-sheet) var(--mysun-radius-sheet) 0 0;
+    background: var(--mysun-canvas);
+    box-shadow: 0 -18px 48px rgba(58, 48, 50, 0.18);
+    @apply flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden md:max-h-[90svh] md:max-w-md md:rounded-[22px];
+  }
+
+  .mysun-sheet-footer {
+    border-top: 1px solid var(--mysun-line);
+    background: var(--mysun-canvas);
+    @apply grid grid-cols-[1fr_auto] gap-2 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))];
   }
 }
