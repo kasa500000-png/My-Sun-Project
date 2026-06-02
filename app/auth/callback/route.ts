@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { normalizeSupabaseUrl } from "@/lib/supabase-url";
 
+export const runtime = "nodejs";
+
 function safeNextPath(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\\\")) return "/";
   const url = new URL(value, "https://local.app");

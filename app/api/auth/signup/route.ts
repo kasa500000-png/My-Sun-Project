@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function asText(value: unknown) {
   if (value == null) return "";

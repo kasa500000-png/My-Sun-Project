@@ -22,6 +22,17 @@ const packageJson = JSON.parse(read("package.json"));
 const envExample = read(".env.example");
 const fitLogMigration = read("supabase/migration-fit-log.sql");
 
+for (const routePath of [
+  "app/api/fit-log/route.ts",
+  "app/api/fit-settings/route.ts",
+  "app/api/auth/signup/route.ts",
+  "app/auth/callback/route.ts",
+]) {
+  if (!read(routePath).includes('runtime = "nodejs"')) {
+    fail(`${routePath} must explicitly use the nodejs runtime`);
+  }
+}
+
 for (const key of [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",

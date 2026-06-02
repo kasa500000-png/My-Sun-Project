@@ -3,6 +3,7 @@ import { getServiceClient } from "@/lib/supabase";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type SetPayload = {
   exerciseId?: string;
