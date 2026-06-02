@@ -2405,6 +2405,22 @@ function SoftIcon({ name, className = "h-4 w-4" }: { name: SoftIconName; classNa
   );
 }
 
+function CloseButton({ onClick, label = "닫기" }: { onClick: () => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#f8f4f0] text-[#4b4541] ring-1 ring-[#eadfda] transition hover:bg-[#f2e8e3] active:bg-[#eadfda]"
+      onClick={onClick}
+      aria-label={label}
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M6 6l12 12" />
+        <path d="M18 6 6 18" />
+      </svg>
+    </button>
+  );
+}
+
 function today() {
   const date = new Date();
   const offset = date.getTimezoneOffset() * 60000;
@@ -3292,7 +3308,7 @@ function TopBar({
   return (
     <header className="sticky top-0 z-30 border-b border-[#eadfda] bg-[#fffdfb]/92 shadow-[0_8px_24px_rgba(58,48,50,0.05)] backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 md:h-16 md:px-8">
-        <button type="button" className="inline-flex items-center gap-2 text-[15px] font-extrabold tracking-[-0.01em] md:text-xl" onClick={() => setActiveTab("home")}><span className="h-2.5 w-2.5 rounded-full bg-[#9cc9ac]" aria-hidden="true" />마이썬 운동일지</button>
+        <button type="button" className="inline-flex items-center gap-2 whitespace-nowrap text-[15px] font-bold md:text-xl" onClick={() => setActiveTab("home")}><span className="h-2.5 w-2.5 rounded-full bg-[#9cc9ac]" aria-hidden="true" />마이썬 운동일지</button>
         <div className="flex items-center gap-2">
           <span className="hidden max-w-[220px] truncate text-xs font-medium text-[#7a7470] md:inline">{userEmail}</span>
           <button type="button" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#242124] px-4 text-sm font-semibold text-[#fffdfb] shadow-[0_8px_18px_rgba(36,33,36,0.16)]" onClick={() => setActiveTab("train")}><SoftIcon name="record" className="h-3.5 w-3.5" />기록</button>
@@ -3404,7 +3420,7 @@ function HomeDashboard({
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/64 via-[#242124]/8 to-transparent md:bg-gradient-to-r md:from-[#242124]/62 md:via-[#242124]/14" />
         <div className="relative mx-auto flex min-h-[52svh] max-w-[1440px] flex-col justify-end px-4 pb-5 text-[#fffdfb] md:min-h-[680px] md:px-8 md:pb-14">
           <p className="text-sm font-semibold text-[#fffdfb]/80">오늘도 천천히, 꾸준히</p>
-          <h1 className="mt-3 max-w-[720px] text-[34px] font-extrabold leading-[1.02] tracking-[-0.02em] md:text-[78px]">
+          <h1 className="mt-3 max-w-[720px] text-[34px] font-bold leading-[1.08] md:text-[72px]">
             마이썬 운동일지
           </h1>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
@@ -3532,16 +3548,14 @@ function WorkoutSummaryModal({
   useEscapeToClose(true, onClose);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 기록 목록">
-      <div className="flex max-h-[86svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 기록 목록">
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-lg md:rounded-[22px]">
         <div className={`flex items-center justify-between border-b p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>{rangeLabel}</p>
             <h2 className="text-2xl font-semibold">운동 기록</h2>
           </div>
-          <button type="button" className={`h-10 w-10 text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
-            X
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <div className="min-h-0 overflow-y-auto p-5">
           {sessions.length === 0 ? (
@@ -3785,7 +3799,7 @@ function WorkoutEntryView({
                   <span className="min-w-0 pl-1">
                     <span className="flex min-w-0 items-center gap-2">
                       {favorite && <b className="shrink-0 rounded-full bg-[#edf8f1] px-2 py-0.5 text-[10px] font-bold text-[#2f8c63]">자주 하는 운동</b>}
-                      <span className="truncate text-[15px] font-bold tracking-[-0.01em]">{exercise.name}</span>
+                      <span className="truncate text-[15px] font-bold">{exercise.name}</span>
                     </span>
                     <span className={`mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium leading-5 ${UI.textMuted}`}>
                       <span className="truncate">{partLabel}</span>
@@ -3897,16 +3911,14 @@ function MemoEntryModal({
   useEscapeToClose(true, onClose);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 메모 입력">
-      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-md md:rounded-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 메모 입력">
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-md md:rounded-[22px]">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className="text-sm font-medium text-[#7a7470]">운동 기록</p>
             <h2 className="mt-1 text-2xl font-semibold">메모 추가</h2>
           </div>
-          <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
-            X
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           <Field label="메모">
@@ -3987,17 +3999,15 @@ function ExerciseEntryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label={`${exercise.name} 운동 입력`}>
-      <div className="flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-md md:rounded-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label={`${exercise.name} 운동 입력`}>
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[90svh] md:max-w-md md:rounded-[22px]">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>{exercise.category}</p>
             <h2 className="mt-1 truncate text-2xl font-semibold">{exercise.name}</h2>
             {exercise.detail && <p className="mt-2 text-sm font-semibold text-[#242124]">{exercise.detail}</p>}
           </div>
-          <button type="button" className={`grid h-10 w-10 shrink-0 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
-            X
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5 pb-4">
@@ -4449,16 +4459,14 @@ function WorkoutHistoryModal({
   useEscapeToClose(true, onClose);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="날짜별 운동 기록">
-      <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="날짜별 운동 기록">
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-lg md:rounded-[22px]">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>운동 완료</p>
             <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
           </div>
-          <button type="button" className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={onClose} aria-label="닫기">
-            ×
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <div className="min-h-0 overflow-y-auto p-5">
         <div className="grid gap-3">
@@ -4676,8 +4684,8 @@ function ProfileView({
       </div>
 
       {activeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="내 정보 설정">
-          <div className="flex max-h-[90svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
+        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="내 정보 설정">
+          <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[90svh] md:max-w-lg md:rounded-[22px]">
             <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
               <div>
                 <p className={`text-sm font-medium ${UI.textMuted}`}>내 정보</p>
@@ -4685,9 +4693,7 @@ function ProfileView({
                   {activeModal === "profile" ? "개인 운동 정보" : activeModal === "goal" ? "주간 운동 목표" : "개인 루틴 운동"}
                 </h2>
               </div>
-              <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={closeModal} aria-label="닫기">
-                X
-              </button>
+              <CloseButton onClick={closeModal} />
             </div>
             <div className="min-h-0 overflow-y-auto p-5">
 
@@ -4791,7 +4797,7 @@ function ProfileView({
                         onClick={() => toggleFavorite(exercise.id)}
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-[15px] font-bold tracking-[-0.01em]">{exercise.name}</span>
+                          <span className="block truncate text-[15px] font-bold">{exercise.name}</span>
                           <span className={`mt-1 block text-xs font-medium ${UI.textMuted}`}>{exercise.category}</span>
                         </span>
                         <span className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selected ? "bg-[#fffdfb] text-[#2f8c63]" : "bg-[#fffdfb] text-[#7a7470]"}`}>
@@ -5023,7 +5029,7 @@ function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="mb-6">
       <p className={`text-sm font-medium ${UI.textMuted}`}>{kicker}</p>
-      <h1 className="mt-1 text-[31px] font-extrabold leading-tight tracking-[-0.02em] md:text-6xl">{title}</h1>
+      <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-6xl">{title}</h1>
     </div>
   );
 }
