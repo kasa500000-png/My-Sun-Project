@@ -90,6 +90,11 @@ if (!serviceWorkerHeaders.some(item => item.key === "Cache-Control" && item.valu
 
 const fitApp = read("components/FitLogApp.tsx");
 const loginPage = read("app/login/page.tsx");
+const rootLayout = read("app/layout.tsx");
+if (!rootLayout.includes('rel="preconnect"') || !rootLayout.includes("https://cdn.jsdelivr.net")) {
+  fail("layout must preconnect to the font CDN used by global CSS");
+}
+
 const clientSources = [fitApp, loginPage, read("components/ServiceWorkerBridge.tsx")].join("\n");
 for (const forbiddenStorageApi of ["localStorage", "sessionStorage", "indexedDB"]) {
   if (clientSources.includes(forbiddenStorageApi)) {
