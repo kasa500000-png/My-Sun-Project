@@ -3054,7 +3054,7 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
   async function saveSettings(nextSettings: UserSettings) {
     if (!isOnline) {
       setToast("인터넷 연결을 확인한 뒤 다시 저장해 주세요.");
-      return;
+      return false;
     }
 
     const normalized = {
@@ -3076,8 +3076,10 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
       assertApiResponse(res, data, "설정 저장에 실패했어요.");
       setSettings(data.settings || normalized);
       setToast("내 정보 설정을 저장했어요.");
+      return true;
     } catch (error) {
       setToast(error instanceof Error ? error.message : "설정 저장에 실패했어요.");
+      return false;
     } finally {
       setSavingSettings(false);
     }
@@ -4565,7 +4567,7 @@ function ProfileView({
   userEmail?: string | null;
   settings: UserSettings;
   saving: boolean;
-  onSave: (settings: UserSettings) => void | Promise<void>;
+  onSave: (settings: UserSettings) => boolean | Promise<boolean>;
   onSignOut: () => void;
 }) {
   const [weeklyGoal, setWeeklyGoal] = useState(String(settings.weeklyGoal));
@@ -4633,14 +4635,14 @@ function ProfileView({
   }
 
   async function handleSave() {
-    await onSave({
+    const saved = await onSave({
       weeklyGoal: clampWeeklyGoal(weeklyGoal),
       favoriteExerciseIds,
       gender: sanitizeGender(gender),
       heightCm: sanitizeBodyNumber(heightCm),
       weightKg: sanitizeBodyNumber(weightKg),
     });
-    setActiveModal(null);
+    if (saved) setActiveModal(null);
   }
 
   return (

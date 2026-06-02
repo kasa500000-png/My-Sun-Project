@@ -164,6 +164,10 @@ if (/\bany\b/.test(fitApp)) {
   fail("FitLogApp must avoid any in client data handling");
 }
 
+if (!fitApp.includes("return false;") || !fitApp.includes("if (saved) setActiveModal(null)")) {
+  fail("profile settings modal must stay open when saving fails");
+}
+
 const buttonsWithoutType = [...fitApp.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
 if (buttonsWithoutType.length > 0) {
   fail(`FitLogApp has ${buttonsWithoutType.length} button(s) without explicit type`);
