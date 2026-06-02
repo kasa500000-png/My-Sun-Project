@@ -92,6 +92,22 @@ if (!loginPage.includes('type="submit"')) {
   fail("login page must have an explicit submit button");
 }
 
+const dialogOverlays = [...fitApp.matchAll(/<div[^>]*role="dialog"[^>]*>/g)];
+if (dialogOverlays.length === 0) {
+  fail("FitLogApp must expose modal dialogs with role=dialog");
+}
+
+for (const match of dialogOverlays) {
+  const overlayTag = match[0];
+  const dialogSnippet = fitApp.slice(match.index, match.index + 600);
+  if (!overlayTag.includes("onClick=")) {
+    fail("modal dialog backdrop must close on outside click");
+  }
+  if (!dialogSnippet.includes("stopPropagation()")) {
+    fail("modal dialog panel must stop click propagation");
+  }
+}
+
 const muscleImageEntries = [...fitApp.matchAll(/([a-zA-Z][\w]*):\s*"\/images\/muscle-focus-cards\/([^"]+)"/g)];
 const muscleImageKeys = new Set(muscleImageEntries.map(match => match[1]));
 for (const [, key, fileName] of muscleImageEntries) {

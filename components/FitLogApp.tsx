@@ -3548,8 +3548,8 @@ function WorkoutSummaryModal({
   useEscapeToClose(true, onClose);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 기록 목록">
-      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-lg md:rounded-[22px]">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 기록 목록" onClick={onClose}>
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-lg md:rounded-[22px]" onClick={event => event.stopPropagation()}>
         <div className={`flex items-center justify-between border-b p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>{rangeLabel}</p>
@@ -3911,8 +3911,8 @@ function MemoEntryModal({
   useEscapeToClose(true, onClose);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 메모 입력">
-      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-md md:rounded-[22px]">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 메모 입력" onClick={onClose}>
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-md md:rounded-[22px]" onClick={event => event.stopPropagation()}>
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className="text-sm font-medium text-[#7a7470]">운동 기록</p>
@@ -3999,8 +3999,8 @@ function ExerciseEntryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label={`${exercise.name} 운동 입력`}>
-      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[90svh] md:max-w-md md:rounded-[22px]">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label={`${exercise.name} 운동 입력`} onClick={onClose}>
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[90svh] md:max-w-md md:rounded-[22px]" onClick={event => event.stopPropagation()}>
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>{exercise.category}</p>
@@ -4459,8 +4459,8 @@ function WorkoutHistoryModal({
   useEscapeToClose(true, onClose);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="날짜별 운동 기록">
-      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-lg md:rounded-[22px]">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="날짜별 운동 기록" onClick={onClose}>
+      <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[88svh] md:max-w-lg md:rounded-[22px]" onClick={event => event.stopPropagation()}>
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
             <p className={`text-sm font-medium ${UI.textMuted}`}>운동 완료</p>
@@ -4684,8 +4684,8 @@ function ProfileView({
       </div>
 
       {activeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="내 정보 설정">
-          <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[90svh] md:max-w-lg md:rounded-[22px]">
+        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="내 정보 설정" onClick={() => setActiveModal(null)}>
+          <div className="flex max-h-[calc(100svh-0.75rem)] w-full flex-col overflow-hidden rounded-t-[22px] bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-h-[90svh] md:max-w-lg md:rounded-[22px]" onClick={event => event.stopPropagation()}>
             <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
               <div>
                 <p className={`text-sm font-medium ${UI.textMuted}`}>내 정보</p>
