@@ -101,6 +101,17 @@ if (!serviceWorkerHeaders.some(item => item.key === "Cache-Control" && item.valu
 const fitApp = read("components/FitLogApp.tsx");
 const loginPage = read("app/login/page.tsx");
 const rootLayout = read("app/layout.tsx");
+for (const layoutToken of [
+  "metadataBase",
+  "appleWebApp",
+  "viewportFit",
+  "userScalable",
+  "themeColor",
+  "colorScheme",
+]) {
+  if (!rootLayout.includes(layoutToken)) fail(`layout metadata is missing ${layoutToken}`);
+}
+
 if (!rootLayout.includes('rel="preconnect"') || !rootLayout.includes("https://cdn.jsdelivr.net")) {
   fail("layout must preconnect to the font CDN used by global CSS");
 }
