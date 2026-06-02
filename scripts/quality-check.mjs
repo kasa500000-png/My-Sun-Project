@@ -210,6 +210,9 @@ for (const source of [fitApp, loginPage]) {
 if (!loginPage.includes("error instanceof Error ? error.message")) {
   fail("login submit catch must preserve specific error messages");
 }
+if (!loginPage.includes("auth.getUser()") || !loginPage.includes(".catch(() =>")) {
+  fail("login page must handle initial session check failures");
+}
 
 for (const token of ["SIGNUP_RATE_LIMIT_MAX", "Retry-After", "status: 429"]) {
   if (!signupRoute.includes(token)) fail(`signup route must include rate limiting token: ${token}`);

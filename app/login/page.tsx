@@ -56,9 +56,13 @@ export default function LoginPage() {
 
     const supabase = createSupabaseBrowser();
     if (!supabase) return;
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) window.location.href = safeNextPath();
-    });
+    supabase.auth.getUser()
+      .then(({ data }) => {
+        if (data.user) window.location.href = safeNextPath();
+      })
+      .catch(() => {
+        // Keep the login form available when the initial session check fails.
+      });
   }, []);
 
   function switchMode(nextMode: AuthMode) {
