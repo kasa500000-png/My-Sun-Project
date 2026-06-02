@@ -4405,9 +4405,7 @@ function WorkoutSessionDetailCard({
         {deleteSession && (
           <button type="button"
             className={`shrink-0 rounded-full bg-[#fffdfb] px-3 text-sm font-semibold ${UI.dangerText}`}
-            onClick={() => {
-              if (window.confirm("이 운동 기록을 삭제할까요?")) deleteSession(session.id);
-            }}
+            onClick={() => deleteSession(session.id)}
           >
             삭제
           </button>
