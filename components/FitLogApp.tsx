@@ -3408,10 +3408,10 @@ function HomeDashboard({
             마이썬 운동일지
           </h1>
           <div className="mt-6 grid grid-cols-2 gap-2 md:flex md:flex-wrap">
-            <button className="h-12 rounded-full bg-[#fffdfb] px-6 text-base font-semibold text-[#242124] shadow-[0_10px_24px_rgba(36,33,36,0.16)]" onClick={onStart}>
+            <button type="button" className="h-12 rounded-full bg-[#fffdfb] px-6 text-base font-semibold text-[#242124] shadow-[0_10px_24px_rgba(36,33,36,0.16)]" onClick={onStart}>
               운동 기록
             </button>
-            <button className="h-12 rounded-full bg-[#242124]/36 px-6 text-base font-semibold text-[#fffdfb] ring-1 ring-[#fffdfb]/45 backdrop-blur" onClick={onAnalyze}>
+            <button type="button" className="h-12 rounded-full bg-[#242124]/36 px-6 text-base font-semibold text-[#fffdfb] ring-1 ring-[#fffdfb]/45 backdrop-blur" onClick={onAnalyze}>
               운동 분석
             </button>
           </div>
@@ -3435,7 +3435,7 @@ function HomeDashboard({
               <SectionTitle kicker={summaryRangeLabels[range]} title="운동 요약" />
               <div className="mb-1 flex rounded-full bg-[#f8f4f0] p-1 ring-1 ring-[#eadfda]">
                 {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
-                  <button
+                  <button type="button"
                     key={item}
                     className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
                     aria-pressed={range === item}
@@ -3449,15 +3449,15 @@ function HomeDashboard({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <button className="rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
+            <button type="button" className="rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 횟수</p>
               <p className="mt-4 text-[34px] font-semibold leading-none">{loading ? "-" : `${summary.count}회`}</p>
             </button>
-            <button className="rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
+            <button type="button" className="rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 시간</p>
               <p className="mt-4 text-[34px] font-semibold leading-none">{loading ? "-" : `${summary.minutes}분`}</p>
             </button>
-            <button className="col-span-2 rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
+            <button type="button" className="col-span-2 rounded-[18px] bg-[#fffdfb] p-5 text-left shadow-[0_14px_34px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" onClick={() => setModalOpen(true)}>
               <p className={`text-sm font-medium ${UI.textMuted}`}>운동 밸런스</p>
               <BalanceBars balance={summary.balance} />
             </button>
@@ -3467,7 +3467,7 @@ function HomeDashboard({
             <p className="text-sm font-medium text-[#7a7470]">추천 루틴</p>
             <h2 className="mt-2 text-2xl font-semibold">{recommendedRoutine}</h2>
             <p className="mt-2 text-sm leading-6 text-[#4b4541]">{routineNote(recommendedRoutine)}</p>
-            <button className="mt-5 h-12 w-full rounded-full bg-[#242124] px-8 text-base font-semibold text-[#fffdfb] md:w-auto" onClick={onStart}>
+            <button type="button" className="mt-5 h-12 w-full rounded-full bg-[#242124] px-8 text-base font-semibold text-[#fffdfb] md:w-auto" onClick={onStart}>
               이 루틴으로 시작
             </button>
           </div>
@@ -3539,7 +3539,7 @@ function WorkoutSummaryModal({
             <p className={`text-sm font-medium ${UI.textMuted}`}>{rangeLabel}</p>
             <h2 className="text-2xl font-semibold">운동 기록</h2>
           </div>
-          <button className={`h-10 w-10 text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
+          <button type="button" className={`h-10 w-10 text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
             X
           </button>
         </div>
@@ -3900,7 +3900,7 @@ function MemoEntryModal({
             <p className="text-sm font-medium text-[#7a7470]">운동 기록</p>
             <h2 className="mt-1 text-2xl font-semibold">메모 추가</h2>
           </div>
-          <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
+          <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
             X
           </button>
         </div>
@@ -3916,11 +3916,11 @@ function MemoEntryModal({
           </Field>
         </div>
         <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#eadfda] bg-[#fffdfb] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <button className={`${UI.primaryButton} h-12 text-base`} onClick={onClose}>
+            <button type="button" className={`${UI.primaryButton} h-12 text-base`} onClick={onClose}>
             완료
           </button>
           {value.trim() && (
-            <button className={`${UI.dangerButton} h-12 px-5 text-sm`} onClick={() => onChange("")}>
+            <button type="button" className={`${UI.dangerButton} h-12 px-5 text-sm`} onClick={() => onChange("")}>
               삭제
             </button>
           )}
@@ -3991,7 +3991,7 @@ function ExerciseEntryModal({
             <h2 className="mt-1 truncate text-2xl font-semibold">{exercise.name}</h2>
             {exercise.detail && <p className="mt-2 text-sm font-semibold text-[#242124]">{exercise.detail}</p>}
           </div>
-          <button className={`grid h-10 w-10 shrink-0 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
+          <button type="button" className={`grid h-10 w-10 shrink-0 place-items-center text-lg ${UI.secondaryButton}`} onClick={onClose} aria-label="닫기">
             X
           </button>
         </div>
@@ -4077,11 +4077,11 @@ function ExerciseEntryModal({
         </div>
 
         <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-[#eadfda] bg-[#fffdfb] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <button className={`${UI.primaryButton} h-12 text-base`} onClick={handleSave} disabled={!canSave}>
+          <button type="button" className={`${UI.primaryButton} h-12 text-base`} onClick={handleSave} disabled={!canSave}>
             입력 저장
           </button>
           {onRemove && (
-            <button className={`${UI.dangerButton} h-12 px-5 text-sm`} onClick={onRemove}>
+            <button type="button" className={`${UI.dangerButton} h-12 px-5 text-sm`} onClick={onRemove}>
               삭제
             </button>
           )}
@@ -4138,7 +4138,7 @@ function SavedWorkoutPanel({ session, onEdit }: { session: WorkoutSession; onEdi
           <h2 className="mt-1 text-2xl font-semibold">{session.routineName}</h2>
           <p className="mt-1 text-sm font-medium text-[#7a7470]">{formatDate(session.date)}</p>
         </div>
-        <button className="h-10 rounded-full bg-[#242124] px-4 text-sm font-semibold text-[#fffdfb]" onClick={onEdit}>
+        <button type="button" className="h-10 rounded-full bg-[#242124] px-4 text-sm font-semibold text-[#fffdfb]" onClick={onEdit}>
           수정
         </button>
       </div>
@@ -4213,10 +4213,10 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                 <h2 className="mt-1 text-2xl font-semibold">{formatMonth(calendarMonth)}</h2>
               </div>
               <div className="flex gap-2">
-                <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => moveCalendar(-1)} aria-label="이전 달">
+                <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => moveCalendar(-1)} aria-label="이전 달">
                   ‹
                 </button>
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => moveCalendar(1)} aria-label="다음 달">
+                <button type="button" className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => moveCalendar(1)} aria-label="다음 달">
                   ›
                 </button>
               </div>
@@ -4232,7 +4232,7 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                 const hasRecord = daySessions.length > 0;
                 const isToday = dateKey === today();
                 return (
-                  <button
+                  <button type="button"
                     key={dateKey}
                     className={`relative grid aspect-square place-items-center rounded-md text-sm font-semibold ${
                       hasRecord
@@ -4266,10 +4266,10 @@ function HistoryView({ loading, sessions, deleteSession }: { loading: boolean; s
                 <h2 className="mt-1 text-2xl font-semibold">{period.label}</h2>
               </div>
               <div className="flex gap-2">
-                <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(-1)} aria-label="이전 기간">
+                <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(-1)} aria-label="이전 기간">
                   ‹
                 </button>
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => movePeriod(1)} aria-label="다음 기간">
+                <button type="button" className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => movePeriod(1)} aria-label="다음 기간">
                   ›
                 </button>
               </div>
@@ -4346,10 +4346,10 @@ function SegmentedControl({
       {items.map(item => (
         <button
           key={item.id}
+          type="button"
           className={`h-10 rounded-full text-xs font-semibold ${value === item.id ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
           aria-pressed={value === item.id}
           onClick={() => onChange(item.id)}
-          type="button"
         >
           {item.label}
         </button>
@@ -4380,7 +4380,7 @@ function WorkoutSessionDetailCard({
           <h3 className="mt-1 truncate text-xl font-semibold">{session.routineName}</h3>
         </div>
         {deleteSession && (
-          <button
+          <button type="button"
             className={`shrink-0 rounded-full bg-[#fffdfb] px-3 text-sm font-semibold ${UI.dangerText}`}
             onClick={() => {
               if (window.confirm("이 운동 기록을 삭제할까요?")) deleteSession(session.id);
@@ -4452,7 +4452,7 @@ function WorkoutHistoryModal({
             <p className={`text-sm font-medium ${UI.textMuted}`}>운동 완료</p>
             <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
           </div>
-          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={onClose} aria-label="닫기">
+          <button type="button" className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={onClose} aria-label="닫기">
             ×
           </button>
         </div>
@@ -4665,7 +4665,7 @@ function ProfileView({
         </div>
 
         <div className="grid gap-3">
-          <button className={`${UI.secondaryButton} h-12 px-8 text-base`} onClick={onSignOut}>
+          <button type="button" className={`${UI.secondaryButton} h-12 px-8 text-base`} onClick={onSignOut}>
             로그아웃
           </button>
         </div>
@@ -4681,7 +4681,7 @@ function ProfileView({
                   {activeModal === "profile" ? "개인 운동 정보" : activeModal === "goal" ? "주간 운동 목표" : "개인 루틴 운동"}
                 </h2>
               </div>
-              <button className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={closeModal} aria-label="닫기">
+              <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={closeModal} aria-label="닫기">
                 X
               </button>
             </div>
@@ -4805,7 +4805,7 @@ function ProfileView({
               </div>
             )}
 
-            <button className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base`} onClick={handleSave} disabled={saving} aria-busy={saving}>
+            <button type="button" className={`${UI.primaryButton} mt-6 h-12 w-full px-8 text-base`} onClick={handleSave} disabled={saving} aria-busy={saving}>
               {saving ? "저장 중" : "저장"}
             </button>
             </div>
@@ -4839,7 +4839,7 @@ function RangePills({ value, onChange }: { value: SummaryRange; onChange: (value
   return (
     <div className="flex gap-1 overflow-x-auto rounded-full bg-[#f8f4f0] p-1 ring-1 ring-[#eadfda]">
       {(Object.keys(summaryRangeLabels) as SummaryRange[]).map(item => (
-        <button
+        <button type="button"
           key={item}
           className={`h-9 shrink-0 rounded-full px-3 text-xs font-semibold ${value === item ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
           aria-pressed={value === item}

@@ -61,6 +61,11 @@ if (/user_id\s*[=:]/.test(fitApp) || /user_id=/.test(fitApp)) {
   fail("FitLogApp must not send user_id to fit APIs");
 }
 
+const buttonsWithoutType = [...fitApp.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/g)];
+if (buttonsWithoutType.length > 0) {
+  fail(`FitLogApp has ${buttonsWithoutType.length} button(s) without explicit type`);
+}
+
 const muscleImageEntries = [...fitApp.matchAll(/([a-zA-Z][\w]*):\s*"\/images\/muscle-focus-cards\/([^"]+)"/g)];
 const muscleImageKeys = new Set(muscleImageEntries.map(match => match[1]));
 for (const [, key, fileName] of muscleImageEntries) {
