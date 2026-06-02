@@ -69,6 +69,19 @@ function tabFromSearchParam(value: string | null): Tab | null {
   return value && TAB_VALUES.includes(value as Tab) ? value as Tab : null;
 }
 
+function useEscapeToClose(enabled: boolean, onClose: () => void) {
+  useEffect(() => {
+    if (!enabled) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [enabled, onClose]);
+}
+
 type MuscleImpact = {
   muscleId: string;
   impactRatio: number;
@@ -3484,8 +3497,10 @@ function WorkoutSummaryModal({
   sessions: WorkoutSession[];
   onClose: () => void;
 }) {
+  useEscapeToClose(true, onClose);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 기록 목록">
       <div className="flex max-h-[86svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
         <div className={`flex items-center justify-between border-b p-5 ${UI.border}`}>
           <div>
@@ -3841,8 +3856,10 @@ function MemoEntryModal({
   onChange: (value: string) => void;
   onClose: () => void;
 }) {
+  useEscapeToClose(true, onClose);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="운동 메모 입력">
       <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-md md:rounded-2xl">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
@@ -3894,6 +3911,8 @@ function ExerciseEntryModal({
   onSave: (draft: Omit<DraftSet, "exerciseId">) => void;
   onRemove?: () => void;
 }) {
+  useEscapeToClose(true, onClose);
+
   const bodyWeightRequired = needsBodyWeightInput(exercise);
   const showExternalLoad = exercise.type !== "time" && hasExternalLoadInput(exercise);
   const initialDraft = draft || { exerciseId: exercise.id, ...emptyDraftForExercise(exercise, bodyWeightKg) };
@@ -3930,7 +3949,7 @@ function ExerciseEntryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label={`${exercise.name} 운동 입력`}>
       <div className="flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-md md:rounded-2xl">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div className="min-w-0">
@@ -4388,8 +4407,10 @@ function WorkoutHistoryModal({
   onClose: () => void;
   deleteSession: (id: string) => void;
 }) {
+  useEscapeToClose(true, onClose);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="날짜별 운동 기록">
       <div className="flex max-h-[82svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
         <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
           <div>
@@ -4528,6 +4549,8 @@ function ProfileView({
       .sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)) || a.name.localeCompare(b.name, "ko"));
   }, [favoriteRoutine, favoriteSet, favoriteSearchQuery, favoriteSubTab, hasFavoriteSubTabs]);
 
+  useEscapeToClose(Boolean(activeModal), closeModal);
+
   useEffect(() => {
     syncLocalFromSettings();
   }, [settings]);
@@ -4614,7 +4637,7 @@ function ProfileView({
       </div>
 
       {activeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/42 p-0 md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="내 정보 설정">
           <div className="flex max-h-[90svh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#fffdfb] shadow-[0_-18px_48px_rgba(58,48,50,0.18)] md:max-w-lg md:rounded-2xl">
             <div className={`flex items-start justify-between gap-4 border-b bg-[#fffdfb] p-5 ${UI.border}`}>
               <div>
