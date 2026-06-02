@@ -3439,6 +3439,7 @@ function HomeDashboard({
                   <button
                     key={item}
                     className={`h-9 rounded-full px-3 text-xs font-semibold ${range === item ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                    aria-pressed={range === item}
                     onClick={() => setRange(item)}
                   >
                     {summaryRangeLabels[item]}
@@ -3734,6 +3735,7 @@ function WorkoutEntryView({
                 key={routine.label}
                 type="button"
                 className={`h-10 shrink-0 rounded-full px-5 text-xs font-semibold ${routine.value === routineName || routine.label === routineName ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
+                aria-pressed={routine.value === routineName || routine.label === routineName}
                 onClick={() => handleRoutineTab(routine.value)}
               >
                 {routine.label}
@@ -3748,6 +3750,7 @@ function WorkoutEntryView({
                   key={tab}
                   type="button"
                   className={`h-8 shrink-0 rounded-full px-3 text-xs font-semibold ${routineSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : "bg-[#f8f4f0] text-[#7a7470]"}`}
+                  aria-pressed={routineSubTab === tab}
                   onClick={() => setRoutineSubTab(tab)}
                 >
                   {tab}
@@ -4345,6 +4348,7 @@ function SegmentedControl({
         <button
           key={item.id}
           className={`h-10 rounded-full text-xs font-semibold ${value === item.id ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
+          aria-pressed={value === item.id}
           onClick={() => onChange(item.id)}
           type="button"
         >
@@ -4743,6 +4747,7 @@ function ProfileView({
                         key={routine.label}
                         type="button"
                         className={`h-9 min-w-[72px] shrink-0 rounded-full px-3 text-xs font-semibold ${routine.value === favoriteRoutine.value ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
+                        aria-pressed={routine.value === favoriteRoutine.value}
                         onClick={() => handleFavoriteRoutineTab(routine.value)}
                       >
                         {routine.label}
@@ -4757,6 +4762,7 @@ function ProfileView({
                           key={tab}
                           type="button"
                           className={`h-9 shrink-0 rounded-full px-4 text-xs font-semibold ${favoriteSubTab === tab ? "bg-[#242124] text-[#fffdfb]" : `${UI.surface} ${UI.textMuted}`}`}
+                          aria-pressed={favoriteSubTab === tab}
                           onClick={() => setFavoriteSubTab(tab)}
                         >
                           {tab}
@@ -4837,6 +4843,7 @@ function RangePills({ value, onChange }: { value: SummaryRange; onChange: (value
         <button
           key={item}
           className={`h-9 shrink-0 rounded-full px-3 text-xs font-semibold ${value === item ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+          aria-pressed={value === item}
           onClick={() => onChange(item)}
         >
           {summaryRangeLabels[item]}

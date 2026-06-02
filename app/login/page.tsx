@@ -160,6 +160,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 className={`h-11 rounded-full text-sm font-medium ${mode === "login" ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                aria-pressed={mode === "login"}
                 onClick={() => switchMode("login")}
               >
                 로그인
@@ -167,6 +168,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 className={`h-11 rounded-full text-sm font-medium ${mode === "signup" ? "bg-[#242124] text-[#fffdfb]" : "text-[#242124]"}`}
+                aria-pressed={mode === "signup"}
                 onClick={() => switchMode("signup")}
               >
                 회원가입
