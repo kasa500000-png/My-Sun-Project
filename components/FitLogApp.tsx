@@ -5107,34 +5107,26 @@ type DietMealLog = {
   foods: DietFoodItem[];
 };
 
-function sampleDietFoods(slot: DietMealSlot): DietFoodItem[] {
-  if (slot === "morning") {
-    return [
-      { id: "sandwich", name: "샌드위치", portion: "1개", calories: 330, carbs: 42, protein: 16, fat: 12 },
-      { id: "americano", name: "아메리카노", portion: "1잔", calories: 10, carbs: 1, protein: 0, fat: 0 },
-    ];
-  }
-  if (slot === "lunch") {
-    return [
-      { id: "rice-bowl", name: "밥", portion: "1공기", calories: 310, carbs: 68, protein: 6, fat: 1 },
-      { id: "protein-side", name: "단백질 반찬", portion: "1인분", calories: 260, carbs: 12, protein: 28, fat: 12 },
-      { id: "soup", name: "국/반찬", portion: "소량", calories: 120, carbs: 12, protein: 5, fat: 5 },
-    ];
-  }
-  if (slot === "afternoon") {
-    return [
-      { id: "chicken", name: "닭가슴살", portion: "100g", calories: 165, carbs: 0, protein: 31, fat: 4 },
-      { id: "sweet-potato", name: "고구마", portion: "1개", calories: 150, carbs: 35, protein: 2, fat: 0 },
-      { id: "salad", name: "샐러드", portion: "1접시", calories: 120, carbs: 10, protein: 4, fat: 7 },
-    ];
-  }
-  return [
-    { id: "greek-yogurt", name: "그릭요거트", portion: "1컵", calories: 130, carbs: 9, protein: 15, fat: 4 },
-  ];
-}
+type DietAnalyzeResponse = {
+  foods?: DietFoodItem[];
+  feedback?: string;
+  error?: string;
+};
 
 function emptyDietFood(): DietFoodItem {
   return { id: `manual-${Date.now()}`, name: "직접 입력 음식", portion: "1인분", calories: 0, carbs: 0, protein: 0, fat: 0 };
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("이미지 파일을 읽지 못했습니다."));
+    };
+    reader.onerror = () => reject(new Error("이미지 파일을 읽지 못했습니다."));
+    reader.readAsDataURL(file);
+  });
 }
 
 function dietTotals(foods: DietFoodItem[]) {
@@ -5159,8 +5151,9 @@ function DietView({ settings }: { settings: UserSettings }) {
   const [reviewMeal, setReviewMeal] = useState<DietMealSlot | null>(null);
   const [reviewImage, setReviewImage] = useState<string | undefined>();
   const [reviewFoods, setReviewFoods] = useState<DietFoodItem[]>([]);
+  const [reviewFeedback, setReviewFeedback] = useState("");
+  const [analysisError, setAnalysisError] = useState("");
   const [analysisStatus, setAnalysisStatus] = useState<"idle" | "analyzing" | "ready">("idle");
-  const dietImageUrlsRef = useRef<string[]>([]);
   const targetCalories = settings.weightKg ? Math.round(settings.weightKg * 30) : 1800;
   const targetProtein = settings.weightKg ? Math.round(settings.weightKg * 1.6) : 90;
   const allFoods = Object.values(mealLogs).flatMap(log => log?.foods || []);
@@ -5172,32 +5165,55 @@ function DietView({ settings }: { settings: UserSettings }) {
   const reviewMealLabel = DIET_MEALS.find(meal => meal.id === reviewMeal)?.label || "식사";
   const todayLabel = formatDate(today());
 
-  useEffect(() => {
-    return () => {
-      dietImageUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, []);
-
-  function openPhotoAnalysis(mealId: DietMealSlot, files: FileList | null) {
+  async function openPhotoAnalysis(mealId: DietMealSlot, files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
-    if (reviewImage && !Object.values(mealLogs).some(log => log?.imageUrl === reviewImage)) {
-      URL.revokeObjectURL(reviewImage);
-      dietImageUrlsRef.current = dietImageUrlsRef.current.filter(url => url !== reviewImage);
-    }
-    const imageUrl = URL.createObjectURL(file);
-    dietImageUrlsRef.current.push(imageUrl);
+
     setReviewMeal(mealId);
-    setReviewImage(imageUrl);
-    setReviewFoods(sampleDietFoods(mealId));
+    setReviewImage(undefined);
+    setReviewFoods([]);
+    setReviewFeedback("");
+    setAnalysisError("");
     setAnalysisStatus("analyzing");
-    window.setTimeout(() => setAnalysisStatus("ready"), 650);
+
+    try {
+      const imageDataUrl = await readFileAsDataUrl(file);
+      setReviewImage(imageDataUrl);
+      const response = await appFetch("/api/diet/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl, mealSlot: mealId }),
+      });
+      const data = await response.json() as DietAnalyzeResponse;
+
+      if (!response.ok) {
+        throw new Error(apiErrorMessage(data) || "AI 분석에 실패했습니다. 직접 입력으로 기록해 주세요.");
+      }
+
+      setReviewFoods((data.foods || []).map((food, index) => ({
+        id: food.id || `ai-food-${Date.now()}-${index}`,
+        name: food.name || "확인 필요 음식",
+        portion: food.portion || "1인분",
+        calories: Math.max(0, Number(food.calories) || 0),
+        carbs: Math.max(0, Number(food.carbs) || 0),
+        protein: Math.max(0, Number(food.protein) || 0),
+        fat: Math.max(0, Number(food.fat) || 0),
+      })));
+      setReviewFeedback(data.feedback || "분석 결과를 확인한 뒤 음식과 분량을 저장해 주세요.");
+    } catch (error) {
+      setAnalysisError(error instanceof Error ? error.message : "AI 분석 중 문제가 발생했습니다. 직접 입력으로 기록해 주세요.");
+      setReviewFoods([emptyDietFood()]);
+    } finally {
+      setAnalysisStatus("ready");
+    }
   }
 
   function openManualEntry(mealId: DietMealSlot) {
     setReviewMeal(mealId);
     setReviewImage(undefined);
     setReviewFoods([emptyDietFood()]);
+    setReviewFeedback("");
+    setAnalysisError("");
     setAnalysisStatus("ready");
   }
 
@@ -5211,11 +5227,6 @@ function DietView({ settings }: { settings: UserSettings }) {
 
   function saveReviewMeal() {
     if (!reviewMeal) return;
-    const oldLog = mealLogs[reviewMeal];
-    if (oldLog?.imageUrl && oldLog.imageUrl !== reviewImage) {
-      URL.revokeObjectURL(oldLog.imageUrl);
-      dietImageUrlsRef.current = dietImageUrlsRef.current.filter(url => url !== oldLog.imageUrl);
-    }
     setMealLogs(logs => ({
       ...logs,
       [reviewMeal]: {
@@ -5227,15 +5238,12 @@ function DietView({ settings }: { settings: UserSettings }) {
     setReviewMeal(null);
     setReviewFoods([]);
     setReviewImage(undefined);
+    setReviewFeedback("");
+    setAnalysisError("");
     setAnalysisStatus("idle");
   }
 
   function deleteMeal(slot: DietMealSlot) {
-    const oldLog = mealLogs[slot];
-    if (oldLog?.imageUrl) {
-      URL.revokeObjectURL(oldLog.imageUrl);
-      dietImageUrlsRef.current = dietImageUrlsRef.current.filter(url => url !== oldLog.imageUrl);
-    }
     setMealLogs(logs => {
       const next = { ...logs };
       delete next[slot];
@@ -5254,7 +5262,7 @@ function DietView({ settings }: { settings: UserSettings }) {
           </div>
           <label className="shrink-0 cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
             + 사진
-            <input type="file" accept="image/*" className="sr-only" onChange={event => openPhotoAnalysis("lunch", event.target.files)} />
+            <input type="file" accept="image/*" className="sr-only" onChange={event => { void openPhotoAnalysis("lunch", event.target.files); event.currentTarget.value = ""; }} />
           </label>
         </div>
         <p className="mt-4 text-sm font-semibold text-[#7a7470]">{todayLabel} · 오늘</p>
@@ -5318,7 +5326,7 @@ function DietView({ settings }: { settings: UserSettings }) {
                 <div className="grid grid-cols-2 gap-2">
                   <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-center text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
                     사진 추가
-                    <input type="file" accept="image/*" className="sr-only" onChange={event => openPhotoAnalysis(meal.id, event.target.files)} />
+                    <input type="file" accept="image/*" className="sr-only" onChange={event => { void openPhotoAnalysis(meal.id, event.target.files); event.currentTarget.value = ""; }} />
                   </label>
                   <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124]" onClick={() => openManualEntry(meal.id)}>
                     직접 입력
@@ -5353,6 +5361,16 @@ function DietView({ settings }: { settings: UserSettings }) {
         {analysisStatus === "analyzing" && (
           <div className="rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-semibold leading-6 text-[#4b4541]">
             음식을 분석하고 있어요. 사진 속 음식과 분량을 확인하는 중입니다.
+          </div>
+        )}
+        {analysisError && (
+          <div className="rounded-[16px] bg-[#fff5f2] p-4 text-sm font-semibold leading-6 text-[#9d3d35] ring-1 ring-[#f1c4bc]">
+            {analysisError}
+          </div>
+        )}
+        {reviewFeedback && !analysisError && (
+          <div className="rounded-[16px] bg-[#edf8f1] p-4 text-sm font-semibold leading-6 text-[#2f6f51]">
+            {reviewFeedback}
           </div>
         )}
         {analysisStatus === "ready" && (
