@@ -2760,6 +2760,34 @@ function groupScores(scores: Array<Muscle & { score: number }>) {
   return Array.from(groups.values()).sort((a, b) => b.score - a.score);
 }
 
+const ANALYSIS_BODY_GROUPS = [
+  { name: "가슴", ids: ["chest"], color: "#242124" },
+  { name: "등", ids: ["back"], color: "#4b4541" },
+  { name: "어깨", ids: ["shoulders"], color: "#7a7470" },
+  { name: "팔", ids: ["biceps", "triceps"], color: "#9e9ea0" },
+  { name: "코어", ids: ["core", "rectusAbs", "obliques", "transverseAbs", "lowerAbs", "hipFlexors", "erectors"], color: "#2f8c63" },
+  { name: "하체", ids: ["quads", "adductors", "glutes", "abductors", "hamstrings", "calves"], color: "#6aa77b" },
+  { name: "심폐", ids: ["cardio", "recovery"], color: "#c48f6a" },
+] as const;
+
+const ANALYSIS_RECOMMENDATION_GROUPS = ["하체", "코어", "등", "어깨", "팔", "가슴", "심폐"] as const;
+const MUSCLE_RANK_EXCLUDED_IDS = new Set(["core", "cardio", "recovery"]);
+
+function analysisBodyBalance(scores: Array<Muscle & { score: number }>) {
+  const scoreMap = new Map(scores.map(item => [item.id, item.score]));
+  return ANALYSIS_BODY_GROUPS.map(group => ({
+    name: group.name,
+    color: group.color,
+    score: group.ids.reduce((sum, id) => sum + (scoreMap.get(id) || 0), 0),
+  })).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+}
+
+function koreanObjectParticle(value: string) {
+  const last = value.charCodeAt(value.length - 1);
+  if (last < 0xac00 || last > 0xd7a3) return "를";
+  return (last - 0xac00) % 28 === 0 ? "를" : "을";
+}
+
 function sessionStats(session: WorkoutSession) {
   const totalSets = session.sets.length;
   const volume = Math.round(session.sets.reduce((sum, set) => sum + setVolume(set), 0));
@@ -4928,37 +4956,46 @@ function AnalysisView({
   const rangedSessions = useMemo(() => sessionsForSummaryRange(sessions, range), [sessions, range]);
   const rangeScores = useMemo(() => scoreSessions(rangedSessions), [rangedSessions]);
   const activeScores = rangeScores.filter(item => item.score > 0);
-  const rangeGroupBalance = useMemo(() => groupScores(rangeScores).filter(item => item.score > 0), [rangeScores]);
+  const detailedScores = activeScores.filter(item => !MUSCLE_RANK_EXCLUDED_IDS.has(item.id));
+  const rangeGroupBalance = useMemo(() => analysisBodyBalance(rangeScores), [rangeScores]);
   const rangeStats = useMemo(() => summarizeSessions(rangedSessions), [rangedSessions]);
   const pieData = rangeGroupBalance.length ? rangeGroupBalance : [{ name: "기록 없음", score: 1, color: "#ded4cf" }];
   const totalScore = activeScores.reduce((sum, item) => sum + item.score, 0);
-  const topScores = activeScores.slice(0, 3);
+  const topScores = detailedScores.slice(0, 3);
   const topScorePercent = totalScore && topScores.length
     ? Math.round((topScores.reduce((sum, item) => sum + item.score, 0) / totalScore) * 100)
     : 0;
-  const topGroup = rangeGroupBalance[0]?.name;
   const groupScoreMap = new Map(rangeGroupBalance.map(item => [item.name, item.score]));
+  const topGroup = rangeGroupBalance[0]?.name;
+  const topFocusText = topScores.length ? topScores.map(item => item.name).join(" · ") : topGroup || "주요 부위";
+  const topFocusScore = topScores.length
+    ? topScores.reduce((sum, item) => sum + item.score, 0)
+    : topGroup
+      ? groupScoreMap.get(topGroup) || 0
+      : 0;
+  const displayedTopPercent = totalScore && topFocusScore ? Math.round((topFocusScore / totalScore) * 100) : topScorePercent;
   const lowGroup = rangeStats.count > 0
-    ? ["상체", "하체", "코어", "팔"].sort((a, b) => (groupScoreMap.get(a) || 0) - (groupScoreMap.get(b) || 0))[0]
+    ? [...ANALYSIS_RECOMMENDATION_GROUPS].sort((a, b) => (groupScoreMap.get(a) || 0) - (groupScoreMap.get(b) || 0))[0]
     : undefined;
+  const primaryActionLabel = recommendedRoutine === "하체 집중" ? "하체 15분 시작" : homeRoutineButton(recommendedRoutine);
   const analysisTitle = rangeStats.count === 0
     ? `${summaryRangeLabels[range]} 분석할 기록이 없어요`
-    : `${summaryRangeLabels[range]}는 ${topGroup || topScores[0]?.name || "운동"} 비중이 높아요`;
+    : `${summaryRangeLabels[range]}는 ${topGroup || topScores[0]?.name || "운동"}${koreanObjectParticle(topGroup || topScores[0]?.name || "운동")} 많이 썼어요`;
   const analysisCopy = rangeStats.count === 0
-    ? "운동을 1회 이상 기록하면 자극 부위와 밸런스를 분석할 수 있습니다."
-    : `${summaryRangeLabels[range]} 기록된 ${rangeStats.count}회 운동 기준으로 ${topScores.map(item => item.name).join(" · ")}가 전체 자극의 ${topScorePercent}%를 차지합니다.`;
+    ? "운동을 1회 이상 기록하면 자극 부위와 밸런스를 분석할 수 있어요."
+    : `${summaryRangeLabels[range]} 기록된 ${rangeStats.count}회 운동 기준으로 ${topFocusText}가 전체 자극의 약 ${displayedTopPercent}%를 차지해요.`;
   const recommendationCopy = rangeStats.count === 0
-    ? "첫 운동을 기록하면 다음 운동 추천이 더 정확해집니다."
+    ? "첫 운동을 기록하면 다음 운동 추천이 더 정확해져요."
     : lowGroup
-      ? `${lowGroup} 자극이 상대적으로 적어요. 다음 운동은 ${recommendedRoutine} 루틴을 추천합니다.`
-      : `다음 운동은 ${recommendedRoutine} 루틴을 추천합니다.`;
+      ? `${lowGroup} 자극이 적은 편이에요. 다음 운동은 ${homeRoutineTitle(recommendedRoutine)}로 균형을 맞춰보세요.`
+      : `다음 운동은 ${homeRoutineTitle(recommendedRoutine)}로 균형을 맞춰보세요.`;
 
   return (
-    <section className="mx-auto grid max-w-[1080px] gap-6 px-4 py-7 pb-[calc(8rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
+    <section className="mx-auto grid max-w-[1080px] gap-6 px-4 py-7 pb-[calc(9rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
       <div>
         <p className={`text-sm font-medium ${UI.textMuted}`}>운동 분석</p>
-        <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">다음 운동을 정하는 화면</h1>
-        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>선택한 기간의 자극, 부족 부위, 추천 루틴을 확인합니다.</p>
+        <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">다음 운동을 정해볼까요?</h1>
+        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>선택한 기간의 자극과 부족한 부위를 확인해요.</p>
       </div>
 
       <RangePills value={range} onChange={setRange} />
@@ -4973,17 +5010,17 @@ function AnalysisView({
         </div>
         <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button type="button" className="mysun-primary-action text-sm" onClick={onStart}>
-            {recommendedRoutine} 시작
+            {primaryActionLabel}
           </button>
           <button type="button" className="mysun-secondary-action text-sm" onClick={onStart}>
-            운동 기록하기
+            직접 기록하기
           </button>
         </div>
       </div>
 
       <MetricGrid
         items={[
-          { label: "운동 횟수", value: `${rangeStats.count}회` },
+          { label: "운동 기록", value: `${rangeStats.count}회` },
           { label: "총 세트", value: `${rangeStats.sets}세트` },
           { label: "운동 시간", value: `${rangeStats.minutes}분` },
           { label: "누적 부하", value: `${formatNumber(Math.round(rangeStats.volume))}점` },
@@ -4998,17 +5035,20 @@ function AnalysisView({
             <FlatPanel title="많이 자극한 근육" kicker="상위 3개">
               <TopMuscleCards scores={topScores} total={totalScore} />
             </FlatPanel>
-            <FlatPanel title="지표 기준" kicker="도움말">
-              <p className={`text-sm leading-6 ${UI.textBody}`}>
-                누적 부하는 운동 시간, 세트 수, 반복 횟수, 중량과 난이도를 반영한 앱 기준 점수입니다.
-                근육 자극은 이 부하를 운동별 근육 기여도에 따라 나눈 값입니다.
+            <details className="rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-[#242124]">
+                지표 기준 보기
+              </summary>
+              <p className={`mt-4 text-sm leading-6 ${UI.textBody}`}>
+                누적 부하는 운동 시간, 세트 수, 반복 횟수, 중량과 난이도를 반영한 앱 기준 점수예요.
+                근육 자극은 이 부하를 운동별 근육 기여도에 따라 나눈 값이에요.
               </p>
               {rangeStats.count < 2 && (
                 <p className="mt-3 rounded-[14px] bg-[#f8f4f0] p-3 text-sm font-medium leading-6 text-[#4b4541]">
                   현재 {rangeStats.count}회 기록 기준입니다. 기록이 늘어나면 분석 신뢰도가 높아집니다.
                 </p>
               )}
-            </FlatPanel>
+            </details>
           </div>
 
           <div className="grid gap-6">
@@ -5027,7 +5067,7 @@ function AnalysisView({
           </div>
         </FlatPanel>
         <FlatPanel title="근육별 자극 순위" kicker="전체 자극 대비 비율">
-          <BarRanking data={activeScores.slice(0, 8)} totalScore={totalScore} />
+          <BarRanking data={detailedScores.slice(0, 8)} totalScore={totalScore} />
         </FlatPanel>
           </div>
         </div>
@@ -5456,7 +5496,7 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
         <div className="grid h-32 w-32 place-items-center rounded-full bg-[#fffdfb] text-center">
           <div>
             <p className="text-sm font-medium text-[#7a7470]">합계</p>
-            <p className="text-[30px] font-medium">{Math.round(total)}</p>
+            <p className="text-[26px] font-medium">{formatNumber(Math.round(total))}점</p>
           </div>
         </div>
       </div>
@@ -5469,8 +5509,9 @@ function BarRanking({ data, totalScore }: { data: Array<Muscle & { score: number
   if (data.length === 0) return <p className="mt-4 text-base leading-7 text-[#7a7470]">운동을 저장하면 주간 순위가 표시됩니다.</p>;
   return (
     <div className="mt-6 grid gap-4">
-      {data.map(item => {
+      {data.map((item, index) => {
         const percent = Math.round((item.score / total) * 100);
+        const barColor = index < 3 ? "#242124" : "#9e9ea0";
         return (
           <div key={item.id}>
             <div className="mb-2 flex items-center justify-between gap-3">
@@ -5478,7 +5519,7 @@ function BarRanking({ data, totalScore }: { data: Array<Muscle & { score: number
               <span className="shrink-0 text-sm font-medium text-[#7a7470]">{percent}% · {formatNumber(item.score)}점</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-[#f8f4f0]">
-              <div className="h-full rounded-full bg-[#242124]" style={{ width: `${Math.max(6, percent)}%` }} />
+              <div className="h-full rounded-full" style={{ width: `${Math.max(6, percent)}%`, background: barColor }} />
             </div>
           </div>
         );
