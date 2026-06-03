@@ -4413,6 +4413,7 @@ function HistoryView({
   const [rangeCursor, setRangeCursor] = useState(() => parseDate(today()));
   const [bodyFilter, setBodyFilter] = useState<BodyFilter>("all");
   const [calendarExpanded, setCalendarExpanded] = useState(false);
+  const [focusedSession, setFocusedSession] = useState<WorkoutSession | null>(null);
 
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, WorkoutSession[]>();
@@ -4434,6 +4435,30 @@ function HistoryView({
   );
   const filteredStats = useMemo(() => summarizeSessions(filteredSessions), [filteredSessions]);
   const rangeHasRecords = filteredSessions.length > 0;
+  const monthSessions = useMemo(() => {
+    const start = toDateKey(startOfMonth(calendarMonth));
+    const end = toDateKey(endOfMonth(calendarMonth));
+    return sessions.filter(session => session.date >= start && session.date <= end);
+  }, [calendarMonth, sessions]);
+  const monthStats = useMemo(() => summarizeSessions(monthSessions), [monthSessions]);
+  const monthWorkoutDays = useMemo(() => new Set(monthSessions.map(session => session.date)).size, [monthSessions]);
+  const filterCounts = useMemo(() => ({
+    all: sessions
+      .filter(session => session.date >= period.start && session.date <= period.end)
+      .length,
+    upper: sessions
+      .filter(session => session.date >= period.start && session.date <= period.end)
+      .filter(session => sessionMatchesBodyFilter(session, "upper"))
+      .length,
+    lower: sessions
+      .filter(session => session.date >= period.start && session.date <= period.end)
+      .filter(session => sessionMatchesBodyFilter(session, "lower"))
+      .length,
+    core: sessions
+      .filter(session => session.date >= period.start && session.date <= period.end)
+      .filter(session => sessionMatchesBodyFilter(session, "core"))
+      .length,
+  }), [period.end, period.start, sessions]);
 
   function moveCalendar(direction: -1 | 1) {
     setCalendarMonth(current => addMonths(current, direction));
@@ -4448,11 +4473,11 @@ function HistoryView({
   }
 
   return (
-    <section className="mx-auto max-w-[960px] px-4 py-7 pb-[calc(8rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
+    <section className="mx-auto max-w-[960px] px-4 py-7 pb-[calc(9rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
       <div className="mb-5">
         <p className={`text-sm font-medium ${UI.textMuted}`}>운동 일지</p>
         <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">기록 모아보기</h1>
-        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>날짜와 기간별로 운동 기록을 빠르게 확인합니다.</p>
+        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>날짜와 기간별로 운동 기록을 빠르게 확인해요.</p>
       </div>
       {loading ? (
         <EmptyState text="운동 기록을 불러오는 중입니다." />
@@ -4466,14 +4491,14 @@ function HistoryView({
                 <p className={`text-sm font-medium ${UI.textMuted}`}>선택 기간</p>
                 <h2 className="mt-1 text-2xl font-semibold">{period.label}</h2>
                 <p className="mt-2 text-sm font-semibold text-[#4b4541]">
-                  {filteredStats.count}회 운동 · {filteredStats.exercises}종목 · {filteredStats.minutes}분
+                  {filteredStats.count}회 · {filteredStats.exercises}종목 · {filteredStats.minutes}분
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
                 <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(-1)} aria-label="이전 기간">
                   ‹
                 </button>
-                <button type="button" className="grid h-10 w-10 place-items-center rounded-full bg-[#242124] text-lg font-semibold text-[#fffdfb]" onClick={() => movePeriod(1)} aria-label="다음 기간">
+                <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(1)} aria-label="다음 기간">
                   ›
                 </button>
               </div>
@@ -4501,7 +4526,10 @@ function HistoryView({
             >
               <div>
                 <p className={`text-sm font-medium ${UI.textMuted}`}>캘린더</p>
-                <h2 className="mt-1 text-xl font-semibold">{formatMonth(calendarMonth)}</h2>
+                <h2 className="mt-1 text-xl font-semibold">{formatMonth(calendarMonth)} · 운동한 날 {monthWorkoutDays}일</h2>
+                <p className="mt-1 text-sm font-medium text-[#4b4541]">
+                  {monthWorkoutDays > 0 ? `총 ${monthStats.minutes}분 기록했어요.` : "이번 달 운동 흔적을 쌓아보세요."}
+                </p>
               </div>
               <span className="rounded-full bg-[#f8f4f0] px-3 py-2 text-xs font-bold text-[#4b4541]">
                 {calendarExpanded ? "접기" : "보기"}
@@ -4512,7 +4540,7 @@ function HistoryView({
               <div className="mt-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="flex flex-wrap gap-3 text-[11px] font-semibold text-[#7a7470]">
-                    <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#c84653]" />오늘</span>
+                    <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#242124]" />오늘</span>
                     <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#4da36f]" />기록 있음</span>
                     <span className="inline-flex items-center gap-1"><i className="h-2 w-4 rounded-full bg-[#f1eadf]" />선택 기간</span>
                   </div>
@@ -4520,7 +4548,7 @@ function HistoryView({
                     <button type="button" className={`grid h-9 w-9 place-items-center text-base ${UI.secondaryButton}`} onClick={() => moveCalendar(-1)} aria-label="이전 달">
                       ‹
                     </button>
-                    <button type="button" className="grid h-9 w-9 place-items-center rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb]" onClick={() => moveCalendar(1)} aria-label="다음 달">
+                    <button type="button" className={`grid h-9 w-9 place-items-center text-base ${UI.secondaryButton}`} onClick={() => moveCalendar(1)} aria-label="다음 달">
                       ›
                     </button>
                   </div>
@@ -4536,22 +4564,27 @@ function HistoryView({
                     const hasRecord = daySessions.length > 0;
                     const isToday = dateKey === today();
                     const isInPeriod = dateKey >= period.start && dateKey <= period.end;
+                    const recordTone = daySessions.length > 1
+                      ? "bg-[#d9f1e2] text-[#24583e] ring-1 ring-[#8bcda2]"
+                      : "bg-[#e9f8ee] text-[#2c6548] ring-1 ring-[#b9dfc5]";
                     return (
                       <button type="button"
                         key={dateKey}
                         className={`relative grid aspect-square place-items-center rounded-[12px] text-sm font-semibold transition ${
-                          isInPeriod
+                          hasRecord
+                            ? recordTone
+                            : isInPeriod
                             ? "bg-[#f1eadf] text-[#242124]"
                             : day.inMonth
                               ? "bg-[#fffdfb] text-[#242124] ring-1 ring-[#eadfda]"
                               : "bg-[#fffdfb] text-[#ded4cf]"
-                        } ${hasRecord ? "ring-1 ring-[#b9dfc5]" : ""}`}
+                        } ${isInPeriod ? "shadow-[inset_0_0_0_2px_rgba(36,33,36,0.12)]" : ""}`}
                         onClick={() => hasRecord && setSelectedDate(dateKey)}
                         disabled={!hasRecord}
                         aria-label={`${formatDate(dateKey)} 운동 기록 ${daySessions.length}개`}
                       >
                         <span>{day.date.getDate()}</span>
-                        {isToday && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#c84653]" />}
+                        {isToday && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#242124]" />}
                         {hasRecord && (
                           <span className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5">
                             <i className="h-1.5 w-1.5 rounded-full bg-[#4da36f]" />
@@ -4570,16 +4603,16 @@ function HistoryView({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className={`text-sm font-medium ${UI.textMuted}`}>기록 리스트</p>
-                <h2 className="mt-1 text-2xl font-semibold">{rangeHasRecords ? `${filteredSessions.length}개 기록` : "기록 없음"}</h2>
+                <h2 className="mt-1 text-2xl font-semibold">{rangeHasRecords ? `기록 ${filteredSessions.length}개` : "기록 없음"}</h2>
               </div>
             </div>
 
             <FilterChips
               items={[
-                { id: "all", label: "전체" },
-                { id: "upper", label: "상체" },
-                { id: "lower", label: "하체" },
-                { id: "core", label: "코어" },
+                { id: "all", label: `전체 ${filterCounts.all}` },
+                { id: "upper", label: `상체 ${filterCounts.upper}` },
+                { id: "lower", label: `하체 ${filterCounts.lower}` },
+                { id: "core", label: `코어 ${filterCounts.core}` },
               ]}
               value={bodyFilter}
               onChange={value => setBodyFilter(value as BodyFilter)}
@@ -4594,7 +4627,12 @@ function HistoryView({
                 />
               ) : (
                 filteredSessions.map(session => (
-                  <WorkoutHistoryCard key={session.id} session={session} deleteSession={deleteSession} />
+                  <WorkoutHistoryCard
+                    key={session.id}
+                    session={session}
+                    deleteSession={deleteSession}
+                    onOpen={() => setFocusedSession(session)}
+                  />
                 ))
               )}
             </div>
@@ -4607,6 +4645,14 @@ function HistoryView({
           title={formatDate(selectedDate)}
           sessions={selectedSessions}
           onClose={() => setSelectedDate(null)}
+          deleteSession={deleteSession}
+        />
+      )}
+      {focusedSession && (
+        <WorkoutHistoryModal
+          title={focusedSession.routineName}
+          sessions={[focusedSession]}
+          onClose={() => setFocusedSession(null)}
           deleteSession={deleteSession}
         />
       )}
@@ -4739,7 +4785,15 @@ function SessionExerciseList({ session }: { session: WorkoutSession }) {
   );
 }
 
-function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSession; deleteSession: (id: string) => void }) {
+function WorkoutHistoryCard({
+  session,
+  deleteSession,
+  onOpen,
+}: {
+  session: WorkoutSession;
+  deleteSession: (id: string) => void;
+  onOpen: () => void;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const stats = sessionStats(session);
   const exercises = sessionExerciseSummaries(session);
@@ -4749,25 +4803,38 @@ function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSessio
   return (
     <article className="relative rounded-[18px] bg-[#fffdfb] p-4 shadow-[0_10px_28px_rgba(58,48,50,0.05)] ring-1 ring-[#eadfda]">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <button type="button" className="min-w-0 flex-1 text-left" onClick={onOpen}>
           <p className={`text-sm font-medium ${UI.textMuted}`}>
             {formatDate(session.date)} · {session.durationMinutes}분 · {stats.exercises}종목
           </p>
           <h3 className="mt-1 truncate text-xl font-semibold text-[#242124]">{session.routineName}</h3>
-        </div>
+        </button>
         <button
           type="button"
           className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f8f4f0] text-lg font-bold text-[#4b4541]"
           aria-label="기록 더보기"
           aria-expanded={menuOpen}
-          onClick={() => setMenuOpen(value => !value)}
+          onClick={event => {
+            event.stopPropagation();
+            setMenuOpen(value => !value);
+          }}
         >
           ⋯
         </button>
       </div>
 
       {menuOpen && (
-        <div className="absolute right-4 top-14 z-10 w-36 overflow-hidden rounded-[14px] bg-[#fffdfb] shadow-[0_16px_40px_rgba(58,48,50,0.16)] ring-1 ring-[#eadfda]">
+        <div className="absolute right-4 top-14 z-10 w-40 overflow-hidden rounded-[14px] bg-[#fffdfb] shadow-[0_16px_40px_rgba(58,48,50,0.16)] ring-1 ring-[#eadfda]">
+          <button
+            type="button"
+            className="w-full px-4 py-3 text-left text-sm font-semibold text-[#242124]"
+            onClick={() => {
+              setMenuOpen(false);
+              onOpen();
+            }}
+          >
+            상세 보기
+          </button>
           <button
             type="button"
             className={`w-full px-4 py-3 text-left text-sm font-semibold ${UI.dangerText}`}
@@ -4781,7 +4848,7 @@ function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSessio
         </div>
       )}
 
-      <div className="mt-4 grid gap-2">
+      <button type="button" className="mt-4 grid w-full gap-2 text-left" onClick={onOpen}>
         {visibleExercises.map(item => (
           <div key={`${item.name}-${item.load}-${item.reps}`} className="flex items-center justify-between gap-3">
             <p className="min-w-0 truncate text-sm font-semibold text-[#242124]">{item.name}</p>
@@ -4793,12 +4860,12 @@ function WorkoutHistoryCard({ session, deleteSession }: { session: WorkoutSessio
         {exercises.length > visibleExercises.length && (
           <p className={`text-xs font-semibold ${UI.textMuted}`}>외 {exercises.length - visibleExercises.length}개 운동</p>
         )}
-      </div>
+      </button>
 
       {scores.length > 0 && (
-        <p className={`mt-4 text-sm font-medium leading-6 ${UI.textMuted}`}>
+        <button type="button" className={`mt-4 block text-left text-sm font-medium leading-6 ${UI.textMuted}`} onClick={onOpen}>
           주요 자극: {scores.map(score => score.name).join(" · ")}
-        </p>
+        </button>
       )}
       {session.memo && <p className={`mt-3 line-clamp-2 text-sm leading-6 ${UI.textBody}`}>{session.memo}</p>}
     </article>
@@ -4831,7 +4898,7 @@ function WorkoutHistoryModal({
         <div className="min-h-0 overflow-y-auto p-5">
         <div className="grid gap-3">
           {sessions.map(session => (
-            <WorkoutHistoryCard key={session.id} session={session} deleteSession={deleteSession} />
+            <WorkoutSessionDetailCard key={session.id} session={session} deleteSession={deleteSession} showScores />
           ))}
         </div>
         </div>
