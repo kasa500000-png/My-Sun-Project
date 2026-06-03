@@ -22,7 +22,7 @@ const UI = {
 
 const API_TIMEOUT_MS = 15000;
 
-type Tab = "home" | "train" | "log" | "balance" | "member";
+type Tab = "home" | "train" | "log" | "balance" | "diet" | "member";
 type ExerciseType = "weight" | "time" | "bodyweight";
 type VolumeType =
   | "time"
@@ -65,7 +65,7 @@ type VolumeType =
 type HistoryRange = "day" | "week" | "month" | "year";
 type BodyFilter = "all" | "upper" | "lower" | "core";
 
-const TAB_VALUES: Tab[] = ["home", "train", "log", "balance", "member"];
+const TAB_VALUES: Tab[] = ["home", "train", "log", "balance", "diet", "member"];
 
 function tabFromSearchParam(value: string | null): Tab | null {
   return value && TAB_VALUES.includes(value as Tab) ? value as Tab : null;
@@ -2381,6 +2381,7 @@ const tabItems: Array<{ id: Tab; label: string; icon: SoftIconName }> = [
   { id: "home", label: "홈", icon: "home" },
   { id: "log", label: "일지", icon: "log" },
   { id: "balance", label: "분석", icon: "analysis" },
+  { id: "diet", label: "식단", icon: "diet" },
   { id: "member", label: "내정보", icon: "member" },
 ];
 
@@ -2389,6 +2390,7 @@ type SoftIconName =
   | "record"
   | "log"
   | "analysis"
+  | "diet"
   | "member"
   | "memo"
   | "save"
@@ -2401,6 +2403,7 @@ const softIconPaths: Record<SoftIconName, ReactNode> = {
   record: <><path d="M7 4.5h7l3 3V19H7z" /><path d="M13.5 4.5v4h4" /><path d="M9.5 13h5" /><path d="M9.5 16h5" /></>,
   log: <><path d="M7 4.5h10" /><path d="M7 9h10" /><path d="M7 13.5h7" /><path d="M6 20h12" /><path d="M5 4.5v15" /></>,
   analysis: <><path d="M5 18V9" /><path d="M12 18V5" /><path d="M19 18v-7" /><path d="M4 19h16" /></>,
+  diet: <><path d="M7 4.5v7" /><path d="M4.5 4.5v4A2.5 2.5 0 0 0 7 11v8" /><path d="M9.5 4.5v4A2.5 2.5 0 0 1 7 11" /><path d="M16 4.5v14.5" /><path d="M16 4.5c2.2 1 3.5 3 3.5 5.5 0 2.2-1.2 3.5-3.5 3.5" /></>,
   member: <><path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
   memo: <><path d="M5 5h14v12H8l-3 3z" /><path d="M8 9h8" /><path d="M8 12.5h6" /></>,
   save: <><path d="M5 4.5h11l3 3V19H5z" /><path d="M8 4.5v5h7" /><path d="M8 16h8" /></>,
@@ -3367,6 +3370,10 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
             selectTab("train");
           }}
         />
+      )}
+
+      {activeTab === "diet" && (
+        <DietView settings={settings} />
       )}
 
       {activeTab === "member" && (
@@ -5076,6 +5083,119 @@ function AnalysisView({
   );
 }
 
+const DIET_MEALS = [
+  { id: "breakfast", label: "아침", hint: "가볍게 시작한 식사를 남겨요." },
+  { id: "lunch", label: "점심", hint: "오늘의 에너지를 채운 식사를 기록해요." },
+  { id: "dinner", label: "저녁", hint: "하루 마무리 식사를 확인해요." },
+  { id: "snack", label: "간식", hint: "커피, 디저트, 간단한 간식도 좋아요." },
+] as const;
+
+function DietView({ settings }: { settings: UserSettings }) {
+  const [selectedMeal, setSelectedMeal] = useState<(typeof DIET_MEALS)[number]["id"]>("breakfast");
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploadedMeal, setUploadedMeal] = useState<string | null>(null);
+  const targetCalories = settings.weightKg ? Math.round(settings.weightKg * 30) : 1800;
+  const targetProtein = settings.weightKg ? Math.round(settings.weightKg * 1.6) : 90;
+  const selectedMealLabel = DIET_MEALS.find(meal => meal.id === selectedMeal)?.label || "식사";
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  function handleMealPhoto(mealId: (typeof DIET_MEALS)[number]["id"], files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (preview) URL.revokeObjectURL(preview);
+    setSelectedMeal(mealId);
+    setUploadedMeal(DIET_MEALS.find(meal => meal.id === mealId)?.label || null);
+    setPreview(URL.createObjectURL(file));
+  }
+
+  return (
+    <section className="mx-auto grid w-full max-w-[960px] gap-6 px-4 py-7 pb-[calc(9rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
+      <div>
+        <p className={`text-sm font-medium ${UI.textMuted}`}>식단</p>
+        <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">오늘 먹은 걸 남겨요</h1>
+        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>사진으로 식사를 기록하고, 칼로리와 탄단지를 확인해요.</p>
+      </div>
+
+      <div className="mysun-card p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-[#7a7470]">오늘 식단 요약</p>
+            <h2 className="mt-2 text-2xl font-semibold">0 kcal / 목표 {formatNumber(targetCalories)} kcal</h2>
+          </div>
+          <span className="rounded-full bg-[#edf8f1] px-3 py-2 text-xs font-bold text-[#2f8c63]">사진 기록</span>
+        </div>
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <SmallStudioStat label="탄수화물" value="0g" />
+          <SmallStudioStat label="단백질" value={`0/${targetProtein}g`} />
+          <SmallStudioStat label="지방" value="0g" />
+        </div>
+        <p className="mt-4 rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-medium leading-6 text-[#4b4541]">
+          사진을 추가하면 식사별 기록을 남기고, 이후 예상 칼로리와 탄단지 분석을 함께 확인할 수 있어요.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className={`text-sm font-medium ${UI.textMuted}`}>식사 기록</p>
+            <h2 className="mt-1 text-2xl font-semibold">아침부터 간식까지</h2>
+          </div>
+          <span className="text-sm font-semibold text-[#7a7470]">4개 구간</span>
+        </div>
+
+        <div className="grid gap-3">
+          {DIET_MEALS.map(meal => (
+            <article key={meal.id} className="rounded-[20px] bg-[#fffdfb] p-4 shadow-[0_12px_28px_rgba(58,48,50,0.05)] ring-1 ring-[#eadfda]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xl font-semibold">{meal.label}</p>
+                  <p className="mt-1 truncate text-sm font-medium text-[#7a7470]">
+                    {uploadedMeal === meal.label ? "사진 분석 대기 중" : meal.hint}
+                  </p>
+                </div>
+                <label className="shrink-0 cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
+                  사진 추가
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={event => handleMealPhoto(meal.id, event.target.files)}
+                  />
+                </label>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
+        <div>
+          <p className={`text-sm font-medium ${UI.textMuted}`}>AI 분석 결과</p>
+          <h2 className="mt-1 text-2xl font-semibold">{uploadedMeal ? `${uploadedMeal} 사진이 추가됐어요` : `${selectedMealLabel} 사진을 추가해보세요`}</h2>
+        </div>
+        {preview ? (
+          <img src={preview} alt={`${uploadedMeal || selectedMealLabel} 식단 사진 미리보기`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
+        ) : (
+          <div className="grid aspect-[4/3] place-items-center rounded-[18px] bg-[#f8f4f0] p-6 text-center text-sm font-semibold leading-6 text-[#7a7470]">
+            음식 사진을 올리면 이곳에서 미리보고 분석 결과를 확인합니다.
+          </div>
+        )}
+        <div className="rounded-[16px] bg-[#f8f4f0] p-4">
+          <p className="text-xs font-semibold text-[#7a7470]">분석 준비</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#242124]">
+            음식 구성, 예상 칼로리, 탄수화물·단백질·지방 분석을 사진 기록과 연결할 예정이에요.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ProfileView({
   userEmail,
   settings,
@@ -5633,7 +5753,7 @@ function SmallStudioStat({ label, value }: { label: string; value: string }) {
 function MobileTabBar({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: (tab: Tab) => void }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eadfda] bg-[#fffdfb]/92 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(58,48,50,0.08)] backdrop-blur md:hidden" aria-label="하단 메뉴">
-      <div className="grid grid-cols-4 gap-1">
+      <div className="grid grid-cols-5 gap-1">
         {tabItems.map(tab => (
           <button
             key={tab.id}
