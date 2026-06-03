@@ -9,16 +9,20 @@ const DEFAULT_SETTINGS = {
   weeklyGoal: 3,
   favoriteExerciseIds: [] as string[],
   gender: "",
+  age: null as number | null,
   heightCm: null as number | null,
   weightKg: null as number | null,
+  activityLevel: "",
 };
 
 type SettingsRow = {
   weekly_goal: number | string | null;
   favorite_exercise_ids: unknown;
   gender: string | null;
+  age: number | string | null;
   height_cm: number | string | null;
   weight_kg: number | string | null;
+  activity_level: string | null;
 };
 
 function clampWeeklyGoal(value: unknown) {
@@ -34,6 +38,18 @@ function sanitizeExerciseIds(value: unknown) {
 function sanitizeGender(value: unknown) {
   const gender = String(value || "");
   return ["female", "male", "other", ""].includes(gender) ? gender : "";
+}
+
+function sanitizeAge(value: unknown) {
+  if (value === "" || value == null) return null;
+  const number = Math.floor(Number(value));
+  if (!Number.isFinite(number)) return null;
+  return number >= 10 && number <= 100 ? number : null;
+}
+
+function sanitizeActivityLevel(value: unknown) {
+  const activity = String(value || "");
+  return ["sedentary", "light", "moderate", "active", ""].includes(activity) ? activity : "";
 }
 
 function sanitizeBodyNumber(value: unknown) {
@@ -60,8 +76,10 @@ function mapSettings(row: SettingsRow | null) {
     weeklyGoal: clampWeeklyGoal(row?.weekly_goal),
     favoriteExerciseIds: sanitizeExerciseIds(row?.favorite_exercise_ids),
     gender: sanitizeGender(row?.gender),
+    age: sanitizeAge(row?.age),
     heightCm: sanitizeHeight(row?.height_cm),
     weightKg: sanitizeWeight(row?.weight_kg),
+    activityLevel: sanitizeActivityLevel(row?.activity_level),
   };
 }
 
@@ -116,8 +134,10 @@ export async function POST(req: NextRequest) {
     weekly_goal: clampWeeklyGoal(body.weeklyGoal ?? body.weekly_goal),
     favorite_exercise_ids: sanitizeExerciseIds(body.favoriteExerciseIds ?? body.favorite_exercise_ids),
     gender: sanitizeGender(body.gender),
+    age: sanitizeAge(body.age),
     height_cm: sanitizeHeight(body.heightCm ?? body.height_cm),
     weight_kg: sanitizeWeight(body.weightKg ?? body.weight_kg),
+    activity_level: sanitizeActivityLevel(body.activityLevel ?? body.activity_level),
     updated_at: new Date().toISOString(),
   };
 

@@ -177,8 +177,10 @@ type UserSettings = {
   weeklyGoal: number;
   favoriteExerciseIds: string[];
   gender: string;
+  age: number | null;
   heightCm: number | null;
   weightKg: number | null;
+  activityLevel: string;
 };
 
 type Muscle = {
@@ -196,8 +198,10 @@ const DEFAULT_SETTINGS: UserSettings = {
   weeklyGoal: 3,
   favoriteExerciseIds: [],
   gender: "",
+  age: null,
   heightCm: null,
   weightKg: null,
+  activityLevel: "",
 };
 
 type MuscleIconKey =
@@ -2608,6 +2612,34 @@ function sanitizeBodyNumber(value: unknown) {
   return Math.round(number * 10) / 10;
 }
 
+function sanitizeAge(value: unknown) {
+  if (value === "" || value == null) return null;
+  const number = Math.floor(Number(value));
+  if (!Number.isFinite(number)) return null;
+  return number >= 10 && number <= 100 ? number : null;
+}
+
+const ACTIVITY_LEVELS = [
+  { value: "", label: "자동 추정", factor: null, description: "주간 운동 목표 기준으로 추정" },
+  { value: "sedentary", label: "낮음", factor: 1.2, description: "주로 앉아서 생활" },
+  { value: "light", label: "가벼움", factor: 1.375, description: "가벼운 활동 또는 주 1~3회 운동" },
+  { value: "moderate", label: "보통", factor: 1.55, description: "주 3~5회 운동" },
+  { value: "active", label: "높음", factor: 1.725, description: "주 5회 이상 활동적" },
+] as const;
+
+function sanitizeActivityLevel(value: unknown) {
+  const activity = String(value || "");
+  return ACTIVITY_LEVELS.some(level => level.value === activity) ? activity : "";
+}
+
+function activityFactor(settings: UserSettings) {
+  const selected = ACTIVITY_LEVELS.find(level => level.value === settings.activityLevel);
+  if (selected?.factor) return selected.factor;
+  if (settings.weeklyGoal >= 5) return 1.55;
+  if (settings.weeklyGoal >= 3) return 1.375;
+  return 1.2;
+}
+
 function clampSetCount(value: string | number) {
   const count = Math.floor(Number(value) || 1);
   return Math.min(Math.max(count, 1), 20);
@@ -3120,8 +3152,10 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
         weeklyGoal: clampWeeklyGoal(data.settings?.weeklyGoal),
         favoriteExerciseIds: sanitizeExerciseIds(data.settings?.favoriteExerciseIds),
         gender: sanitizeGender(data.settings?.gender),
+        age: sanitizeAge(data.settings?.age),
         heightCm: sanitizeBodyNumber(data.settings?.heightCm),
         weightKg: sanitizeBodyNumber(data.settings?.weightKg),
+        activityLevel: sanitizeActivityLevel(data.settings?.activityLevel),
       });
     } catch {
       setSettings(DEFAULT_SETTINGS);
@@ -3138,8 +3172,10 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
       weeklyGoal: clampWeeklyGoal(nextSettings.weeklyGoal),
       favoriteExerciseIds: sanitizeExerciseIds(nextSettings.favoriteExerciseIds),
       gender: sanitizeGender(nextSettings.gender),
+      age: sanitizeAge(nextSettings.age),
       heightCm: sanitizeBodyNumber(nextSettings.heightCm),
       weightKg: sanitizeBodyNumber(nextSettings.weightKg),
+      activityLevel: sanitizeActivityLevel(nextSettings.activityLevel),
     };
 
     setSavingSettings(true);
@@ -5237,12 +5273,76 @@ function isDietMealSlot(value: unknown): value is DietMealSlot {
   return typeof value === "string" && DIET_MEALS.some(meal => meal.id === value);
 }
 
-function defaultDietGoal(settings: UserSettings): DietGoal {
+const DIET_GOAL_PRESETS: Record<string, { calorieDelta: number; calorieMultiplier: number; proteinPerKg: number }> = {
+  fat_loss: { calorieDelta: 0, calorieMultiplier: 0.88, proteinPerKg: 1.6 },
+  maintain: { calorieDelta: 0, calorieMultiplier: 1, proteinPerKg: 1.3 },
+  muscle_gain: { calorieDelta: 200, calorieMultiplier: 1, proteinPerKg: 1.8 },
+  bulk: { calorieDelta: 400, calorieMultiplier: 1, proteinPerKg: 1.9 },
+  healthy: { calorieDelta: 0, calorieMultiplier: 1, proteinPerKg: 1.2 },
+};
+
+function roundToNearest(value: number, step: number) {
+  return Math.round(value / step) * step;
+}
+
+function estimatedBmr(settings: UserSettings) {
+  if (!settings.weightKg || !settings.heightCm || !settings.age) return null;
+  const sexConstant = settings.gender === "male" ? 5 : settings.gender === "female" ? -161 : -78;
+  return (10 * settings.weightKg) + (6.25 * settings.heightCm) - (5 * settings.age) + sexConstant;
+}
+
+function calculatedDietGoal(settings: UserSettings, goalType = "healthy"): DietGoal {
+  const preset = DIET_GOAL_PRESETS[goalType] || DIET_GOAL_PRESETS.healthy;
+  const bmr = estimatedBmr(settings);
+  const baseCalories = bmr
+    ? bmr * activityFactor(settings)
+    : settings.weightKg
+      ? settings.weightKg * 30
+      : 1800;
+  const targetCalories = Math.min(
+    Math.max(roundToNearest((baseCalories * preset.calorieMultiplier) + preset.calorieDelta, 10), 800),
+    6000,
+  );
+  const targetProtein = Math.min(
+    Math.max(Math.round((settings.weightKg || 55) * preset.proteinPerKg), 0),
+    400,
+  );
+  const fatMin = Math.max(0, Math.round((targetCalories * 0.2) / 9));
+  const fatMax = Math.max(fatMin, Math.round((targetCalories * 0.3) / 9));
+  const carbsMin = Math.max(0, Math.round((targetCalories - (targetProtein * 4) - (fatMax * 9)) / 4));
+  const carbsMax = Math.max(carbsMin, Math.round((targetCalories - (targetProtein * 4) - (fatMin * 9)) / 4));
+
   return {
-    goalType: "healthy",
-    targetCalories: settings.weightKg ? Math.round(settings.weightKg * 30) : 1800,
-    targetProtein: settings.weightKg ? Math.round(settings.weightKg * 1.6) : 90,
+    goalType,
+    targetCalories,
+    targetProtein,
+    targetCarbsMin: carbsMin,
+    targetCarbsMax: carbsMax,
+    targetFatMin: fatMin,
+    targetFatMax: fatMax,
   };
+}
+
+function hasCompleteDietGoalProfile(settings: UserSettings) {
+  return Boolean(settings.gender && settings.age && settings.heightCm && settings.weightKg);
+}
+
+function defaultDietGoal(settings: UserSettings): DietGoal {
+  return calculatedDietGoal(settings, "healthy");
+}
+
+function dietGoalTypeLabel(goalType: string) {
+  switch (goalType) {
+    case "fat_loss": return "체중 감량";
+    case "maintain": return "체중 유지";
+    case "muscle_gain": return "근육 증가";
+    case "bulk": return "벌크업";
+    default: return "건강한 식습관";
+  }
+}
+
+function activityLevelLabel(value: string) {
+  return ACTIVITY_LEVELS.find(level => level.value === value)?.label || "자동 추정";
 }
 
 function DietView({ settings }: { settings: UserSettings }) {
@@ -5274,6 +5374,8 @@ function DietView({ settings }: { settings: UserSettings }) {
   const reviewMealLabel = DIET_MEALS.find(meal => meal.id === reviewMeal)?.label || "식사";
   const dietDate = today();
   const todayLabel = formatDate(dietDate);
+  const hasPreciseDietProfile = hasCompleteDietGoalProfile(settings);
+  const autoGoalPreview = calculatedDietGoal(settings, goalDraft.goalType || "healthy");
 
   useEscapeToClose(goalDialogOpen, () => {
     setGoalDraft(dietGoal);
@@ -5295,7 +5397,7 @@ function DietView({ settings }: { settings: UserSettings }) {
           setGoalError("식단 목표 테이블이 아직 준비되지 않았습니다. Supabase SQL을 확인해 주세요.");
           return;
         }
-        const fallback = defaultDietGoal(settings);
+        const fallback = calculatedDietGoal(settings, data.goal?.goalType || "healthy");
         const nextGoal = {
           ...fallback,
           ...(data.goal || {}),
@@ -5313,7 +5415,12 @@ function DietView({ settings }: { settings: UserSettings }) {
     }
 
     void loadDietGoal();
-  }, [settings.weightKg]);
+  }, [settings.activityLevel, settings.age, settings.gender, settings.heightCm, settings.weightKg, settings.weeklyGoal]);
+
+  function applyCalculatedGoal(goalType = goalDraft.goalType || "healthy") {
+    setGoalDraft(calculatedDietGoal(settings, goalType));
+    setGoalError("");
+  }
 
   useEffect(() => {
     async function loadDietMeals() {
@@ -5818,7 +5925,7 @@ function DietView({ settings }: { settings: UserSettings }) {
                 <select
                   className="h-12 rounded-full bg-[#f8f4f0] px-4 text-base font-semibold text-[#242124] outline-none ring-1 ring-[#eadfda]"
                   value={goalDraft.goalType}
-                  onChange={event => setGoalDraft(goal => ({ ...goal, goalType: event.target.value }))}
+                  onChange={event => applyCalculatedGoal(event.target.value)}
                 >
                   <option value="healthy">건강한 식습관</option>
                   <option value="fat_loss">체중 감량</option>
@@ -5869,12 +5976,23 @@ function DietView({ settings }: { settings: UserSettings }) {
               )}
 
               <div className="rounded-[18px] bg-[#f8f4f0] p-4 text-sm font-semibold leading-6 text-[#4b4541]">
-                내 정보에 체중이 입력되어 있으면 기본 목표는 자동으로 계산됩니다. 여기서 저장한 값이 있으면 저장값을 우선 사용합니다.
+                {hasPreciseDietProfile
+                  ? `내 정보 기준으로 ${dietGoalTypeLabel(goalDraft.goalType)} 목표를 계산합니다. 활동량은 ${activityLevelLabel(settings.activityLevel)} 기준입니다.`
+                  : "성별, 나이, 키, 체중을 모두 입력하면 더 정확한 목표 칼로리와 단백질을 자동 계산합니다. 정보가 부족하면 체중 기반 추정값을 사용합니다."}
+              </div>
+
+              <div className="rounded-[18px] bg-[#fffdfb] p-4 text-sm font-semibold leading-6 text-[#4b4541] ring-1 ring-[#eadfda]">
+                자동 계산값: {formatNumber(autoGoalPreview.targetCalories || 0)} kcal · 단백질 {autoGoalPreview.targetProtein || 0}g
+                {autoGoalPreview.targetCarbsMin != null && autoGoalPreview.targetCarbsMax != null && autoGoalPreview.targetFatMin != null && autoGoalPreview.targetFatMax != null && (
+                  <span className="mt-1 block text-xs text-[#7a7470]">
+                    탄수화물 {autoGoalPreview.targetCarbsMin}~{autoGoalPreview.targetCarbsMax}g · 지방 {autoGoalPreview.targetFatMin}~{autoGoalPreview.targetFatMax}g
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-4 text-sm font-bold text-[#242124]" onClick={() => { setGoalDraft(fallbackGoal); setGoalError(""); }}>
-                  자동값
+                <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-4 text-sm font-bold text-[#242124]" onClick={() => applyCalculatedGoal()}>
+                  자동 계산
                 </button>
                 <button type="button" className="rounded-full bg-[#242124] px-4 py-4 text-sm font-bold text-[#fffdfb] disabled:opacity-40" onClick={() => void saveDietGoal()} disabled={savingGoal}>
                   {savingGoal ? "저장 중" : "목표 저장"}
@@ -5903,8 +6021,10 @@ function ProfileView({
 }) {
   const [weeklyGoal, setWeeklyGoal] = useState(String(settings.weeklyGoal));
   const [gender, setGender] = useState(settings.gender);
+  const [age, setAge] = useState(settings.age == null ? "" : String(settings.age));
   const [heightCm, setHeightCm] = useState(settings.heightCm == null ? "" : String(settings.heightCm));
   const [weightKg, setWeightKg] = useState(settings.weightKg == null ? "" : String(settings.weightKg));
+  const [activityLevel, setActivityLevel] = useState(settings.activityLevel);
   const [favoriteExerciseIds, setFavoriteExerciseIds] = useState<string[]>(settings.favoriteExerciseIds);
   const [activeModal, setActiveModal] = useState<"profile" | "goal" | "favorites" | null>(null);
   const [favoriteRoutineTab, setFavoriteRoutineTab] = useState(ROUTINE_TABS[0].value);
@@ -5942,8 +6062,10 @@ function ProfileView({
   function syncLocalFromSettings() {
     setWeeklyGoal(String(settings.weeklyGoal));
     setGender(settings.gender);
+    setAge(settings.age == null ? "" : String(settings.age));
     setHeightCm(settings.heightCm == null ? "" : String(settings.heightCm));
     setWeightKg(settings.weightKg == null ? "" : String(settings.weightKg));
+    setActivityLevel(settings.activityLevel);
     setFavoriteExerciseIds(settings.favoriteExerciseIds);
   }
 
@@ -5970,8 +6092,10 @@ function ProfileView({
       weeklyGoal: clampWeeklyGoal(weeklyGoal),
       favoriteExerciseIds,
       gender: sanitizeGender(gender),
+      age: sanitizeAge(age),
       heightCm: sanitizeBodyNumber(heightCm),
       weightKg: sanitizeBodyNumber(weightKg),
+      activityLevel: sanitizeActivityLevel(activityLevel),
     });
     if (saved) setActiveModal(null);
   }
@@ -5991,7 +6115,10 @@ function ProfileView({
             <h2 className="mt-2 text-2xl font-semibold">몸 상태 기록</h2>
             <p className="mt-4 text-sm font-semibold text-[#242124]">{genderText}</p>
             <p className={`mt-1 text-sm leading-6 ${UI.textMuted}`}>
-              키 {heightCm || "-"}cm · 몸무게 {weightKg || "-"}kg
+              나이 {age || "-"}세 · 키 {heightCm || "-"}cm · 몸무게 {weightKg || "-"}kg
+            </p>
+            <p className={`mt-1 text-sm leading-6 ${UI.textMuted}`}>
+              활동량 {activityLevelLabel(activityLevel)}
             </p>
             <span className={`mt-5 inline-flex ${UI.pill} bg-[#fffdfb] text-xs`}>수정하기</span>
           </button>
@@ -6044,7 +6171,10 @@ function ProfileView({
                     <option value="other">기타</option>
                   </select>
                 </Field>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
+                  <Field label="나이">
+                    <input className="nike-input bg-[#fffdfb]" inputMode="numeric" value={age} onChange={event => setAge(event.target.value)} placeholder="예: 28" />
+                  </Field>
                   <Field label="키(cm)">
                     <input className="nike-input bg-[#fffdfb]" inputMode="decimal" value={heightCm} onChange={event => setHeightCm(event.target.value)} placeholder="예: 165" />
                   </Field>
@@ -6052,7 +6182,14 @@ function ProfileView({
                     <input className="nike-input bg-[#fffdfb]" inputMode="decimal" value={weightKg} onChange={event => setWeightKg(event.target.value)} placeholder="예: 55" />
                   </Field>
                 </div>
-                <p className={`text-sm leading-6 ${UI.textMuted}`}>운동 분석과 체중형 운동 볼륨 계산에 활용할 수 있는 기본 정보입니다.</p>
+                <Field label="활동량">
+                  <select className="nike-input bg-[#fffdfb]" value={activityLevel} onChange={event => setActivityLevel(event.target.value)}>
+                    {ACTIVITY_LEVELS.map(level => (
+                      <option key={level.value || "auto"} value={level.value}>{level.label} · {level.description}</option>
+                    ))}
+                  </select>
+                </Field>
+                <p className={`text-sm leading-6 ${UI.textMuted}`}>운동 분석, 체중형 운동 볼륨, 식단 목표 자동 계산에 활용합니다.</p>
               </div>
             )}
 

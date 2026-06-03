@@ -32,8 +32,10 @@ CREATE TABLE IF NOT EXISTS fit_user_settings (
   weekly_goal INTEGER NOT NULL DEFAULT 3 CHECK (weekly_goal BETWEEN 1 AND 14),
   favorite_exercise_ids TEXT[] NOT NULL DEFAULT '{}',
   gender TEXT NOT NULL DEFAULT '',
+  age INTEGER,
   height_cm NUMERIC,
   weight_kg NUMERIC,
+  activity_level TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -96,8 +98,10 @@ CREATE TABLE IF NOT EXISTS fit_nutrition_goals (
 
 ALTER TABLE fit_user_settings
   ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS age INTEGER,
   ADD COLUMN IF NOT EXISTS height_cm NUMERIC,
-  ADD COLUMN IF NOT EXISTS weight_kg NUMERIC;
+  ADD COLUMN IF NOT EXISTS weight_kg NUMERIC,
+  ADD COLUMN IF NOT EXISTS activity_level TEXT NOT NULL DEFAULT '';
 
 DO $$
 BEGIN
@@ -138,6 +142,22 @@ BEGIN
         (height_cm IS NULL OR height_cm BETWEEN 80 AND 230)
         AND (weight_kg IS NULL OR weight_kg BETWEEN 20 AND 250)
       ) NOT VALID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fit_settings_age_range'
+  ) THEN
+    ALTER TABLE fit_user_settings
+      ADD CONSTRAINT fit_settings_age_range
+      CHECK (age IS NULL OR age BETWEEN 10 AND 100) NOT VALID;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fit_settings_activity_level_valid'
+  ) THEN
+    ALTER TABLE fit_user_settings
+      ADD CONSTRAINT fit_settings_activity_level_valid
+      CHECK (activity_level IN ('', 'sedentary', 'light', 'moderate', 'active')) NOT VALID;
   END IF;
 END $$;
 
