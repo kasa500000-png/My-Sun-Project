@@ -2507,6 +2507,10 @@ function formatMonth(date: Date) {
   }).format(date);
 }
 
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("ko-KR").format(value);
+}
+
 function formatDateShort(date: Date) {
   return new Intl.DateTimeFormat("ko-KR", {
     month: "long",
@@ -3310,6 +3314,10 @@ export default function FitLogApp({ userEmail }: FitLogAppProps) {
           todayScores={todayScores}
           groupBalance={groupBalance}
           recommendedRoutine={recommendedRoutine}
+          onStart={() => {
+            setRoutineName(recommendedRoutine);
+            selectTab("train");
+          }}
         />
       )}
 
@@ -4819,6 +4827,7 @@ function AnalysisView({
   todayScores,
   groupBalance,
   recommendedRoutine,
+  onStart,
 }: {
   sessions: WorkoutSession[];
   weekStats: { count: number; sets: number; minutes: number; volume: number };
@@ -4826,6 +4835,7 @@ function AnalysisView({
   todayScores: Array<Muscle & { score: number }>;
   groupBalance: Array<{ name: string; score: number; color: string }>;
   recommendedRoutine: string;
+  onStart: () => void;
 }) {
   const [range, setRange] = useState<SummaryRange>("week");
   const rangedSessions = useMemo(() => sessionsForSummaryRange(sessions, range), [sessions, range]);
@@ -4833,34 +4843,88 @@ function AnalysisView({
   const activeScores = rangeScores.filter(item => item.score > 0);
   const rangeGroupBalance = useMemo(() => groupScores(rangeScores).filter(item => item.score > 0), [rangeScores]);
   const rangeStats = useMemo(() => summarizeSessions(rangedSessions), [rangedSessions]);
-  const missing = rangeScores.filter(item => item.score === 0).slice(0, 3);
   const pieData = rangeGroupBalance.length ? rangeGroupBalance : [{ name: "기록 없음", score: 1, color: "#ded4cf" }];
+  const totalScore = activeScores.reduce((sum, item) => sum + item.score, 0);
+  const topScores = activeScores.slice(0, 3);
+  const topScorePercent = totalScore && topScores.length
+    ? Math.round((topScores.reduce((sum, item) => sum + item.score, 0) / totalScore) * 100)
+    : 0;
+  const topGroup = rangeGroupBalance[0]?.name;
+  const groupScoreMap = new Map(rangeGroupBalance.map(item => [item.name, item.score]));
+  const lowGroup = rangeStats.count > 0
+    ? ["상체", "하체", "코어", "팔"].sort((a, b) => (groupScoreMap.get(a) || 0) - (groupScoreMap.get(b) || 0))[0]
+    : undefined;
+  const analysisTitle = rangeStats.count === 0
+    ? `${summaryRangeLabels[range]} 분석할 기록이 없어요`
+    : `${summaryRangeLabels[range]}는 ${topGroup || topScores[0]?.name || "운동"} 비중이 높아요`;
+  const analysisCopy = rangeStats.count === 0
+    ? "운동을 1회 이상 기록하면 자극 부위와 밸런스를 분석할 수 있습니다."
+    : `${summaryRangeLabels[range]} 기록된 ${rangeStats.count}회 운동 기준으로 ${topScores.map(item => item.name).join(" · ")}가 전체 자극의 ${topScorePercent}%를 차지합니다.`;
+  const recommendationCopy = rangeStats.count === 0
+    ? "첫 운동을 기록하면 다음 운동 추천이 더 정확해집니다."
+    : lowGroup
+      ? `${lowGroup} 자극이 상대적으로 적어요. 다음 운동은 ${recommendedRoutine} 루틴을 추천합니다.`
+      : `다음 운동은 ${recommendedRoutine} 루틴을 추천합니다.`;
 
   return (
-    <section className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 pb-28 md:grid-cols-[0.9fr_1.1fr] md:px-8 md:py-10">
-      <div className="grid gap-7 self-start">
-        <MuscleMapPanel range={range} setRange={setRange} scores={activeScores} />
-        <div className="rounded-[20px] bg-[#fffdfb] p-6 text-[#242124] shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
-          <p className="text-sm font-medium text-[#9e9ea0]">코치 메모</p>
-          <h2 className="mt-3 text-2xl font-semibold leading-tight">
-            {summaryRangeLabels[range]}는 {rangeGroupBalance[0]?.name || "운동 기록"} 비중이 가장 높아요.
-          </h2>
-          <p className="mt-4 text-sm leading-6 text-[#4b4541]">
-            다음 운동은 {recommendedRoutine} 루틴을 추천해요.
-            {missing.length > 0 && ` 아직 부족한 부위는 ${missing.map(item => item.name).join(", ")}입니다.`}
-          </p>
+    <section className="mx-auto grid max-w-[1080px] gap-6 px-4 py-7 pb-[calc(8rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
+      <div>
+        <p className={`text-sm font-medium ${UI.textMuted}`}>운동 분석</p>
+        <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">다음 운동을 정하는 화면</h1>
+        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>선택한 기간의 자극, 부족 부위, 추천 루틴을 확인합니다.</p>
+      </div>
+
+      <RangePills value={range} onChange={setRange} />
+
+      <div className="mysun-card p-5 md:p-6">
+        <p className="text-sm font-medium text-[#7a7470]">핵심 인사이트</p>
+        <h2 className="mt-3 text-2xl font-semibold leading-tight md:text-3xl">{analysisTitle}</h2>
+        <p className="mt-4 text-sm font-medium leading-6 text-[#4b4541]">{analysisCopy}</p>
+        <div className="mt-4 rounded-[16px] bg-[#f8f4f0] p-4">
+          <p className="text-xs font-semibold text-[#7a7470]">추천 행동</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-[#242124]">{recommendationCopy}</p>
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button type="button" className="mysun-primary-action text-sm" onClick={onStart}>
+            {recommendedRoutine} 시작
+          </button>
+          <button type="button" className="mysun-secondary-action text-sm" onClick={onStart}>
+            운동 기록하기
+          </button>
         </div>
       </div>
 
-      <div className="grid gap-7">
-        <MetricGrid
-          items={[
-            { label: "운동", value: `${rangeStats.count}` },
-            { label: "세트", value: `${rangeStats.sets}` },
-            { label: "시간", value: `${rangeStats.minutes}분` },
-            { label: "부하", value: `${Math.round(rangeStats.volume)}` },
-          ]}
-        />
+      <MetricGrid
+        items={[
+          { label: "운동 횟수", value: `${rangeStats.count}회` },
+          { label: "총 세트", value: `${rangeStats.sets}세트` },
+          { label: "운동 시간", value: `${rangeStats.minutes}분` },
+          { label: "누적 부하", value: `${formatNumber(Math.round(rangeStats.volume))}점` },
+        ]}
+      />
+
+      {rangeStats.count === 0 ? (
+        <EmptyState text="아직 분석할 운동 기록이 부족해요. 운동을 기록하면 부위별 자극과 밸런스를 계산합니다." action="운동 기록하기" onClick={onStart} />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="grid gap-6 self-start">
+            <FlatPanel title="많이 자극한 근육" kicker="상위 3개">
+              <TopMuscleCards scores={topScores} total={totalScore} />
+            </FlatPanel>
+            <FlatPanel title="지표 기준" kicker="도움말">
+              <p className={`text-sm leading-6 ${UI.textBody}`}>
+                누적 부하는 운동 시간, 세트 수, 반복 횟수, 중량과 난이도를 반영한 앱 기준 점수입니다.
+                근육 자극은 이 부하를 운동별 근육 기여도에 따라 나눈 값입니다.
+              </p>
+              {rangeStats.count < 2 && (
+                <p className="mt-3 rounded-[14px] bg-[#f8f4f0] p-3 text-sm font-medium leading-6 text-[#4b4541]">
+                  현재 {rangeStats.count}회 기록 기준입니다. 기록이 늘어나면 분석 신뢰도가 높아집니다.
+                </p>
+              )}
+            </FlatPanel>
+          </div>
+
+          <div className="grid gap-6">
         <FlatPanel title="부위 밸런스" kicker={summaryRangeLabels[range]}>
           <DonutChart data={pieData} />
           <div className="mt-8 grid gap-2">
@@ -4870,15 +4934,17 @@ function AnalysisView({
                   <i className="h-3 w-3 rounded-full" style={{ background: item.color }} />
                   {item.name}
                 </span>
-                <span className="text-base font-medium text-[#7a7470]">{item.score}</span>
+                <span className="text-base font-medium text-[#7a7470]">{formatNumber(item.score)}점</span>
               </div>
             ))}
           </div>
         </FlatPanel>
-        <FlatPanel title="근육 순위" kicker="자극량">
-          <BarRanking data={activeScores.slice(0, 8)} />
+        <FlatPanel title="근육별 자극 순위" kicker="전체 자극 대비 비율">
+          <BarRanking data={activeScores.slice(0, 8)} totalScore={totalScore} />
         </FlatPanel>
-      </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -5250,6 +5316,20 @@ function MuscleFocusCard({ item, total, index }: { item: Muscle & { score: numbe
   );
 }
 
+function TopMuscleCards({ scores, total }: { scores: Array<Muscle & { score: number }>; total: number }) {
+  if (scores.length === 0 || total <= 0) {
+    return <p className="text-sm leading-6 text-[#7a7470]">운동을 저장하면 많이 자극한 근육 카드가 표시됩니다.</p>;
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {scores.map((item, index) => (
+        <MuscleFocusCard key={item.id} item={item} total={total} index={index} />
+      ))}
+    </div>
+  );
+}
+
 function muscleShapeBounds(pathData: string, padding = 0) {
   const values = pathData.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
   const xs: number[] = [];
@@ -5297,20 +5377,22 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
   );
 }
 
-function BarRanking({ data }: { data: Array<Muscle & { score: number }> }) {
-  const total = data.reduce((sum, item) => sum + item.score, 0) || 1;
+function BarRanking({ data, totalScore }: { data: Array<Muscle & { score: number }>; totalScore?: number }) {
+  const total = totalScore || data.reduce((sum, item) => sum + item.score, 0) || 1;
   if (data.length === 0) return <p className="mt-4 text-base leading-7 text-[#7a7470]">운동을 저장하면 주간 순위가 표시됩니다.</p>;
   return (
     <div className="mt-6 grid gap-4">
       {data.map(item => {
         const percent = Math.round((item.score / total) * 100);
         return (
-          <div key={item.id} className="grid grid-cols-[76px_1fr_44px] items-center gap-3">
-            <span className="truncate text-sm font-medium text-[#4b4541]">{item.name}</span>
-            <div className="h-7 bg-[#f8f4f0]">
-              <div className="h-7 bg-[#242124]" style={{ width: `${Math.max(7, percent)}%` }} />
+          <div key={item.id}>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <span className="truncate text-sm font-semibold text-[#242124]">{item.name}</span>
+              <span className="shrink-0 text-sm font-medium text-[#7a7470]">{percent}% · {formatNumber(item.score)}점</span>
             </div>
-            <span className="text-right text-sm font-medium text-[#7a7470]">{percent}%</span>
+            <div className="h-3 overflow-hidden rounded-full bg-[#f8f4f0]">
+              <div className="h-full rounded-full bg-[#242124]" style={{ width: `${Math.max(6, percent)}%` }} />
+            </div>
           </div>
         );
       })}
