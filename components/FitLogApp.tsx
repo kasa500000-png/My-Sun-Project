@@ -5006,7 +5006,7 @@ function AnalysisView({
 
       <RangePills value={range} onChange={setRange} />
 
-      <div className="mysun-card p-5 md:p-6">
+      <div className="mysun-card min-w-0 p-5 md:p-6">
         <p className="text-sm font-medium text-[#7a7470]">핵심 인사이트</p>
         <h2 className="mt-3 text-2xl font-semibold leading-tight md:text-3xl">{analysisTitle}</h2>
         <p className="mt-4 text-sm font-medium leading-6 text-[#4b4541]">{analysisCopy}</p>
@@ -5014,7 +5014,7 @@ function AnalysisView({
           <p className="text-xs font-semibold text-[#7a7470]">추천 행동</p>
           <p className="mt-1 text-sm font-semibold leading-6 text-[#242124]">{recommendationCopy}</p>
         </div>
-        <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="mt-5 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
           <button type="button" className="mysun-primary-action text-sm" onClick={onStart}>
             {primaryActionLabel}
           </button>
@@ -5036,10 +5036,10 @@ function AnalysisView({
       {rangeStats.count === 0 ? (
         <EmptyState text="아직 분석할 운동 기록이 부족해요. 운동을 기록하면 부위별 자극과 밸런스를 계산합니다." action="운동 기록하기" onClick={onStart} />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="grid gap-6 self-start">
-            <FlatPanel title="많이 자극한 근육" kicker="상위 3개">
-              <TopMuscleCards scores={topScores} total={totalScore} />
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="grid min-w-0 gap-6 self-start">
+            <FlatPanel title="많이 자극한 근육" kicker="가로로 전체 확인">
+              <TopMuscleCards scores={detailedScores} total={totalScore} />
             </FlatPanel>
             <details className="rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
               <summary className="cursor-pointer list-none text-sm font-semibold text-[#242124]">
@@ -5057,7 +5057,7 @@ function AnalysisView({
             </details>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid min-w-0 gap-6">
         <FlatPanel title="부위 밸런스" kicker={summaryRangeLabels[range]}>
           <DonutChart data={pieData} />
           <div className="mt-8 grid gap-2">
@@ -5073,7 +5073,6 @@ function AnalysisView({
           </div>
         </FlatPanel>
         <FlatPanel title="근육별 자극 순위" kicker="전체 자극 대비 비율">
-          <MuscleRankScroller data={detailedScores} totalScore={totalScore} />
           <BarRanking data={detailedScores.slice(0, 8)} totalScore={totalScore} />
         </FlatPanel>
           </div>
@@ -5569,10 +5568,14 @@ function TopMuscleCards({ scores, total }: { scores: Array<Muscle & { score: num
   }
 
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain pb-2" aria-label="많이 자극한 근육 전체 순위">
+      <div className="flex w-max gap-2">
       {scores.map((item, index) => (
-        <MuscleFocusCard key={item.id} item={item} total={total} index={index} />
+        <div key={item.id} className="w-[126px] shrink-0">
+          <MuscleFocusCard item={item} total={total} index={index} />
+        </div>
       ))}
+      </div>
     </div>
   );
 }
@@ -5619,29 +5622,6 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
             <p className="text-[26px] font-medium">{formatNumber(Math.round(total))}점</p>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function MuscleRankScroller({ data, totalScore }: { data: Array<Muscle & { score: number }>; totalScore: number }) {
-  if (data.length === 0 || totalScore <= 0) {
-    return <p className="text-sm leading-6 text-[#7a7470]">운동을 저장하면 전체 근육 순위가 표시됩니다.</p>;
-  }
-
-  return (
-    <div className="-mx-1 mb-6 overflow-x-auto px-1 pb-2" aria-label="근육 자극 전체 순위">
-      <div className="flex w-max gap-2">
-        {data.map((item, index) => {
-          const percent = Math.round((item.score / totalScore) * 100);
-          return (
-            <div key={item.id} className="w-[132px] shrink-0 rounded-[14px] bg-[#f8f4f0] p-3">
-              <p className="text-xs font-semibold text-[#7a7470]">{index + 1}위</p>
-              <p className="mt-2 truncate text-base font-semibold text-[#242124]">{item.name}</p>
-              <p className="mt-1 text-sm font-medium text-[#7a7470]">{percent}% · {formatNumber(item.score)}점</p>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
@@ -5702,10 +5682,10 @@ function MetricGrid({ items }: { items: Array<{ label: string; value: string }> 
 
 function FlatPanel({ title, kicker, children }: { title: string; kicker: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
+    <section className="min-w-0 overflow-hidden rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
       <p className={`text-sm font-medium ${UI.textMuted}`}>{kicker}</p>
       <h2 className="mt-1 text-2xl font-semibold">{title}</h2>
-      <div className="mt-5">{children}</div>
+      <div className="mt-5 min-w-0">{children}</div>
     </section>
   );
 }
