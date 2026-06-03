@@ -3491,16 +3491,7 @@ function HomeDashboard({
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
           style={{ backgroundImage: "url('/images/mysun-home-hero.webp')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/78 via-[#242124]/24 to-transparent md:bg-gradient-to-r md:from-[#242124]/68 md:via-[#242124]/16" />
-        <div className="relative mx-auto flex min-h-[26svh] max-w-[1440px] flex-col justify-end px-4 pb-5 text-[#fffdfb] md:min-h-[380px] md:px-8 md:pb-10">
-          <p className="text-sm font-semibold text-[#fffdfb]/82">오늘의 홈</p>
-          <h1 className="mt-2 max-w-[640px] text-[32px] font-bold leading-[1.08] md:text-[60px]">
-            오늘 운동을 남겨볼까요?
-          </h1>
-          <p className="mt-3 max-w-[360px] text-sm font-medium leading-6 text-[#fffdfb]/86 md:text-base">
-            목표와 기록, 추천 루틴을 한눈에 확인해요.
-          </p>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/18 via-transparent to-transparent" />
       </section>
 
       <section className="mysun-section grid gap-5 pt-5 md:gap-7">
