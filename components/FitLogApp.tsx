@@ -4990,7 +4990,7 @@ function AnalysisView({
       : `다음 운동은 ${homeRoutineTitle(recommendedRoutine)}로 균형을 맞춰보세요.`;
 
   return (
-    <section className="mx-auto grid max-w-[1080px] gap-6 px-4 py-7 pb-[calc(9rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
+    <section className="mx-auto grid w-full max-w-[1080px] gap-6 overflow-x-hidden px-4 py-7 pb-[calc(9rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
       <div>
         <p className={`text-sm font-medium ${UI.textMuted}`}>운동 분석</p>
         <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">다음 운동을 정해볼까요?</h1>
@@ -5031,8 +5031,8 @@ function AnalysisView({
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <div className="grid gap-6 self-start">
-            <FlatPanel title="많이 자극한 근육" kicker="가로로 전체 확인">
-              <TopMuscleCards scores={detailedScores} total={totalScore} />
+            <FlatPanel title="많이 자극한 근육" kicker="상위 3개">
+              <TopMuscleCards scores={topScores} total={totalScore} />
             </FlatPanel>
             <details className="rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
               <summary className="cursor-pointer list-none text-sm font-semibold text-[#242124]">
@@ -5066,6 +5066,7 @@ function AnalysisView({
           </div>
         </FlatPanel>
         <FlatPanel title="근육별 자극 순위" kicker="전체 자극 대비 비율">
+          <MuscleRankScroller data={detailedScores} totalScore={totalScore} />
           <BarRanking data={detailedScores.slice(0, 8)} totalScore={totalScore} />
         </FlatPanel>
           </div>
@@ -5448,11 +5449,9 @@ function TopMuscleCards({ scores, total }: { scores: Array<Muscle & { score: num
   }
 
   return (
-    <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2" aria-label="많이 자극한 근육 전체 순위">
+    <div className="grid grid-cols-3 gap-2">
       {scores.map((item, index) => (
-        <div key={item.id} className="w-[128px] shrink-0 snap-start">
-          <MuscleFocusCard item={item} total={total} index={index} />
-        </div>
+        <MuscleFocusCard key={item.id} item={item} total={total} index={index} />
       ))}
     </div>
   );
@@ -5500,6 +5499,29 @@ function DonutChart({ data }: { data: Array<{ name: string; score: number; color
             <p className="text-[26px] font-medium">{formatNumber(Math.round(total))}점</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MuscleRankScroller({ data, totalScore }: { data: Array<Muscle & { score: number }>; totalScore: number }) {
+  if (data.length === 0 || totalScore <= 0) {
+    return <p className="text-sm leading-6 text-[#7a7470]">운동을 저장하면 전체 근육 순위가 표시됩니다.</p>;
+  }
+
+  return (
+    <div className="-mx-1 mb-6 overflow-x-auto px-1 pb-2" aria-label="근육 자극 전체 순위">
+      <div className="flex w-max gap-2">
+        {data.map((item, index) => {
+          const percent = Math.round((item.score / totalScore) * 100);
+          return (
+            <div key={item.id} className="w-[132px] shrink-0 rounded-[14px] bg-[#f8f4f0] p-3">
+              <p className="text-xs font-semibold text-[#7a7470]">{index + 1}위</p>
+              <p className="mt-2 truncate text-base font-semibold text-[#242124]">{item.name}</p>
+              <p className="mt-1 text-sm font-medium text-[#7a7470]">{percent}% · {formatNumber(item.score)}점</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
