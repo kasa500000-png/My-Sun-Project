@@ -5083,9 +5083,9 @@ function AnalysisView({
 }
 
 const DIET_MEALS = [
-  { id: "morning", label: "오전", hint: "커피, 샌드위치, 간단한 아침을 남겨요." },
+  { id: "morning", label: "아침", hint: "커피, 샌드위치, 간단한 아침을 남겨요." },
   { id: "lunch", label: "점심", hint: "오늘의 에너지를 채운 식사를 기록해요." },
-  { id: "afternoon", label: "오후", hint: "저녁 식사와 운동 후 식사까지 기록해요." },
+  { id: "afternoon", label: "저녁", hint: "저녁 식사와 운동 후 식사까지 기록해요." },
   { id: "snack", label: "간식", hint: "디저트, 음료, 작은 간식도 좋아요." },
 ] as const;
 
@@ -5253,6 +5253,7 @@ function DietView({ settings }: { settings: UserSettings }) {
   const [dietGoal, setDietGoal] = useState<DietGoal>(() => defaultDietGoal(settings));
   const [goalDraft, setGoalDraft] = useState<DietGoal>(() => defaultDietGoal(settings));
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [savingGoal, setSavingGoal] = useState(false);
   const [goalError, setGoalError] = useState("");
   const [reviewMeal, setReviewMeal] = useState<DietMealSlot | null>(null);
@@ -5278,6 +5279,7 @@ function DietView({ settings }: { settings: UserSettings }) {
     setGoalDraft(dietGoal);
     setGoalDialogOpen(false);
   });
+  useEscapeToClose(summaryDialogOpen, () => setSummaryDialogOpen(false));
 
   useEffect(() => {
     async function loadDietGoal() {
@@ -5522,7 +5524,12 @@ function DietView({ settings }: { settings: UserSettings }) {
         )}
       </div>
 
-      <div className="mysun-card min-w-0 p-5">
+      <button
+        type="button"
+        className="mysun-card w-full min-w-0 p-5 text-left transition active:scale-[0.995]"
+        onClick={() => setSummaryDialogOpen(true)}
+        aria-label="오늘 식단 요약 상세 보기"
+      >
         <div className="flex min-w-0 items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-sm font-medium text-[#7a7470]">오늘 식단 요약</p>
@@ -5543,13 +5550,14 @@ function DietView({ settings }: { settings: UserSettings }) {
         <p className="mt-4 rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-medium leading-6 text-[#4b4541]">
           {feedback}
         </p>
-      </div>
+        <p className="mt-3 text-right text-xs font-bold text-[#7a7470]">식단별 상세 보기</p>
+      </button>
 
       <div className="grid min-w-0 gap-3">
         <div className="flex min-w-0 items-end justify-between gap-3">
           <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>식사 기록</p>
-            <h2 className="mt-1 text-2xl font-semibold">오전부터 오후까지</h2>
+            <h2 className="mt-1 text-2xl font-semibold">아침부터 간식까지</h2>
           </div>
           <span className="text-sm font-semibold text-[#7a7470]">4개 구간</span>
         </div>
@@ -5660,6 +5668,133 @@ function DietView({ settings }: { settings: UserSettings }) {
           </p>
         </div>
       </div>
+
+      {summaryDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="오늘 식단 상세"
+          onClick={() => setSummaryDialogOpen(false)}
+        >
+          <div
+            className="max-h-[86vh] w-full max-w-[560px] overflow-y-auto rounded-t-[28px] bg-[#fffdfb] p-5 shadow-[0_-18px_48px_rgba(36,33,36,0.22)] md:rounded-[28px]"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#7a7470]">오늘 식단 상세</p>
+                <h2 className="mt-1 text-2xl font-bold text-[#242124]">식단별 분석 결과</h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-[#7a7470]">
+                  {todayLabel} · {loggedCount}/4 기록 · {formatNumber(totals.calories)} kcal
+                </p>
+              </div>
+              <button
+                type="button"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#f8f4f0] text-lg font-bold text-[#242124]"
+                onClick={() => setSummaryDialogOpen(false)}
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <MacroBox label="탄수화물" value={`${totals.carbs}g`} />
+              <MacroBox label="단백질" value={`${totals.protein}g`} />
+              <MacroBox label="지방" value={`${totals.fat}g`} />
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              {DIET_MEALS.map(meal => {
+                const log = mealLogs[meal.id];
+                const mealTotals = dietTotals(log?.foods || []);
+
+                return (
+                  <article key={meal.id} className="min-w-0 rounded-[20px] bg-[#f8f4f0] p-4 ring-1 ring-[#eadfda]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#7a7470]">{meal.label}</p>
+                        <h3 className="mt-1 text-xl font-bold text-[#242124]">
+                          {log ? `${formatNumber(mealTotals.calories)} kcal` : "아직 기록이 없어요"}
+                        </h3>
+                      </div>
+                      {log && <span className="shrink-0 rounded-full bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#2f8c63]">저장됨</span>}
+                    </div>
+
+                    {log ? (
+                      <div className="mt-4 grid gap-3">
+                        {log.imageUrl && (
+                          <img
+                            src={log.imageUrl}
+                            alt={`${meal.label} 식단 사진`}
+                            className="aspect-[4/3] w-full rounded-[18px] object-cover"
+                          />
+                        )}
+
+                        <div className="grid grid-cols-3 gap-2">
+                          <MacroBox label="탄수화물" value={`${mealTotals.carbs}g`} />
+                          <MacroBox label="단백질" value={`${mealTotals.protein}g`} />
+                          <MacroBox label="지방" value={`${mealTotals.fat}g`} />
+                        </div>
+
+                        <div className="grid gap-2">
+                          {log.foods.map(food => (
+                            <div key={food.id} className="rounded-[16px] bg-[#fffdfb] p-3 ring-1 ring-[#eadfda]">
+                              <div className="flex min-w-0 items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-bold text-[#242124]">{food.name}</p>
+                                  <p className="mt-1 text-xs font-semibold text-[#7a7470]">{food.portion}</p>
+                                </div>
+                                <span className="shrink-0 text-sm font-bold text-[#242124]">{formatNumber(food.calories)} kcal</span>
+                              </div>
+                              <p className="mt-2 text-xs font-semibold text-[#7a7470]">
+                                탄 {food.carbs}g · 단 {food.protein}g · 지 {food.fat}g
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {log.feedback && (
+                          <p className="rounded-[16px] bg-[#fffdfb] p-4 text-sm font-semibold leading-6 text-[#4b4541] ring-1 ring-[#eadfda]">
+                            {log.feedback}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-center text-sm font-bold text-[#fffdfb] active:scale-[0.99]">
+                          사진 추가
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={event => {
+                              setSummaryDialogOpen(false);
+                              void openPhotoAnalysis(meal.id, event.target.files);
+                              event.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="rounded-full bg-[#fffdfb] px-4 py-3 text-sm font-bold text-[#242124] ring-1 ring-[#eadfda]"
+                          onClick={() => {
+                            setSummaryDialogOpen(false);
+                            openManualEntry(meal.id);
+                          }}
+                        >
+                          직접 입력
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {goalDialogOpen && (
         <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="식단 목표 설정" onClick={() => { setGoalDraft(dietGoal); setGoalDialogOpen(false); }}>
