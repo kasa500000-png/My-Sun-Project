@@ -5123,6 +5123,22 @@ type DietLogResponse = {
   error?: string;
 };
 
+type DietGoal = {
+  goalType: string;
+  targetCalories: number | null;
+  targetProtein: number | null;
+  targetCarbsMin?: number | null;
+  targetCarbsMax?: number | null;
+  targetFatMin?: number | null;
+  targetFatMax?: number | null;
+};
+
+type DietGoalResponse = {
+  goal?: DietGoal;
+  setupRequired?: boolean;
+  error?: string;
+};
+
 function emptyDietFood(): DietFoodItem {
   return { id: `manual-${Date.now()}`, name: "직접 입력 음식", portion: "1인분", calories: 0, carbs: 0, protein: 0, fat: 0 };
 }
@@ -5221,19 +5237,33 @@ function isDietMealSlot(value: unknown): value is DietMealSlot {
   return typeof value === "string" && DIET_MEALS.some(meal => meal.id === value);
 }
 
+function defaultDietGoal(settings: UserSettings): DietGoal {
+  return {
+    goalType: "healthy",
+    targetCalories: settings.weightKg ? Math.round(settings.weightKg * 30) : 1800,
+    targetProtein: settings.weightKg ? Math.round(settings.weightKg * 1.6) : 90,
+  };
+}
+
 function DietView({ settings }: { settings: UserSettings }) {
   const [mealLogs, setMealLogs] = useState<Partial<Record<DietMealSlot, DietMealLog>>>({});
   const [loadingDiet, setLoadingDiet] = useState(true);
   const [savingDiet, setSavingDiet] = useState(false);
   const [dietError, setDietError] = useState("");
+  const [dietGoal, setDietGoal] = useState<DietGoal>(() => defaultDietGoal(settings));
+  const [goalDraft, setGoalDraft] = useState<DietGoal>(() => defaultDietGoal(settings));
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [savingGoal, setSavingGoal] = useState(false);
+  const [goalError, setGoalError] = useState("");
   const [reviewMeal, setReviewMeal] = useState<DietMealSlot | null>(null);
   const [reviewImage, setReviewImage] = useState<string | undefined>();
   const [reviewFoods, setReviewFoods] = useState<DietFoodItem[]>([]);
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [analysisError, setAnalysisError] = useState("");
   const [analysisStatus, setAnalysisStatus] = useState<"idle" | "analyzing" | "ready">("idle");
-  const targetCalories = settings.weightKg ? Math.round(settings.weightKg * 30) : 1800;
-  const targetProtein = settings.weightKg ? Math.round(settings.weightKg * 1.6) : 90;
+  const fallbackGoal = defaultDietGoal(settings);
+  const targetCalories = dietGoal.targetCalories || fallbackGoal.targetCalories || 1800;
+  const targetProtein = dietGoal.targetProtein || fallbackGoal.targetProtein || 90;
   const allFoods = Object.values(mealLogs).flatMap(log => log?.foods || []);
   const totals = dietTotals(allFoods);
   const calorieProgress = Math.min(140, Math.round((totals.calories / targetCalories) * 100));
@@ -5243,6 +5273,45 @@ function DietView({ settings }: { settings: UserSettings }) {
   const reviewMealLabel = DIET_MEALS.find(meal => meal.id === reviewMeal)?.label || "식사";
   const dietDate = today();
   const todayLabel = formatDate(dietDate);
+
+  useEscapeToClose(goalDialogOpen, () => {
+    setGoalDraft(dietGoal);
+    setGoalDialogOpen(false);
+  });
+
+  useEffect(() => {
+    async function loadDietGoal() {
+      setGoalError("");
+      try {
+        const response = await appFetch("/api/diet-goals", { cache: "no-store" });
+        const data = await response.json() as DietGoalResponse;
+        assertApiResponse(response, data, "식단 목표를 불러오지 못했습니다.");
+        if (data.setupRequired) {
+          const fallback = defaultDietGoal(settings);
+          setDietGoal(fallback);
+          setGoalDraft(fallback);
+          setGoalError("식단 목표 테이블이 아직 준비되지 않았습니다. Supabase SQL을 확인해 주세요.");
+          return;
+        }
+        const fallback = defaultDietGoal(settings);
+        const nextGoal = {
+          ...fallback,
+          ...(data.goal || {}),
+          targetCalories: data.goal?.targetCalories || fallback.targetCalories,
+          targetProtein: data.goal?.targetProtein || fallback.targetProtein,
+        };
+        setDietGoal(nextGoal);
+        setGoalDraft(nextGoal);
+      } catch (error) {
+        const fallback = defaultDietGoal(settings);
+        setDietGoal(fallback);
+        setGoalDraft(fallback);
+        setGoalError(error instanceof Error ? error.message : "식단 목표를 불러오지 못했습니다.");
+      }
+    }
+
+    void loadDietGoal();
+  }, [settings.weightKg]);
 
   useEffect(() => {
     async function loadDietMeals() {
@@ -5271,6 +5340,29 @@ function DietView({ settings }: { settings: UserSettings }) {
 
     void loadDietMeals();
   }, [dietDate]);
+
+  async function saveDietGoal() {
+    if (savingGoal) return;
+    setSavingGoal(true);
+    setGoalError("");
+    try {
+      const response = await appFetch("/api/diet-goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(goalDraft),
+      });
+      const data = await response.json() as DietGoalResponse;
+      assertApiResponse(response, data, "식단 목표 저장에 실패했습니다.");
+      if (!data.goal) throw new Error("저장된 식단 목표를 확인하지 못했습니다.");
+      setDietGoal(data.goal);
+      setGoalDraft(data.goal);
+      setGoalDialogOpen(false);
+    } catch (error) {
+      setGoalError(error instanceof Error ? error.message : "식단 목표 저장에 실패했습니다.");
+    } finally {
+      setSavingGoal(false);
+    }
+  }
 
   async function openPhotoAnalysis(mealId: DietMealSlot, files: FileList | null) {
     const file = files?.[0];
@@ -5402,15 +5494,25 @@ function DietView({ settings }: { settings: UserSettings }) {
             <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">오늘 먹은 걸 남겨요</h1>
             <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>사진으로 식사를 기록하고, 칼로리와 탄단지를 확인해요.</p>
           </div>
-          <label className="shrink-0 cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
-            + 사진
-            <input type="file" accept="image/*" className="sr-only" onChange={event => { void openPhotoAnalysis("lunch", event.target.files); event.currentTarget.value = ""; }} />
-          </label>
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124] ring-1 ring-[#eadfda] active:scale-[0.99]" onClick={() => { setGoalDraft(dietGoal); setGoalDialogOpen(true); }}>
+              목표
+            </button>
+            <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
+              + 사진
+              <input type="file" accept="image/*" className="sr-only" onChange={event => { void openPhotoAnalysis("lunch", event.target.files); event.currentTarget.value = ""; }} />
+            </label>
+          </div>
         </div>
         <p className="mt-4 text-sm font-semibold text-[#7a7470]">{todayLabel} · 오늘</p>
         {dietError && (
           <p className="mt-4 rounded-[16px] bg-[#fff5f2] p-4 text-sm font-semibold leading-6 text-[#9d3d35] ring-1 ring-[#f1c4bc]">
             {dietError}
+          </p>
+        )}
+        {goalError && (
+          <p className="mt-4 rounded-[16px] bg-[#fff5f2] p-4 text-sm font-semibold leading-6 text-[#9d3d35] ring-1 ring-[#f1c4bc]">
+            {goalError}
           </p>
         )}
         {loadingDiet && (
@@ -5558,6 +5660,95 @@ function DietView({ settings }: { settings: UserSettings }) {
           </p>
         </div>
       </div>
+
+      {goalDialogOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6" role="dialog" aria-modal="true" aria-label="식단 목표 설정" onClick={() => { setGoalDraft(dietGoal); setGoalDialogOpen(false); }}>
+          <div className="max-h-[86vh] w-full max-w-[520px] overflow-y-auto rounded-t-[28px] bg-[#fffdfb] p-5 shadow-[0_-18px_48px_rgba(36,33,36,0.22)] md:rounded-[28px]" onClick={event => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-[#7a7470]">식단 목표</p>
+                <h2 className="mt-1 text-2xl font-bold text-[#242124]">목표를 설정해요</h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-[#7a7470]">
+                  오늘 식단 요약의 목표 칼로리와 단백질 기준으로 사용됩니다.
+                </p>
+              </div>
+              <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#f8f4f0] text-lg font-bold text-[#242124]" onClick={() => { setGoalDraft(dietGoal); setGoalDialogOpen(false); }} aria-label="닫기">
+                ×
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[#7a7470]">목표 유형</span>
+                <select
+                  className="h-12 rounded-full bg-[#f8f4f0] px-4 text-base font-semibold text-[#242124] outline-none ring-1 ring-[#eadfda]"
+                  value={goalDraft.goalType}
+                  onChange={event => setGoalDraft(goal => ({ ...goal, goalType: event.target.value }))}
+                >
+                  <option value="healthy">건강한 식습관</option>
+                  <option value="fat_loss">체중 감량</option>
+                  <option value="maintain">체중 유지</option>
+                  <option value="muscle_gain">근육 증가</option>
+                  <option value="bulk">벌크업</option>
+                </select>
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#7a7470]">목표 칼로리</span>
+                  <div className="flex items-center rounded-full bg-[#f8f4f0] px-4 ring-1 ring-[#eadfda]">
+                    <input
+                      type="number"
+                      min={800}
+                      max={6000}
+                      inputMode="numeric"
+                      className="h-12 min-w-0 flex-1 bg-transparent text-base font-bold text-[#242124] outline-none"
+                      value={goalDraft.targetCalories ?? ""}
+                      onChange={event => setGoalDraft(goal => ({ ...goal, targetCalories: event.target.value ? Number(event.target.value) : null }))}
+                    />
+                    <span className="text-sm font-bold text-[#7a7470]">kcal</span>
+                  </div>
+                </label>
+
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#7a7470]">목표 단백질</span>
+                  <div className="flex items-center rounded-full bg-[#f8f4f0] px-4 ring-1 ring-[#eadfda]">
+                    <input
+                      type="number"
+                      min={0}
+                      max={400}
+                      inputMode="numeric"
+                      className="h-12 min-w-0 flex-1 bg-transparent text-base font-bold text-[#242124] outline-none"
+                      value={goalDraft.targetProtein ?? ""}
+                      onChange={event => setGoalDraft(goal => ({ ...goal, targetProtein: event.target.value ? Number(event.target.value) : null }))}
+                    />
+                    <span className="text-sm font-bold text-[#7a7470]">g</span>
+                  </div>
+                </label>
+              </div>
+
+              {goalError && (
+                <p className="rounded-[16px] bg-[#fff5f2] p-4 text-sm font-semibold leading-6 text-[#9d3d35] ring-1 ring-[#f1c4bc]">
+                  {goalError}
+                </p>
+              )}
+
+              <div className="rounded-[18px] bg-[#f8f4f0] p-4 text-sm font-semibold leading-6 text-[#4b4541]">
+                내 정보에 체중이 입력되어 있으면 기본 목표는 자동으로 계산됩니다. 여기서 저장한 값이 있으면 저장값을 우선 사용합니다.
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-4 text-sm font-bold text-[#242124]" onClick={() => { setGoalDraft(fallbackGoal); setGoalError(""); }}>
+                  자동값
+                </button>
+                <button type="button" className="rounded-full bg-[#242124] px-4 py-4 text-sm font-bold text-[#fffdfb] disabled:opacity-40" onClick={() => void saveDietGoal()} disabled={savingGoal}>
+                  {savingGoal ? "저장 중" : "목표 저장"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
