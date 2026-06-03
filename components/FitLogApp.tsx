@@ -2379,7 +2379,6 @@ const ROUTINE_TABS = [
 
 const tabItems: Array<{ id: Tab; label: string; icon: SoftIconName }> = [
   { id: "home", label: "홈", icon: "home" },
-  { id: "train", label: "기록", icon: "record" },
   { id: "log", label: "일지", icon: "log" },
   { id: "balance", label: "분석", icon: "analysis" },
   { id: "member", label: "내정보", icon: "member" },
@@ -5032,8 +5031,8 @@ function AnalysisView({
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <div className="grid gap-6 self-start">
-            <FlatPanel title="많이 자극한 근육" kicker="상위 3개">
-              <TopMuscleCards scores={topScores} total={totalScore} />
+            <FlatPanel title="많이 자극한 근육" kicker="가로로 전체 확인">
+              <TopMuscleCards scores={detailedScores} total={totalScore} />
             </FlatPanel>
             <details className="rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
               <summary className="cursor-pointer list-none text-sm font-semibold text-[#242124]">
@@ -5449,9 +5448,11 @@ function TopMuscleCards({ scores, total }: { scores: Array<Muscle & { score: num
   }
 
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2" aria-label="많이 자극한 근육 전체 순위">
       {scores.map((item, index) => (
-        <MuscleFocusCard key={item.id} item={item} total={total} index={index} />
+        <div key={item.id} className="w-[128px] shrink-0 snap-start">
+          <MuscleFocusCard item={item} total={total} index={index} />
+        </div>
       ))}
     </div>
   );
@@ -5610,7 +5611,7 @@ function SmallStudioStat({ label, value }: { label: string; value: string }) {
 function MobileTabBar({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: (tab: Tab) => void }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eadfda] bg-[#fffdfb]/92 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(58,48,50,0.08)] backdrop-blur md:hidden" aria-label="하단 메뉴">
-      <div className="grid grid-cols-5 gap-1">
+      <div className="grid grid-cols-4 gap-1">
         {tabItems.map(tab => (
           <button
             key={tab.id}
