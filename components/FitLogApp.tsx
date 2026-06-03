@@ -5102,14 +5102,24 @@ type DietFoodItem = {
 };
 
 type DietMealLog = {
+  id?: string;
+  date?: string;
   slot: DietMealSlot;
   imageUrl?: string;
+  feedback?: string;
   foods: DietFoodItem[];
 };
 
 type DietAnalyzeResponse = {
   foods?: DietFoodItem[];
   feedback?: string;
+  error?: string;
+};
+
+type DietLogResponse = {
+  meal?: DietMealLog;
+  meals?: DietMealLog[];
+  setupRequired?: boolean;
   error?: string;
 };
 
@@ -5146,8 +5156,15 @@ function dietFeedback(totalCalories: number, targetCalories: number, totalProtei
   return "오늘은 목표에 가까운 흐름이에요. 단백질과 채소를 유지하면 더 균형이 좋아져요.";
 }
 
+function isDietMealSlot(value: unknown): value is DietMealSlot {
+  return typeof value === "string" && DIET_MEALS.some(meal => meal.id === value);
+}
+
 function DietView({ settings }: { settings: UserSettings }) {
   const [mealLogs, setMealLogs] = useState<Partial<Record<DietMealSlot, DietMealLog>>>({});
+  const [loadingDiet, setLoadingDiet] = useState(true);
+  const [savingDiet, setSavingDiet] = useState(false);
+  const [dietError, setDietError] = useState("");
   const [reviewMeal, setReviewMeal] = useState<DietMealSlot | null>(null);
   const [reviewImage, setReviewImage] = useState<string | undefined>();
   const [reviewFoods, setReviewFoods] = useState<DietFoodItem[]>([]);
@@ -5163,7 +5180,36 @@ function DietView({ settings }: { settings: UserSettings }) {
   const loggedCount = Object.values(mealLogs).filter(log => log && log.foods.length > 0).length;
   const feedback = dietFeedback(totals.calories, targetCalories, totals.protein, targetProtein);
   const reviewMealLabel = DIET_MEALS.find(meal => meal.id === reviewMeal)?.label || "식사";
-  const todayLabel = formatDate(today());
+  const dietDate = today();
+  const todayLabel = formatDate(dietDate);
+
+  useEffect(() => {
+    async function loadDietMeals() {
+      setLoadingDiet(true);
+      setDietError("");
+      try {
+        const response = await appFetch(`/api/diet-log?date=${encodeURIComponent(dietDate)}`, { cache: "no-store" });
+        const data = await response.json() as DietLogResponse;
+        assertApiResponse(response, data, "식단 기록을 불러오지 못했습니다.");
+        if (data.setupRequired) {
+          setDietError("식단 저장 테이블이 아직 준비되지 않았습니다. Supabase SQL을 실행해 주세요.");
+          setMealLogs({});
+          return;
+        }
+        const next: Partial<Record<DietMealSlot, DietMealLog>> = {};
+        for (const meal of data.meals || []) {
+          if (isDietMealSlot(meal.slot)) next[meal.slot] = meal;
+        }
+        setMealLogs(next);
+      } catch (error) {
+        setDietError(error instanceof Error ? error.message : "식단 기록을 불러오지 못했습니다.");
+      } finally {
+        setLoadingDiet(false);
+      }
+    }
+
+    void loadDietMeals();
+  }, [dietDate]);
 
   async function openPhotoAnalysis(mealId: DietMealSlot, files: FileList | null) {
     const file = files?.[0];
@@ -5225,30 +5271,65 @@ function DietView({ settings }: { settings: UserSettings }) {
     }));
   }
 
-  function saveReviewMeal() {
-    if (!reviewMeal) return;
-    setMealLogs(logs => ({
-      ...logs,
-      [reviewMeal]: {
-        slot: reviewMeal,
-        imageUrl: reviewImage,
-        foods: reviewFoods,
-      },
-    }));
-    setReviewMeal(null);
-    setReviewFoods([]);
-    setReviewImage(undefined);
-    setReviewFeedback("");
+  async function saveReviewMeal() {
+    if (!reviewMeal || savingDiet) return;
+    setSavingDiet(true);
+    setDietError("");
     setAnalysisError("");
-    setAnalysisStatus("idle");
+
+    try {
+      const response = await appFetch("/api/diet-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: dietDate,
+          slot: reviewMeal,
+          imageUrl: reviewImage,
+          feedback: reviewFeedback,
+          foods: reviewFoods,
+        }),
+      });
+      const data = await response.json() as DietLogResponse;
+      assertApiResponse(response, data, "식단 기록 저장에 실패했습니다.");
+      const savedMeal = data.meal;
+      if (!savedMeal || !isDietMealSlot(savedMeal.slot)) throw new Error("저장된 식단 기록을 확인하지 못했습니다.");
+
+      setMealLogs(logs => ({
+        ...logs,
+        [savedMeal.slot]: savedMeal,
+      }));
+      setReviewMeal(null);
+      setReviewFoods([]);
+      setReviewImage(undefined);
+      setReviewFeedback("");
+      setAnalysisError("");
+      setAnalysisStatus("idle");
+    } catch (error) {
+      setAnalysisError(error instanceof Error ? error.message : "식단 기록 저장에 실패했습니다.");
+    } finally {
+      setSavingDiet(false);
+    }
   }
 
-  function deleteMeal(slot: DietMealSlot) {
-    setMealLogs(logs => {
-      const next = { ...logs };
-      delete next[slot];
-      return next;
-    });
+  async function deleteMeal(slot: DietMealSlot) {
+    const oldLog = mealLogs[slot];
+    setDietError("");
+
+    try {
+      const query = oldLog?.id
+        ? `id=${encodeURIComponent(oldLog.id)}`
+        : `date=${encodeURIComponent(dietDate)}&slot=${encodeURIComponent(slot)}`;
+      const response = await appFetch(`/api/diet-log?${query}`, { method: "DELETE" });
+      const data = await response.json() as DietLogResponse;
+      assertApiResponse(response, data, "식단 기록 삭제에 실패했습니다.");
+      setMealLogs(logs => {
+        const next = { ...logs };
+        delete next[slot];
+        return next;
+      });
+    } catch (error) {
+      setDietError(error instanceof Error ? error.message : "식단 기록 삭제에 실패했습니다.");
+    }
   }
 
   return (
@@ -5266,6 +5347,16 @@ function DietView({ settings }: { settings: UserSettings }) {
           </label>
         </div>
         <p className="mt-4 text-sm font-semibold text-[#7a7470]">{todayLabel} · 오늘</p>
+        {dietError && (
+          <p className="mt-4 rounded-[16px] bg-[#fff5f2] p-4 text-sm font-semibold leading-6 text-[#9d3d35] ring-1 ring-[#f1c4bc]">
+            {dietError}
+          </p>
+        )}
+        {loadingDiet && (
+          <p className="mt-4 rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-semibold leading-6 text-[#7a7470]">
+            저장된 오늘 식단을 불러오고 있어요.
+          </p>
+        )}
       </div>
 
       <div className="mysun-card min-w-0 p-5">
@@ -5333,7 +5424,7 @@ function DietView({ settings }: { settings: UserSettings }) {
                   </button>
                 </div>
                 {log && (
-                  <button type="button" className="justify-self-start text-sm font-bold text-[#c84653]" onClick={() => deleteMeal(meal.id)}>
+                  <button type="button" className="justify-self-start text-sm font-bold text-[#c84653]" onClick={() => void deleteMeal(meal.id)}>
                     삭제
                   </button>
                 )}
@@ -5393,8 +5484,8 @@ function DietView({ settings }: { settings: UserSettings }) {
               <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124]" onClick={() => setReviewFoods(foods => [...foods, emptyDietFood()])}>
                 음식 추가
               </button>
-              <button type="button" className="rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb]" onClick={saveReviewMeal}>
-                저장
+              <button type="button" className="rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] disabled:opacity-40" onClick={() => void saveReviewMeal()} disabled={savingDiet || reviewFoods.length === 0}>
+                {savingDiet ? "저장 중" : "저장"}
               </button>
             </div>
           </div>

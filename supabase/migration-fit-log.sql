@@ -38,6 +38,62 @@ CREATE TABLE IF NOT EXISTS fit_user_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS fit_diet_meal_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  meal_date DATE NOT NULL,
+  meal_slot TEXT NOT NULL,
+  image_url TEXT,
+  ai_feedback TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT fit_diet_meal_slot_valid CHECK (meal_slot IN ('morning', 'lunch', 'afternoon', 'snack')),
+  CONSTRAINT fit_diet_meal_unique UNIQUE (user_id, meal_date, meal_slot)
+);
+
+CREATE TABLE IF NOT EXISTS fit_diet_food_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  meal_log_id UUID NOT NULL REFERENCES fit_diet_meal_logs(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  portion TEXT NOT NULL DEFAULT '1인분',
+  calories NUMERIC NOT NULL DEFAULT 0,
+  carbs NUMERIC NOT NULL DEFAULT 0,
+  protein NUMERIC NOT NULL DEFAULT 0,
+  fat NUMERIC NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT fit_diet_food_non_negative CHECK (
+    calories >= 0
+    AND carbs >= 0
+    AND protein >= 0
+    AND fat >= 0
+    AND sort_order BETWEEN 1 AND 100
+  )
+);
+
+CREATE TABLE IF NOT EXISTS fit_nutrition_goals (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  goal_type TEXT NOT NULL DEFAULT 'healthy',
+  target_calories INTEGER,
+  target_protein NUMERIC,
+  target_carbs_min NUMERIC,
+  target_carbs_max NUMERIC,
+  target_fat_min NUMERIC,
+  target_fat_max NUMERIC,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT fit_nutrition_goal_type_valid CHECK (goal_type IN ('fat_loss', 'maintain', 'muscle_gain', 'bulk', 'healthy')),
+  CONSTRAINT fit_nutrition_goal_ranges CHECK (
+    (target_calories IS NULL OR target_calories BETWEEN 800 AND 6000)
+    AND (target_protein IS NULL OR target_protein BETWEEN 0 AND 400)
+    AND (target_carbs_min IS NULL OR target_carbs_min BETWEEN 0 AND 800)
+    AND (target_carbs_max IS NULL OR target_carbs_max BETWEEN 0 AND 800)
+    AND (target_fat_min IS NULL OR target_fat_min BETWEEN 0 AND 300)
+    AND (target_fat_max IS NULL OR target_fat_max BETWEEN 0 AND 300)
+  )
+);
+
 ALTER TABLE fit_user_settings
   ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS height_cm NUMERIC,
@@ -94,9 +150,21 @@ CREATE INDEX IF NOT EXISTS idx_fit_sets_session
 CREATE INDEX IF NOT EXISTS idx_fit_sets_user_session
   ON fit_set_logs(user_id, session_id);
 
+CREATE INDEX IF NOT EXISTS idx_fit_diet_meals_user_date
+  ON fit_diet_meal_logs(user_id, meal_date DESC);
+
+CREATE INDEX IF NOT EXISTS idx_fit_diet_food_items_meal
+  ON fit_diet_food_items(meal_log_id, sort_order);
+
+CREATE INDEX IF NOT EXISTS idx_fit_diet_food_items_user
+  ON fit_diet_food_items(user_id, meal_log_id);
+
 ALTER TABLE fit_workout_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fit_set_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fit_user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fit_diet_meal_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fit_diet_food_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fit_nutrition_goals ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS fit_sessions_select_own ON fit_workout_sessions;
 CREATE POLICY fit_sessions_select_own ON fit_workout_sessions
@@ -144,4 +212,52 @@ CREATE POLICY fit_settings_update_own ON fit_user_settings
 
 DROP POLICY IF EXISTS fit_settings_delete_own ON fit_user_settings;
 CREATE POLICY fit_settings_delete_own ON fit_user_settings
+  FOR DELETE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_meals_select_own ON fit_diet_meal_logs;
+CREATE POLICY fit_diet_meals_select_own ON fit_diet_meal_logs
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_meals_insert_own ON fit_diet_meal_logs;
+CREATE POLICY fit_diet_meals_insert_own ON fit_diet_meal_logs
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_meals_update_own ON fit_diet_meal_logs;
+CREATE POLICY fit_diet_meals_update_own ON fit_diet_meal_logs
+  FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_meals_delete_own ON fit_diet_meal_logs;
+CREATE POLICY fit_diet_meals_delete_own ON fit_diet_meal_logs
+  FOR DELETE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_food_select_own ON fit_diet_food_items;
+CREATE POLICY fit_diet_food_select_own ON fit_diet_food_items
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_food_insert_own ON fit_diet_food_items;
+CREATE POLICY fit_diet_food_insert_own ON fit_diet_food_items
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_food_update_own ON fit_diet_food_items;
+CREATE POLICY fit_diet_food_update_own ON fit_diet_food_items
+  FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_diet_food_delete_own ON fit_diet_food_items;
+CREATE POLICY fit_diet_food_delete_own ON fit_diet_food_items
+  FOR DELETE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_nutrition_goals_select_own ON fit_nutrition_goals;
+CREATE POLICY fit_nutrition_goals_select_own ON fit_nutrition_goals
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_nutrition_goals_insert_own ON fit_nutrition_goals;
+CREATE POLICY fit_nutrition_goals_insert_own ON fit_nutrition_goals
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_nutrition_goals_update_own ON fit_nutrition_goals;
+CREATE POLICY fit_nutrition_goals_update_own ON fit_nutrition_goals
+  FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS fit_nutrition_goals_delete_own ON fit_nutrition_goals;
+CREATE POLICY fit_nutrition_goals_delete_own ON fit_nutrition_goals
   FOR DELETE USING (auth.uid() = user_id);
