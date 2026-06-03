@@ -5083,111 +5083,308 @@ function AnalysisView({
 }
 
 const DIET_MEALS = [
-  { id: "breakfast", label: "아침", hint: "가볍게 시작한 식사를 남겨요." },
+  { id: "morning", label: "오전", hint: "커피, 샌드위치, 간단한 아침을 남겨요." },
   { id: "lunch", label: "점심", hint: "오늘의 에너지를 채운 식사를 기록해요." },
-  { id: "dinner", label: "저녁", hint: "하루 마무리 식사를 확인해요." },
-  { id: "snack", label: "간식", hint: "커피, 디저트, 간단한 간식도 좋아요." },
+  { id: "afternoon", label: "오후", hint: "저녁 식사와 운동 후 식사까지 기록해요." },
+  { id: "snack", label: "간식", hint: "디저트, 음료, 작은 간식도 좋아요." },
 ] as const;
 
+type DietMealSlot = (typeof DIET_MEALS)[number]["id"];
+
+type DietFoodItem = {
+  id: string;
+  name: string;
+  portion: string;
+  calories: number;
+  carbs: number;
+  protein: number;
+  fat: number;
+};
+
+type DietMealLog = {
+  slot: DietMealSlot;
+  imageUrl?: string;
+  foods: DietFoodItem[];
+};
+
+function sampleDietFoods(slot: DietMealSlot): DietFoodItem[] {
+  if (slot === "morning") {
+    return [
+      { id: "sandwich", name: "샌드위치", portion: "1개", calories: 330, carbs: 42, protein: 16, fat: 12 },
+      { id: "americano", name: "아메리카노", portion: "1잔", calories: 10, carbs: 1, protein: 0, fat: 0 },
+    ];
+  }
+  if (slot === "lunch") {
+    return [
+      { id: "rice-bowl", name: "밥", portion: "1공기", calories: 310, carbs: 68, protein: 6, fat: 1 },
+      { id: "protein-side", name: "단백질 반찬", portion: "1인분", calories: 260, carbs: 12, protein: 28, fat: 12 },
+      { id: "soup", name: "국/반찬", portion: "소량", calories: 120, carbs: 12, protein: 5, fat: 5 },
+    ];
+  }
+  if (slot === "afternoon") {
+    return [
+      { id: "chicken", name: "닭가슴살", portion: "100g", calories: 165, carbs: 0, protein: 31, fat: 4 },
+      { id: "sweet-potato", name: "고구마", portion: "1개", calories: 150, carbs: 35, protein: 2, fat: 0 },
+      { id: "salad", name: "샐러드", portion: "1접시", calories: 120, carbs: 10, protein: 4, fat: 7 },
+    ];
+  }
+  return [
+    { id: "greek-yogurt", name: "그릭요거트", portion: "1컵", calories: 130, carbs: 9, protein: 15, fat: 4 },
+  ];
+}
+
+function emptyDietFood(): DietFoodItem {
+  return { id: `manual-${Date.now()}`, name: "직접 입력 음식", portion: "1인분", calories: 0, carbs: 0, protein: 0, fat: 0 };
+}
+
+function dietTotals(foods: DietFoodItem[]) {
+  return foods.reduce((total, item) => ({
+    calories: total.calories + item.calories,
+    carbs: total.carbs + item.carbs,
+    protein: total.protein + item.protein,
+    fat: total.fat + item.fat,
+  }), { calories: 0, carbs: 0, protein: 0, fat: 0 });
+}
+
+function dietFeedback(totalCalories: number, targetCalories: number, totalProtein: number, targetProtein: number) {
+  if (totalCalories === 0) return "먹은 음식을 사진으로 남기면 오늘의 영양 흐름을 확인할 수 있어요.";
+  if (totalProtein < targetProtein * 0.7) return "단백질이 목표보다 부족한 편이에요. 다음 식사에 계란, 두부, 닭가슴살, 생선류를 더해보세요.";
+  if (totalCalories > targetCalories * 1.15) return "오늘은 목표보다 섭취량이 높은 편이에요. 다음 식사는 단백질과 채소 중심으로 가볍게 구성해보세요.";
+  if (totalCalories < targetCalories * 0.8) return "오늘 섭취량은 아직 낮은 편이에요. 다음 식사에 탄수화물과 단백질을 함께 챙겨보세요.";
+  return "오늘은 목표에 가까운 흐름이에요. 단백질과 채소를 유지하면 더 균형이 좋아져요.";
+}
+
 function DietView({ settings }: { settings: UserSettings }) {
-  const [selectedMeal, setSelectedMeal] = useState<(typeof DIET_MEALS)[number]["id"]>("breakfast");
-  const [preview, setPreview] = useState<string | null>(null);
-  const [uploadedMeal, setUploadedMeal] = useState<string | null>(null);
+  const [mealLogs, setMealLogs] = useState<Partial<Record<DietMealSlot, DietMealLog>>>({});
+  const [reviewMeal, setReviewMeal] = useState<DietMealSlot | null>(null);
+  const [reviewImage, setReviewImage] = useState<string | undefined>();
+  const [reviewFoods, setReviewFoods] = useState<DietFoodItem[]>([]);
+  const [analysisStatus, setAnalysisStatus] = useState<"idle" | "analyzing" | "ready">("idle");
+  const dietImageUrlsRef = useRef<string[]>([]);
   const targetCalories = settings.weightKg ? Math.round(settings.weightKg * 30) : 1800;
   const targetProtein = settings.weightKg ? Math.round(settings.weightKg * 1.6) : 90;
-  const selectedMealLabel = DIET_MEALS.find(meal => meal.id === selectedMeal)?.label || "식사";
+  const allFoods = Object.values(mealLogs).flatMap(log => log?.foods || []);
+  const totals = dietTotals(allFoods);
+  const calorieProgress = Math.min(140, Math.round((totals.calories / targetCalories) * 100));
+  const proteinProgress = Math.min(140, Math.round((totals.protein / targetProtein) * 100));
+  const loggedCount = Object.values(mealLogs).filter(log => log && log.foods.length > 0).length;
+  const feedback = dietFeedback(totals.calories, targetCalories, totals.protein, targetProtein);
+  const reviewMealLabel = DIET_MEALS.find(meal => meal.id === reviewMeal)?.label || "식사";
+  const todayLabel = formatDate(today());
 
   useEffect(() => {
     return () => {
-      if (preview) URL.revokeObjectURL(preview);
+      dietImageUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
     };
-  }, [preview]);
+  }, []);
 
-  function handleMealPhoto(mealId: (typeof DIET_MEALS)[number]["id"], files: FileList | null) {
+  function openPhotoAnalysis(mealId: DietMealSlot, files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
-    if (preview) URL.revokeObjectURL(preview);
-    setSelectedMeal(mealId);
-    setUploadedMeal(DIET_MEALS.find(meal => meal.id === mealId)?.label || null);
-    setPreview(URL.createObjectURL(file));
+    if (reviewImage && !Object.values(mealLogs).some(log => log?.imageUrl === reviewImage)) {
+      URL.revokeObjectURL(reviewImage);
+      dietImageUrlsRef.current = dietImageUrlsRef.current.filter(url => url !== reviewImage);
+    }
+    const imageUrl = URL.createObjectURL(file);
+    dietImageUrlsRef.current.push(imageUrl);
+    setReviewMeal(mealId);
+    setReviewImage(imageUrl);
+    setReviewFoods(sampleDietFoods(mealId));
+    setAnalysisStatus("analyzing");
+    window.setTimeout(() => setAnalysisStatus("ready"), 650);
+  }
+
+  function openManualEntry(mealId: DietMealSlot) {
+    setReviewMeal(mealId);
+    setReviewImage(undefined);
+    setReviewFoods([emptyDietFood()]);
+    setAnalysisStatus("ready");
+  }
+
+  function updateReviewFood(id: string, field: keyof Omit<DietFoodItem, "id">, value: string) {
+    setReviewFoods(foods => foods.map(food => {
+      if (food.id !== id) return food;
+      if (field === "name" || field === "portion") return { ...food, [field]: value };
+      return { ...food, [field]: Math.max(0, Number(value) || 0) };
+    }));
+  }
+
+  function saveReviewMeal() {
+    if (!reviewMeal) return;
+    const oldLog = mealLogs[reviewMeal];
+    if (oldLog?.imageUrl && oldLog.imageUrl !== reviewImage) {
+      URL.revokeObjectURL(oldLog.imageUrl);
+      dietImageUrlsRef.current = dietImageUrlsRef.current.filter(url => url !== oldLog.imageUrl);
+    }
+    setMealLogs(logs => ({
+      ...logs,
+      [reviewMeal]: {
+        slot: reviewMeal,
+        imageUrl: reviewImage,
+        foods: reviewFoods,
+      },
+    }));
+    setReviewMeal(null);
+    setReviewFoods([]);
+    setReviewImage(undefined);
+    setAnalysisStatus("idle");
+  }
+
+  function deleteMeal(slot: DietMealSlot) {
+    const oldLog = mealLogs[slot];
+    if (oldLog?.imageUrl) {
+      URL.revokeObjectURL(oldLog.imageUrl);
+      dietImageUrlsRef.current = dietImageUrlsRef.current.filter(url => url !== oldLog.imageUrl);
+    }
+    setMealLogs(logs => {
+      const next = { ...logs };
+      delete next[slot];
+      return next;
+    });
   }
 
   return (
-    <section className="mx-auto grid w-full max-w-[960px] gap-6 px-4 py-7 pb-[calc(9rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
-      <div>
-        <p className={`text-sm font-medium ${UI.textMuted}`}>식단</p>
-        <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">오늘 먹은 걸 남겨요</h1>
-        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>사진으로 식사를 기록하고, 칼로리와 탄단지를 확인해요.</p>
+    <section className="mx-auto grid w-full max-w-[960px] min-w-0 gap-6 overflow-x-hidden px-4 py-7 pb-[calc(9rem+env(safe-area-inset-bottom))] md:px-8 md:py-10">
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className={`text-sm font-medium ${UI.textMuted}`}>식단</p>
+            <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">오늘 먹은 걸 남겨요</h1>
+            <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>사진으로 식사를 기록하고, 칼로리와 탄단지를 확인해요.</p>
+          </div>
+          <label className="shrink-0 cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
+            + 사진
+            <input type="file" accept="image/*" className="sr-only" onChange={event => openPhotoAnalysis("lunch", event.target.files)} />
+          </label>
+        </div>
+        <p className="mt-4 text-sm font-semibold text-[#7a7470]">{todayLabel} · 오늘</p>
       </div>
 
-      <div className="mysun-card p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+      <div className="mysun-card min-w-0 p-5">
+        <div className="flex min-w-0 items-start justify-between gap-4">
+          <div className="min-w-0">
             <p className="text-sm font-medium text-[#7a7470]">오늘 식단 요약</p>
-            <h2 className="mt-2 text-2xl font-semibold">0 kcal / 목표 {formatNumber(targetCalories)} kcal</h2>
+            <h2 className="mt-2 text-2xl font-semibold">{formatNumber(totals.calories)} kcal / 목표 {formatNumber(targetCalories)} kcal</h2>
+            <p className="mt-1 text-sm font-semibold text-[#7a7470]">목표 대비 {calorieProgress}% · 식사 기록 {loggedCount}/4</p>
           </div>
-          <span className="rounded-full bg-[#edf8f1] px-3 py-2 text-xs font-bold text-[#2f8c63]">사진 기록</span>
+          <span className="shrink-0 rounded-full bg-[#edf8f1] px-3 py-2 text-xs font-bold text-[#2f8c63]">{Math.min(100, calorieProgress)}%</span>
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-2">
-          <SmallStudioStat label="탄수화물" value="0g" />
-          <SmallStudioStat label="단백질" value={`0/${targetProtein}g`} />
-          <SmallStudioStat label="지방" value="0g" />
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#f8f4f0]">
+          <div className="h-full rounded-full bg-[#2f8c63]" style={{ width: `${Math.min(100, calorieProgress)}%` }} />
         </div>
+        <div className="mt-5 grid min-w-0 grid-cols-3 gap-2">
+          <MacroBox label="탄수화물" value={`${totals.carbs}g`} />
+          <MacroBox label="단백질" value={`${totals.protein}/${targetProtein}g`} />
+          <MacroBox label="지방" value={`${totals.fat}g`} />
+        </div>
+        <p className="mt-3 text-sm font-semibold text-[#7a7470]">단백질 목표 {proteinProgress}% 달성</p>
         <p className="mt-4 rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-medium leading-6 text-[#4b4541]">
-          사진을 추가하면 식사별 기록을 남기고, 이후 예상 칼로리와 탄단지 분석을 함께 확인할 수 있어요.
+          {feedback}
         </p>
       </div>
 
-      <div className="grid gap-3">
-        <div className="flex items-end justify-between">
-          <div>
+      <div className="grid min-w-0 gap-3">
+        <div className="flex min-w-0 items-end justify-between gap-3">
+          <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>식사 기록</p>
-            <h2 className="mt-1 text-2xl font-semibold">아침부터 간식까지</h2>
+            <h2 className="mt-1 text-2xl font-semibold">오전부터 오후까지</h2>
           </div>
           <span className="text-sm font-semibold text-[#7a7470]">4개 구간</span>
         </div>
 
-        <div className="grid gap-3">
-          {DIET_MEALS.map(meal => (
-            <article key={meal.id} className="rounded-[20px] bg-[#fffdfb] p-4 shadow-[0_12px_28px_rgba(58,48,50,0.05)] ring-1 ring-[#eadfda]">
-              <div className="flex items-center justify-between gap-3">
+        <div className="grid min-w-0 gap-3">
+          {DIET_MEALS.map(meal => {
+            const log = mealLogs[meal.id];
+            const mealTotals = dietTotals(log?.foods || []);
+            return (
+            <article key={meal.id} className="min-w-0 rounded-[20px] bg-[#fffdfb] p-4 shadow-[0_12px_28px_rgba(58,48,50,0.05)] ring-1 ring-[#eadfda]">
+              <div className="grid min-w-0 gap-3">
                 <div className="min-w-0">
-                  <p className="text-xl font-semibold">{meal.label}</p>
-                  <p className="mt-1 truncate text-sm font-medium text-[#7a7470]">
-                    {uploadedMeal === meal.label ? "사진 분석 대기 중" : meal.hint}
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xl font-semibold">{meal.label}</p>
+                    {log && <span className="rounded-full bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#2f8c63]">저장됨</span>}
+                  </div>
+                  {log ? (
+                    <div className="mt-2 min-w-0">
+                      <p className="truncate text-sm font-semibold text-[#242124]">{log.foods.map(food => food.name).join(", ")}</p>
+                      <p className="mt-1 text-sm font-medium text-[#7a7470]">
+                        {formatNumber(mealTotals.calories)} kcal · 탄 {mealTotals.carbs}g / 단 {mealTotals.protein}g / 지 {mealTotals.fat}g
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 truncate text-sm font-medium text-[#7a7470]">{meal.hint}</p>
+                  )}
                 </div>
-                <label className="shrink-0 cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
-                  사진 추가
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={event => handleMealPhoto(meal.id, event.target.files)}
-                  />
-                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-center text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
+                    사진 추가
+                    <input type="file" accept="image/*" className="sr-only" onChange={event => openPhotoAnalysis(meal.id, event.target.files)} />
+                  </label>
+                  <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124]" onClick={() => openManualEntry(meal.id)}>
+                    직접 입력
+                  </button>
+                </div>
+                {log && (
+                  <button type="button" className="justify-self-start text-sm font-bold text-[#c84653]" onClick={() => deleteMeal(meal.id)}>
+                    삭제
+                  </button>
+                )}
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
+      <div className="grid min-w-0 gap-4 rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
         <div>
           <p className={`text-sm font-medium ${UI.textMuted}`}>AI 분석 결과</p>
-          <h2 className="mt-1 text-2xl font-semibold">{uploadedMeal ? `${uploadedMeal} 사진이 추가됐어요` : `${selectedMealLabel} 사진을 추가해보세요`}</h2>
+          <h2 className="mt-1 text-2xl font-semibold">
+            {reviewMeal ? `${reviewMealLabel} 분석 결과를 확인해요` : "사진을 추가하거나 직접 입력해보세요"}
+          </h2>
         </div>
-        {preview ? (
-          <img src={preview} alt={`${uploadedMeal || selectedMealLabel} 식단 사진 미리보기`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
+        {reviewImage ? (
+          <img src={reviewImage} alt={`${reviewMealLabel} 식단 사진 미리보기`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
         ) : (
           <div className="grid aspect-[4/3] place-items-center rounded-[18px] bg-[#f8f4f0] p-6 text-center text-sm font-semibold leading-6 text-[#7a7470]">
             음식 사진을 올리면 이곳에서 미리보고 분석 결과를 확인합니다.
           </div>
         )}
+        {analysisStatus === "analyzing" && (
+          <div className="rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-semibold leading-6 text-[#4b4541]">
+            음식을 분석하고 있어요. 사진 속 음식과 분량을 확인하는 중입니다.
+          </div>
+        )}
+        {analysisStatus === "ready" && (
+          <div className="grid min-w-0 gap-3">
+            {reviewFoods.map(food => (
+              <div key={food.id} className="grid min-w-0 gap-2 rounded-[16px] bg-[#f8f4f0] p-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_90px] gap-2">
+                  <input className="min-w-0 rounded-full bg-[#fffdfb] px-3 py-2 text-sm font-semibold outline-none ring-1 ring-[#eadfda]" value={food.name} onChange={event => updateReviewFood(food.id, "name", event.target.value)} aria-label="음식명" />
+                  <input className="min-w-0 rounded-full bg-[#fffdfb] px-3 py-2 text-sm font-semibold outline-none ring-1 ring-[#eadfda]" value={food.portion} onChange={event => updateReviewFood(food.id, "portion", event.target.value)} aria-label="분량" />
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  <NutritionInput label="kcal" value={food.calories} onChange={value => updateReviewFood(food.id, "calories", value)} />
+                  <NutritionInput label="탄" value={food.carbs} onChange={value => updateReviewFood(food.id, "carbs", value)} />
+                  <NutritionInput label="단" value={food.protein} onChange={value => updateReviewFood(food.id, "protein", value)} />
+                  <NutritionInput label="지" value={food.fat} onChange={value => updateReviewFood(food.id, "fat", value)} />
+                </div>
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124]" onClick={() => setReviewFoods(foods => [...foods, emptyDietFood()])}>
+                음식 추가
+              </button>
+              <button type="button" className="rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb]" onClick={saveReviewMeal}>
+                저장
+              </button>
+            </div>
+          </div>
+        )}
         <div className="rounded-[16px] bg-[#f8f4f0] p-4">
-          <p className="text-xs font-semibold text-[#7a7470]">분석 준비</p>
+          <p className="text-xs font-semibold text-[#7a7470]">AI 정확도 안내</p>
           <p className="mt-2 text-sm font-semibold leading-6 text-[#242124]">
-            음식 구성, 예상 칼로리, 탄수화물·단백질·지방 분석을 사진 기록과 연결할 예정이에요.
+            사진 기반 추정값입니다. 실제 조리법과 분량에 따라 차이가 있을 수 있으니 저장 전 음식과 분량을 확인해 주세요.
           </p>
         </div>
       </div>
@@ -5727,6 +5924,29 @@ function SmallStudioStat({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-medium text-[#7a7470]">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>
+  );
+}
+
+function MacroBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-[14px] bg-[#fffdfb] p-3 ring-1 ring-[#eadfda]">
+      <p className="truncate text-xs font-medium text-[#7a7470]">{label}</p>
+      <p className="mt-2 truncate text-lg font-semibold text-[#242124]">{value}</p>
+    </div>
+  );
+}
+
+function NutritionInput({ label, value, onChange }: { label: string; value: number; onChange: (value: string) => void }) {
+  return (
+    <label className="min-w-0">
+      <span className="mb-1 block text-center text-[11px] font-bold text-[#7a7470]">{label}</span>
+      <input
+        className="h-10 w-full min-w-0 rounded-full bg-[#fffdfb] px-2 text-center text-sm font-semibold outline-none ring-1 ring-[#eadfda]"
+        inputMode="numeric"
+        value={value}
+        onChange={event => onChange(event.target.value)}
+      />
+    </label>
   );
 }
 
