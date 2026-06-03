@@ -2861,6 +2861,27 @@ function routineNote(label: string) {
   return ROUTINES.find(item => item.label === label)?.note || "오늘 컨디션에 맞춰 가볍게 시작해요.";
 }
 
+function homeRoutineTitle(label: string) {
+  if (label === "하체 집중") return "하체 가볍게 채우기";
+  if (label === "상체 밸런스") return "상체 균형 맞추기";
+  if (label === "코어 리셋") return "코어 가볍게 깨우기";
+  return label;
+}
+
+function homeRoutineMeta(label: string) {
+  if (label === "하체 집중") return "15분 · 초급 · 4개 운동";
+  if (label === "상체 밸런스") return "20분 · 초급 · 4개 운동";
+  if (label === "코어 리셋") return "12분 · 초급 · 3개 운동";
+  return "15분 · 초급 · 추천 루틴";
+}
+
+function homeRoutineButton(label: string) {
+  if (label === "하체 집중") return "15분 루틴 시작";
+  if (label === "상체 밸런스") return "상체 루틴 시작";
+  if (label === "코어 리셋") return "코어 루틴 시작";
+  return "가볍게 시작하기";
+}
+
 function normalizeSearchText(value: string) {
   return value.toLocaleLowerCase("ko-KR").replace(/\s+/g, "");
 }
@@ -3449,30 +3470,35 @@ function HomeDashboard({
   const rangedSessions = useMemo(() => sessionsForSummaryRange(sessions, range), [sessions, range]);
   const summary = useMemo(() => workoutSummary(rangedSessions), [rangedSessions]);
   const rangeScores = useMemo(() => scoreSessions(rangedSessions).filter(item => item.score > 0), [rangedSessions]);
+  const weekScores = useMemo(() => scoreSessions(sessionsForSummaryRange(sessions, "week")).filter(item => item.score > 0), [sessions]);
   const weekProgress = useMemo(() => sessionsForSummaryRange(sessions, "week").length, [sessions]);
   const weeklyGoal = clampWeeklyGoal(settings.weeklyGoal);
   const weeklyGoalPercent = Math.min(Math.round((weekProgress / weeklyGoal) * 100), 100);
   const goalRemaining = Math.max(weeklyGoal - weekProgress, 0);
   const hasRangedSessions = summary.count > 0;
+  const goalComplete = goalRemaining === 0;
   const recommendedReason = goalRemaining > 0
     ? `이번 주 목표까지 ${goalRemaining}회 남았어요.`
-    : "이번 주 목표를 채웠어요. 오늘은 가볍게 균형만 유지해도 좋습니다.";
+    : "이번 주 목표는 완료했어요. 오늘은 균형만 맞춰도 충분해요.";
+  const previewScores = rangeScores.length > 0 ? rangeScores : weekScores;
+  const previewRangeLabel = rangeScores.length > 0 ? summaryRangeLabels[range] : weekScores.length > 0 ? "이번 주" : summaryRangeLabels[range];
+  const previewMode = rangeScores.length > 0 ? "active" : weekScores.length > 0 ? "fallbackWeek" : "empty";
 
   return (
     <>
-      <section className="relative min-h-[32svh] overflow-hidden bg-[#242124] md:min-h-[460px]">
+      <section className="relative min-h-[26svh] overflow-hidden bg-[#242124] md:min-h-[380px]">
         <div
           className="absolute inset-0 bg-cover bg-center md:bg-[center_45%]"
           style={{ backgroundImage: "url('/images/mysun-home-hero.webp')" }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#242124]/78 via-[#242124]/24 to-transparent md:bg-gradient-to-r md:from-[#242124]/68 md:via-[#242124]/16" />
-        <div className="relative mx-auto flex min-h-[32svh] max-w-[1440px] flex-col justify-end px-4 pb-5 text-[#fffdfb] md:min-h-[460px] md:px-8 md:pb-10">
+        <div className="relative mx-auto flex min-h-[26svh] max-w-[1440px] flex-col justify-end px-4 pb-5 text-[#fffdfb] md:min-h-[380px] md:px-8 md:pb-10">
           <p className="text-sm font-semibold text-[#fffdfb]/82">오늘의 홈</p>
           <h1 className="mt-2 max-w-[640px] text-[32px] font-bold leading-[1.08] md:text-[60px]">
-            오늘 운동을 남기는 곳
+            오늘 운동을 남겨볼까요?
           </h1>
           <p className="mt-3 max-w-[360px] text-sm font-medium leading-6 text-[#fffdfb]/86 md:text-base">
-            목표, 추천 루틴, 최근 기록을 확인하고 바로 기록을 시작합니다.
+            목표와 기록, 추천 루틴을 한눈에 확인해요.
           </p>
         </div>
       </section>
@@ -3481,7 +3507,7 @@ function HomeDashboard({
         <div className="mysun-card p-4 md:p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold text-[#7a7470]">이번 주 목표</p>
+              <p className="text-xs font-semibold text-[#7a7470]">{goalComplete ? "이번 주 목표 완료" : "이번 주 목표"}</p>
               <h2 className="mt-1 text-2xl font-semibold">{weekProgress}/{weeklyGoal}회 완료</h2>
             </div>
             <span className="rounded-full bg-[#edf8f1] px-3 py-1 text-xs font-bold text-[#2f8c63]">
@@ -3493,10 +3519,10 @@ function HomeDashboard({
           </div>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm font-medium leading-6 text-[#4b4541]">
-              {goalRemaining > 0 ? `${goalRemaining}회만 더 기록하면 목표 달성입니다.` : "이번 주 목표를 달성했습니다."}
+              {goalRemaining > 0 ? `${goalRemaining}회만 더 기록하면 목표 달성입니다.` : "이번 주 목표를 채웠어요. 오늘 운동도 추가로 남길 수 있어요."}
             </p>
             <button type="button" className="mysun-primary-action shrink-0 px-5 text-sm" onClick={onStart}>
-              운동 기록하기
+              {goalComplete ? "추가 운동 기록하기" : "운동 기록하기"}
             </button>
           </div>
         </div>
@@ -3505,7 +3531,6 @@ function HomeDashboard({
           <div className="mysun-card grid gap-4 p-4 md:p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold text-[#7a7470]">{summaryRangeLabels[range]}</p>
                 <h2 className="mt-1 text-2xl font-semibold">운동 요약</h2>
               </div>
               {hasRangedSessions && (
@@ -3549,9 +3574,11 @@ function HomeDashboard({
               </>
             ) : (
               <div className="rounded-[18px] bg-[#f8f4f0] p-5">
-                <h3 className="text-lg font-semibold">{range === "today" ? "오늘 아직 기록이 없어요." : "선택한 기간에 기록이 없어요."}</h3>
+                <h3 className="text-lg font-semibold">{range === "today" ? "오늘은 아직 기록이 없어요." : "선택한 기간에 기록이 없어요."}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#4b4541]">
-                  가볍게 10분 운동을 시작하거나, 방금 한 운동을 바로 기록해보세요.
+                  {range === "today" && goalComplete
+                    ? "목표는 달성했지만, 오늘 운동도 추가로 남길 수 있어요."
+                    : "방금 한 운동이 있다면 바로 남겨보세요."}
                 </p>
                 <button type="button" className="mysun-primary-action mt-4 w-full text-sm" onClick={onStart}>
                   운동 기록하기
@@ -3561,10 +3588,11 @@ function HomeDashboard({
           </div>
 
           <div className="mysun-card p-5">
-            <p className="text-sm font-medium text-[#7a7470]">추천 루틴</p>
+            <p className="text-sm font-medium text-[#7a7470]">오늘 추천</p>
             <div className="mt-3 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold">{recommendedRoutine}</h2>
+                <h2 className="text-2xl font-semibold">{homeRoutineTitle(recommendedRoutine)}</h2>
+                <p className="mt-2 text-xs font-bold text-[#2f8c63]">{homeRoutineMeta(recommendedRoutine)}</p>
                 <p className="mt-2 text-sm leading-6 text-[#4b4541]">{recommendedReason}</p>
                 <p className="mt-1 text-sm leading-6 text-[#4b4541]">{routineNote(recommendedRoutine)}</p>
               </div>
@@ -3573,13 +3601,13 @@ function HomeDashboard({
               </span>
             </div>
             <button type="button" className="mysun-secondary-action mt-5 w-full text-base" onClick={onStart}>
-              이 루틴으로 시작
+              {homeRoutineButton(recommendedRoutine)}
             </button>
           </div>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <FlatPanel title={recent ? recent.routineName : "아직 기록이 없어요"} kicker="최근 기록">
+          <FlatPanel title={recent ? "마지막 운동" : "아직 기록이 없어요"} kicker="최근 기록">
             {recent ? (
               <HomeRecentRecordCard session={recent} onOpen={() => {
                 setModalMode("recent");
@@ -3591,8 +3619,9 @@ function HomeDashboard({
           </FlatPanel>
 
           <HomeAnalysisPreview
-            rangeLabel={summaryRangeLabels[range]}
-            scores={rangeScores}
+            rangeLabel={previewRangeLabel}
+            scores={previewScores}
+            mode={previewMode}
             onAnalyze={onAnalyze}
             onStart={onStart}
           />
@@ -3624,7 +3653,7 @@ function HomeRecentRecordCard({ session, onOpen }: { session: WorkoutSession; on
   const exercises = sessionExerciseSummaries(session).slice(0, 2);
 
   return (
-    <article className="rounded-[16px] bg-[#f8f4f0] p-4">
+    <button type="button" className="w-full rounded-[16px] bg-[#f8f4f0] p-4 text-left transition active:scale-[0.99]" onClick={onOpen}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[#7a7470]">
@@ -3635,37 +3664,30 @@ function HomeRecentRecordCard({ session, onOpen }: { session: WorkoutSession; on
             {stats.exercises}개 운동 · {stats.totalSets}세트
           </p>
         </div>
-        <button type="button" className="shrink-0 rounded-full bg-[#fffdfb] px-3 py-2 text-xs font-bold text-[#242124]" onClick={onOpen}>
+        <span className="shrink-0 rounded-full bg-[#fffdfb] px-3 py-2 text-xs font-bold text-[#242124]">
           자세히
-        </button>
+        </span>
       </div>
 
-      <div className="mt-4 grid gap-2">
-        {exercises.map(item => (
-          <div key={`${item.name}-${item.load}-${item.reps}`} className="flex items-center justify-between gap-3 rounded-[12px] bg-[#fffdfb] px-3 py-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#242124]">{item.name}</p>
-              <p className="mt-0.5 text-xs font-medium text-[#7a7470]">{item.category}</p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-sm font-semibold text-[#242124]">{item.load} · {item.reps}</p>
-              <p className="mt-0.5 text-xs font-semibold text-[#7a7470]">{item.sets}세트</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </article>
+      {exercises.length > 0 && (
+        <p className="mt-4 line-clamp-2 text-sm font-semibold leading-6 text-[#242124]">
+          {exercises.map(item => `${item.name} ${item.sets}세트`).join(" · ")}
+        </p>
+      )}
+    </button>
   );
 }
 
 function HomeAnalysisPreview({
   rangeLabel,
   scores,
+  mode,
   onAnalyze,
   onStart,
 }: {
   rangeLabel: string;
   scores: Array<Muscle & { score: number }>;
+  mode: "active" | "fallbackWeek" | "empty";
   onAnalyze: () => void;
   onStart: () => void;
 }) {
@@ -3679,13 +3701,20 @@ function HomeAnalysisPreview({
           <p className="text-sm font-medium text-[#7a7470]">분석 미리보기</p>
           <h2 className="mt-1 text-2xl font-semibold">{rangeLabel} 자극 부위</h2>
         </div>
-        <button type="button" className="rounded-full bg-[#f8f4f0] px-3 py-2 text-xs font-bold text-[#4b4541]" onClick={onAnalyze}>
-          분석 보기
-        </button>
+        {mode !== "empty" && (
+          <button type="button" className="rounded-full bg-[#f8f4f0] px-3 py-2 text-xs font-bold text-[#4b4541]" onClick={onAnalyze}>
+            분석 보기
+          </button>
+        )}
       </div>
 
       {topScores.length > 0 && total > 0 ? (
         <div className="mt-5 grid gap-3">
+          {mode === "fallbackWeek" && (
+            <p className="rounded-[14px] bg-[#f8f4f0] p-3 text-sm font-medium leading-6 text-[#4b4541]">
+              오늘 기록은 없어도, 이번 주 기록 기준으로 자극 부위를 확인할 수 있어요.
+            </p>
+          )}
           {topScores.map(item => {
             const percent = Math.round((item.score / total) * 100);
             return (
@@ -3703,11 +3732,11 @@ function HomeAnalysisPreview({
         </div>
       ) : (
         <div className="mt-5 rounded-[18px] bg-[#f8f4f0] p-5">
-          <p className="text-sm font-semibold text-[#242124]">아직 분석할 기록이 없어요.</p>
+          <p className="text-sm font-semibold text-[#242124]">오늘 분석할 기록이 없어요.</p>
           <p className="mt-2 text-sm font-medium leading-6 text-[#4b4541]">
-            운동을 저장하면 자극 부위와 밸런스를 여기서 바로 확인할 수 있습니다.
+            오늘 운동을 기록하면 자극 부위를 바로 확인할 수 있어요.
           </p>
-          <button type="button" className="mysun-secondary-action mt-4 w-full text-sm" onClick={onStart}>
+          <button type="button" className="mysun-primary-action mt-4 w-full text-sm" onClick={onStart}>
             운동 기록하기
           </button>
         </div>
