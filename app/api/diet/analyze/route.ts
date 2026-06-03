@@ -8,6 +8,7 @@ const DEFAULT_MODEL = "grok-4.3";
 const VISION_FALLBACK_MODEL = "grok-4";
 const MAX_IMAGE_DATA_URL_LENGTH = 10_000_000;
 const MAX_FOOD_ITEMS = 12;
+const XAI_TIMEOUT_MS = 75000;
 
 type FoodEstimate = {
   id: string;
@@ -122,7 +123,7 @@ function buildPayload(model: string, imageDataUrl: string, mealSlot: string) {
         content: [
           {
             type: "image_url",
-            image_url: { url: imageDataUrl, detail: "high" },
+            image_url: { url: imageDataUrl, detail: "auto" },
           },
           {
             type: "text",
@@ -141,17 +142,25 @@ function buildPayload(model: string, imageDataUrl: string, mealSlot: string) {
 }
 
 async function callXai(apiKey: string, model: string, imageDataUrl: string, mealSlot: string) {
-  const response = await fetch(XAI_CHAT_COMPLETIONS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(buildPayload(model, imageDataUrl, mealSlot)),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), XAI_TIMEOUT_MS);
 
-  const data = await response.json().catch(() => null);
-  return { response, data, content: extractMessageContent(data) };
+  try {
+    const response = await fetch(XAI_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(buildPayload(model, imageDataUrl, mealSlot)),
+      signal: controller.signal,
+    });
+
+    const data = await response.json().catch(() => null);
+    return { response, data, content: extractMessageContent(data) };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -230,6 +239,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[diet-analyze]", error);
+    if (typeof error === "object" && error !== null && "name" in error && error.name === "AbortError") {
+      return NextResponse.json({ error: "AI 분석 응답이 지연되고 있습니다. 잠시 후 다시 시도하거나 직접 입력으로 기록해 주세요." }, { status: 504 });
+    }
     return NextResponse.json({ error: "AI 식단 분석 중 문제가 발생했습니다. 직접 입력으로 기록해 주세요." }, { status: 500 });
   }
 }

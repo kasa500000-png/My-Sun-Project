@@ -21,6 +21,7 @@ const UI = {
 };
 
 const API_TIMEOUT_MS = 15000;
+const DIET_ANALYZE_TIMEOUT_MS = 90000;
 
 type Tab = "home" | "train" | "log" | "balance" | "diet" | "member";
 type ExerciseType = "weight" | "time" | "bodyweight";
@@ -94,9 +95,9 @@ function assertApiResponse(response: Response, data: unknown, fallback: string) 
   }
 }
 
-async function appFetch(input: RequestInfo | URL, init?: RequestInit) {
+async function appFetch(input: RequestInfo | URL, init?: RequestInit, timeoutMs = API_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     return await fetch(input, { ...init, signal: init?.signal || controller.signal });
@@ -5179,8 +5180,8 @@ function emptyDietFood(): DietFoodItem {
   return { id: `manual-${Date.now()}`, name: "직접 입력 음식", portion: "1인분", calories: 0, carbs: 0, protein: 0, fat: 0 };
 }
 
-const DIET_IMAGE_MAX_DIMENSION = 1280;
-const DIET_IMAGE_TARGET_BYTES = 1_200_000;
+const DIET_IMAGE_MAX_DIMENSION = 1024;
+const DIET_IMAGE_TARGET_BYTES = 850_000;
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -5491,7 +5492,7 @@ function DietView({ settings }: { settings: UserSettings }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageDataUrl, mealSlot: mealId }),
-      });
+      }, DIET_ANALYZE_TIMEOUT_MS);
       const data = await readDietApiResponse(response);
 
       if (!response.ok) {
@@ -5729,7 +5730,7 @@ function DietView({ settings }: { settings: UserSettings }) {
         )}
         {analysisStatus === "analyzing" && (
           <div className="rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-semibold leading-6 text-[#4b4541]">
-            음식을 분석하고 있어요. 사진 속 음식과 분량을 확인하는 중입니다.
+            음식을 분석하고 있어요. 사진 속 음식과 분량을 확인하는 중이며, 최대 1분 정도 걸릴 수 있습니다.
           </div>
         )}
         {analysisError && (
