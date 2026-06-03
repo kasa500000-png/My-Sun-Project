@@ -5126,6 +5126,13 @@ const DIET_MEALS = [
   { id: "snack", label: "간식", hint: "디저트, 음료, 작은 간식도 좋아요." },
 ] as const;
 
+const DIET_MEAL_COLORS: Record<string, string> = {
+  morning: "bg-[#f3c96a]",
+  lunch: "bg-[#65b985]",
+  afternoon: "bg-[#d9796f]",
+  snack: "bg-[#8f7ad8]",
+};
+
 type DietMealSlot = (typeof DIET_MEALS)[number]["id"];
 
 type DietFoodItem = {
@@ -5348,7 +5355,9 @@ function activityLevelLabel(value: string) {
 
 function DietView({ settings }: { settings: UserSettings }) {
   const [mealLogs, setMealLogs] = useState<Partial<Record<DietMealSlot, DietMealLog>>>({});
+  const [monthlyMealLogs, setMonthlyMealLogs] = useState<DietMealLog[]>([]);
   const [loadingDiet, setLoadingDiet] = useState(true);
+  const [loadingDietMonth, setLoadingDietMonth] = useState(true);
   const [savingDiet, setSavingDiet] = useState(false);
   const [dietError, setDietError] = useState("");
   const [dietGoal, setDietGoal] = useState<DietGoal>(() => defaultDietGoal(settings));
@@ -5363,6 +5372,8 @@ function DietView({ settings }: { settings: UserSettings }) {
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [analysisError, setAnalysisError] = useState("");
   const [analysisStatus, setAnalysisStatus] = useState<"idle" | "analyzing" | "ready">("idle");
+  const [dietCalendarMonth, setDietCalendarMonth] = useState(() => startOfMonth(parseDate(today())));
+  const [selectedDietDate, setSelectedDietDate] = useState<string | null>(null);
   const fallbackGoal = defaultDietGoal(settings);
   const targetCalories = dietGoal.targetCalories || fallbackGoal.targetCalories || 1800;
   const targetProtein = dietGoal.targetProtein || fallbackGoal.targetProtein || 90;
@@ -5377,12 +5388,33 @@ function DietView({ settings }: { settings: UserSettings }) {
   const todayLabel = formatDate(dietDate);
   const hasPreciseDietProfile = hasCompleteDietGoalProfile(settings);
   const autoGoalPreview = calculatedDietGoal(settings, goalDraft.goalType || "healthy");
+  const dietCalendarDays = useMemo(() => buildCalendarDays(dietCalendarMonth), [dietCalendarMonth]);
+  const dietMealsByDate = useMemo(() => {
+    const map = new Map<string, DietMealLog[]>();
+    for (const meal of monthlyMealLogs) {
+      const date = meal.date || dietDate;
+      map.set(date, [...(map.get(date) || []), meal]);
+    }
+    for (const [date, meals] of map) {
+      map.set(date, meals.slice().sort((a, b) => DIET_MEALS.findIndex(meal => meal.id === a.slot) - DIET_MEALS.findIndex(meal => meal.id === b.slot)));
+    }
+    return map;
+  }, [dietDate, monthlyMealLogs]);
+  const selectedDietLogs = selectedDietDate ? dietMealsByDate.get(selectedDietDate) || [] : [];
+  const monthDietLogs = useMemo(() => {
+    const start = toDateKey(startOfMonth(dietCalendarMonth));
+    const end = toDateKey(endOfMonth(dietCalendarMonth));
+    return monthlyMealLogs.filter(meal => (meal.date || "") >= start && (meal.date || "") <= end);
+  }, [dietCalendarMonth, monthlyMealLogs]);
+  const monthDietDays = useMemo(() => new Set(monthDietLogs.map(meal => meal.date)).size, [monthDietLogs]);
+  const monthDietTotals = useMemo(() => dietTotals(monthDietLogs.flatMap(meal => meal.foods)), [monthDietLogs]);
 
   useEscapeToClose(goalDialogOpen, () => {
     setGoalDraft(dietGoal);
     setGoalDialogOpen(false);
   });
   useEscapeToClose(summaryDialogOpen, () => setSummaryDialogOpen(false));
+  useEscapeToClose(Boolean(selectedDietDate), () => setSelectedDietDate(null));
 
   useEffect(() => {
     async function loadDietGoal() {
@@ -5450,6 +5482,32 @@ function DietView({ settings }: { settings: UserSettings }) {
 
     void loadDietMeals();
   }, [dietDate]);
+
+  useEffect(() => {
+    async function loadDietMonth() {
+      setLoadingDietMonth(true);
+      setDietError("");
+      try {
+        const start = toDateKey(startOfMonth(dietCalendarMonth));
+        const end = toDateKey(endOfMonth(dietCalendarMonth));
+        const response = await appFetch(`/api/diet-log?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, { cache: "no-store" });
+        const data = await response.json() as DietLogResponse;
+        assertApiResponse(response, data, "월간 식단 기록을 불러오지 못했습니다.");
+        if (data.setupRequired) {
+          setDietError("식단 저장 테이블이 아직 준비되지 않았습니다. Supabase SQL을 실행해 주세요.");
+          setMonthlyMealLogs([]);
+          return;
+        }
+        setMonthlyMealLogs((data.meals || []).filter(meal => isDietMealSlot(meal.slot)));
+      } catch (error) {
+        setDietError(error instanceof Error ? error.message : "월간 식단 기록을 불러오지 못했습니다.");
+      } finally {
+        setLoadingDietMonth(false);
+      }
+    }
+
+    void loadDietMonth();
+  }, [dietCalendarMonth]);
 
   async function saveDietGoal() {
     if (savingGoal) return;
@@ -5561,6 +5619,10 @@ function DietView({ settings }: { settings: UserSettings }) {
         ...logs,
         [savedMeal.slot]: savedMeal,
       }));
+      setMonthlyMealLogs(logs => [
+        ...logs.filter(log => !(log.date === savedMeal.date && log.slot === savedMeal.slot)),
+        savedMeal,
+      ]);
       setReviewMeal(null);
       setReviewFoods([]);
       setReviewImage(undefined);
@@ -5590,6 +5652,7 @@ function DietView({ settings }: { settings: UserSettings }) {
         delete next[slot];
         return next;
       });
+      setMonthlyMealLogs(logs => logs.filter(log => oldLog?.id ? log.id !== oldLog.id : !(log.date === dietDate && log.slot === slot)));
     } catch (error) {
       setDietError(error instanceof Error ? error.message : "식단 기록 삭제에 실패했습니다.");
     }
@@ -5660,6 +5723,81 @@ function DietView({ settings }: { settings: UserSettings }) {
         </p>
         <p className="mt-3 text-right text-xs font-bold text-[#7a7470]">식단별 상세 보기</p>
       </button>
+
+      <section className="mysun-card min-w-0 p-4 md:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className={`text-sm font-medium ${UI.textMuted}`}>식단 캘린더</p>
+            <h2 className="mt-1 text-xl font-semibold">{formatMonth(dietCalendarMonth)} · 기록한 날 {monthDietDays}일</h2>
+            <p className="mt-1 text-sm font-medium text-[#4b4541]">
+              {loadingDietMonth ? "월간 식단을 불러오고 있어요." : `${formatNumber(monthDietTotals.calories)} kcal · 탄 ${monthDietTotals.carbs}g / 단 ${monthDietTotals.protein}g / 지 ${monthDietTotals.fat}g`}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <button type="button" className={`grid h-9 w-9 place-items-center text-base ${UI.secondaryButton}`} onClick={() => setDietCalendarMonth(current => addMonths(current, -1))} aria-label="이전 달">
+              ‹
+            </button>
+            <button type="button" className={`grid h-9 w-9 place-items-center text-base ${UI.secondaryButton}`} onClick={() => setDietCalendarMonth(current => addMonths(current, 1))} aria-label="다음 달">
+              ›
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-semibold text-[#7a7470]">
+          {DIET_MEALS.map(meal => (
+            <span key={meal.id} className="inline-flex items-center gap-1">
+              <i className={`h-2 w-2 rounded-full ${DIET_MEAL_COLORS[meal.id]}`} />
+              {meal.label}
+            </span>
+          ))}
+          <span className="inline-flex items-center gap-1"><i className="h-2 w-5 rounded-full bg-[#e7b85b]" />탄</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2 w-5 rounded-full bg-[#2f8c63]" />단</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2 w-5 rounded-full bg-[#d9796f]" />지</span>
+        </div>
+
+        <div className={`mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold ${UI.textMuted}`}>
+          {["월", "화", "수", "목", "금", "토", "일"].map(day => <span key={day}>{day}</span>)}
+        </div>
+        <div className="mt-2 grid grid-cols-7 gap-1">
+          {dietCalendarDays.map(day => {
+            const dateKey = toDateKey(day.date);
+            const dayMeals = dietMealsByDate.get(dateKey) || [];
+            const hasRecord = dayMeals.length > 0;
+            const isToday = dateKey === dietDate;
+            const dayTotals = dietTotals(dayMeals.flatMap(meal => meal.foods));
+            return (
+              <button
+                key={dateKey}
+                type="button"
+                className={`relative grid min-h-[74px] rounded-[13px] p-1.5 text-left transition ${
+                  hasRecord
+                    ? "bg-[#fffdfb] text-[#242124] shadow-[0_8px_20px_rgba(58,48,50,0.04)] ring-1 ring-[#b9dfc5]"
+                    : day.inMonth
+                      ? "bg-[#fffdfb] text-[#242124] ring-1 ring-[#eadfda]"
+                      : "bg-[#fffdfb] text-[#ded4cf]"
+                } ${isToday ? "shadow-[inset_0_0_0_2px_rgba(36,33,36,0.16)]" : ""}`}
+                onClick={() => hasRecord && setSelectedDietDate(dateKey)}
+                disabled={!hasRecord}
+                aria-label={`${formatDate(dateKey)} 식단 기록 ${dayMeals.length}개`}
+              >
+                <span className="text-xs font-bold">{day.date.getDate()}</span>
+                {isToday && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#242124]" />}
+                {hasRecord && (
+                  <span className="mt-1 grid gap-1">
+                    <span className="truncate text-[9px] font-bold leading-none text-[#2f8c63]">{formatNumber(dayTotals.calories)}kcal</span>
+                    <span className="flex gap-0.5">
+                      {DIET_MEALS.map(meal => (
+                        <i key={meal.id} className={`h-1.5 flex-1 rounded-full ${dayMeals.some(log => log.slot === meal.id) ? DIET_MEAL_COLORS[meal.id] : "bg-[#eee6e0]"}`} />
+                      ))}
+                    </span>
+                    <DietMacroStrip totals={dayTotals} />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="grid min-w-0 gap-3">
         <div className="flex min-w-0 items-end justify-between gap-3">
@@ -5776,6 +5914,27 @@ function DietView({ settings }: { settings: UserSettings }) {
           </p>
         </div>
       </div>
+
+      {selectedDietDate && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="날짜별 식단 상세"
+          onClick={() => setSelectedDietDate(null)}
+        >
+          <div
+            className="max-h-[86vh] w-full max-w-[560px] overflow-y-auto rounded-t-[28px] bg-[#fffdfb] p-5 shadow-[0_-18px_48px_rgba(36,33,36,0.22)] md:rounded-[28px]"
+            onClick={event => event.stopPropagation()}
+          >
+            <DietDayDetail
+              date={selectedDietDate}
+              meals={selectedDietLogs}
+              onClose={() => setSelectedDietDate(null)}
+            />
+          </div>
+        </div>
+      )}
 
       {summaryDialogOpen && (
         <div
@@ -6567,6 +6726,116 @@ function MacroBox({ label, value }: { label: string; value: string }) {
       <p className="truncate text-xs font-medium text-[#7a7470]">{label}</p>
       <p className="mt-2 truncate text-lg font-semibold text-[#242124]">{value}</p>
     </div>
+  );
+}
+
+function DietMacroStrip({ totals }: { totals: { calories: number; carbs: number; protein: number; fat: number } }) {
+  const macroCalories = (totals.carbs * 4) + (totals.protein * 4) + (totals.fat * 9);
+  const carbs = macroCalories > 0 ? Math.max((totals.carbs * 4 / macroCalories) * 100, totals.carbs > 0 ? 8 : 0) : 0;
+  const protein = macroCalories > 0 ? Math.max((totals.protein * 4 / macroCalories) * 100, totals.protein > 0 ? 8 : 0) : 0;
+  const fat = macroCalories > 0 ? Math.max((totals.fat * 9 / macroCalories) * 100, totals.fat > 0 ? 8 : 0) : 0;
+
+  if (macroCalories <= 0) return <span className="h-1.5 rounded-full bg-[#eee6e0]" />;
+
+  return (
+    <span className="flex h-1.5 overflow-hidden rounded-full bg-[#eee6e0]">
+      <i className="bg-[#e7b85b]" style={{ width: `${carbs}%` }} />
+      <i className="bg-[#2f8c63]" style={{ width: `${protein}%` }} />
+      <i className="bg-[#d9796f]" style={{ width: `${fat}%` }} />
+    </span>
+  );
+}
+
+function DietDayDetail({ date, meals, onClose }: { date: string; meals: DietMealLog[]; onClose: () => void }) {
+  const totals = dietTotals(meals.flatMap(meal => meal.foods));
+  const mealsBySlot = new Map(meals.map(meal => [meal.slot, meal]));
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#7a7470]">식단 상세</p>
+          <h2 className="mt-1 text-2xl font-bold text-[#242124]">{formatDate(date)}</h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-[#7a7470]">
+            {meals.length}/4 기록 · {formatNumber(totals.calories)} kcal
+          </p>
+        </div>
+        <button
+          type="button"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#f8f4f0] text-lg font-bold text-[#242124]"
+          onClick={onClose}
+          aria-label="닫기"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="mt-5 grid grid-cols-3 gap-2">
+        <MacroBox label="탄수화물" value={`${totals.carbs}g`} />
+        <MacroBox label="단백질" value={`${totals.protein}g`} />
+        <MacroBox label="지방" value={`${totals.fat}g`} />
+      </div>
+      <div className="mt-3">
+        <DietMacroStrip totals={totals} />
+      </div>
+
+      <div className="mt-5 grid gap-3">
+        {DIET_MEALS.map(meal => {
+          const log = mealsBySlot.get(meal.id);
+          const mealTotals = dietTotals(log?.foods || []);
+
+          return (
+            <article key={meal.id} className="rounded-[20px] bg-[#f8f4f0] p-4 ring-1 ring-[#eadfda]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-[#7a7470]">{meal.label}</p>
+                  <h3 className="mt-1 text-xl font-bold text-[#242124]">
+                    {log ? `${formatNumber(mealTotals.calories)} kcal` : "기록 없음"}
+                  </h3>
+                </div>
+                <i className={`h-3 w-3 shrink-0 rounded-full ${DIET_MEAL_COLORS[meal.id]}`} />
+              </div>
+
+              {log ? (
+                <div className="mt-4 grid gap-3">
+                  {log.imageUrl && (
+                    <img src={log.imageUrl} alt={`${meal.label} 식단 사진`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    <MacroBox label="탄수화물" value={`${mealTotals.carbs}g`} />
+                    <MacroBox label="단백질" value={`${mealTotals.protein}g`} />
+                    <MacroBox label="지방" value={`${mealTotals.fat}g`} />
+                  </div>
+                  <div className="grid gap-2">
+                    {log.foods.map(food => (
+                      <div key={food.id} className="rounded-[16px] bg-[#fffdfb] p-3 ring-1 ring-[#eadfda]">
+                        <div className="flex min-w-0 items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-[#242124]">{food.name}</p>
+                            <p className="mt-1 text-xs font-semibold text-[#7a7470]">{food.portion}</p>
+                          </div>
+                          <span className="shrink-0 text-sm font-bold text-[#242124]">{formatNumber(food.calories)} kcal</span>
+                        </div>
+                        <p className="mt-2 text-xs font-semibold text-[#7a7470]">
+                          탄 {food.carbs}g · 단 {food.protein}g · 지 {food.fat}g
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {log.feedback && (
+                    <p className="rounded-[16px] bg-[#fffdfb] p-4 text-sm font-semibold leading-6 text-[#4b4541] ring-1 ring-[#eadfda]">
+                      {log.feedback}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm font-semibold text-[#7a7470]">이 구간은 아직 등록된 식단이 없습니다.</p>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
