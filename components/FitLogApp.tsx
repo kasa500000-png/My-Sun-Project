@@ -5127,6 +5127,9 @@ function emptyDietFood(): DietFoodItem {
   return { id: `manual-${Date.now()}`, name: "직접 입력 음식", portion: "1인분", calories: 0, carbs: 0, protein: 0, fat: 0 };
 }
 
+const DIET_IMAGE_MAX_DIMENSION = 1280;
+const DIET_IMAGE_TARGET_BYTES = 1_200_000;
+
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -5137,6 +5140,64 @@ function readFileAsDataUrl(file: File) {
     reader.onerror = () => reject(new Error("이미지 파일을 읽지 못했습니다."));
     reader.readAsDataURL(file);
   });
+}
+
+function dataUrlBytes(dataUrl: string) {
+  const base64 = dataUrl.split(",")[1] || "";
+  return Math.ceil((base64.length * 3) / 4);
+}
+
+function loadImageFromDataUrl(dataUrl: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("이미지 미리보기를 만들지 못했습니다."));
+    image.src = dataUrl;
+  });
+}
+
+function resizedImageDataUrl(image: HTMLImageElement, maxDimension: number, quality: number) {
+  const maxSourceDimension = Math.max(image.naturalWidth, image.naturalHeight);
+  const scale = Math.min(1, maxDimension / maxSourceDimension);
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("이미지 압축을 처리하지 못했습니다.");
+  context.drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+async function prepareDietImageDataUrl(file: File) {
+  if (!file.type.startsWith("image/")) throw new Error("이미지 파일만 업로드할 수 있습니다.");
+  const sourceDataUrl = await readFileAsDataUrl(file);
+  const image = await loadImageFromDataUrl(sourceDataUrl);
+
+  for (const dimension of [DIET_IMAGE_MAX_DIMENSION, 1080, 900, 720]) {
+    for (const quality of [0.78, 0.68, 0.58, 0.48]) {
+      const dataUrl = resizedImageDataUrl(image, dimension, quality);
+      if (dataUrlBytes(dataUrl) <= DIET_IMAGE_TARGET_BYTES) return dataUrl;
+    }
+  }
+
+  return resizedImageDataUrl(image, 720, 0.42);
+}
+
+async function readDietApiResponse(response: Response): Promise<DietAnalyzeResponse> {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text) as DietAnalyzeResponse;
+  } catch {
+    return {
+      error: response.ok
+        ? "AI 분석 응답을 해석하지 못했습니다. 직접 입력으로 기록해 주세요."
+        : "사진 용량이 크거나 서버 응답을 처리하지 못했습니다. 사진을 압축해 다시 시도해 주세요.",
+    };
+  }
 }
 
 function dietTotals(foods: DietFoodItem[]) {
@@ -5223,14 +5284,14 @@ function DietView({ settings }: { settings: UserSettings }) {
     setAnalysisStatus("analyzing");
 
     try {
-      const imageDataUrl = await readFileAsDataUrl(file);
+      const imageDataUrl = await prepareDietImageDataUrl(file);
       setReviewImage(imageDataUrl);
       const response = await appFetch("/api/diet/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageDataUrl, mealSlot: mealId }),
       });
-      const data = await response.json() as DietAnalyzeResponse;
+      const data = await readDietApiResponse(response);
 
       if (!response.ok) {
         throw new Error(apiErrorMessage(data) || "AI 분석에 실패했습니다. 직접 입력으로 기록해 주세요.");
