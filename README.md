@@ -27,6 +27,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_DB_URL=
 XAI_API_KEY=
 XAI_MODEL=grok-4.3
+XAI_VISION_MODEL=grok-4
 ```
 
 운동 기록을 저장하기 전에 Supabase SQL Editor에서 `supabase/migration-fit-log.sql`을 실행합니다.
