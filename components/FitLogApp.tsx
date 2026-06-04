@@ -4548,7 +4548,6 @@ function HistoryView({
       <div className="mb-5">
         <p className={`text-sm font-medium ${UI.textMuted}`}>운동 일지</p>
         <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">기록 모아보기</h1>
-        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>날짜와 기간별로 운동 기록을 빠르게 확인해요.</p>
       </div>
       {loading ? (
         <EmptyState text="운동 기록을 불러오는 중입니다." />
@@ -5038,7 +5037,6 @@ function AnalysisView({
       <div>
         <p className={`text-sm font-medium ${UI.textMuted}`}>운동 분석</p>
         <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">다음 운동을 정해볼까요?</h1>
-        <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>선택한 기간의 자극과 부족한 부위를 확인해요.</p>
       </div>
 
       <RangePills value={range} onChange={setRange} />
@@ -5747,7 +5745,6 @@ function DietView({ settings }: { settings: UserSettings }) {
           <div className="min-w-0">
             <p className={`text-sm font-medium ${UI.textMuted}`}>식단</p>
             <h1 className="mt-1 text-[31px] font-bold leading-tight md:text-5xl">오늘 먹은 걸 남겨요</h1>
-            <p className={`mt-2 text-sm leading-6 ${UI.textBody}`}>사진으로 식사를 기록하고, 칼로리와 탄단지를 확인해요.</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124] ring-1 ring-[#eadfda] active:scale-[0.99]" onClick={() => { setGoalDraft(dietGoal); setGoalDialogOpen(true); }}>
