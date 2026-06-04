@@ -5284,6 +5284,15 @@ function dietMealOrder(slot: DietMealSlot) {
   return DIET_MEALS.findIndex(meal => meal.id === slot);
 }
 
+function suggestedDietMealSlot(date = today()): DietMealSlot {
+  if (date !== today()) return "lunch";
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 10) return "morning";
+  if (hour >= 10 && hour < 15) return "lunch";
+  if (hour >= 15 && hour < 22) return "afternoon";
+  return "snack";
+}
+
 function sortDietMeals(meals: DietMealLog[]) {
   return meals.slice().sort((a, b) => {
     const dateCompare = (a.date || "").localeCompare(b.date || "");
@@ -5425,7 +5434,7 @@ function DietView({ settings }: { settings: UserSettings }) {
   const [reviewFoods, setReviewFoods] = useState<DietFoodItem[]>([]);
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [analysisError, setAnalysisError] = useState("");
-  const [analysisStatus, setAnalysisStatus] = useState<"idle" | "analyzing" | "ready">("idle");
+  const [analysisStatus, setAnalysisStatus] = useState<"idle" | "selected" | "analyzing" | "ready">("idle");
   const [dietCalendarMonth, setDietCalendarMonth] = useState(() => startOfMonth(parseDate(today())));
   const [dietRange, setDietRange] = useState<HistoryRange>("day");
   const [dietRangeCursor, setDietRangeCursor] = useState(() => parseDate(today()));
@@ -5443,7 +5452,6 @@ function DietView({ settings }: { settings: UserSettings }) {
   const totals = dietTotals(allFoods);
   const calorieProgress = Math.min(140, Math.round((totals.calories / periodTargetCalories) * 100));
   const proteinProgress = Math.min(140, Math.round((totals.protein / periodTargetProtein) * 100));
-  const loggedCount = loggedDietSlotCount(periodMealLogs);
   const feedback = dietFeedback(totals.calories, periodTargetCalories, totals.protein, periodTargetProtein);
   const reviewMealLabel = DIET_MEALS.find(meal => meal.id === reviewMeal)?.label || "식사";
   const todayLabel = formatDate(dietDate);
@@ -5489,6 +5497,14 @@ function DietView({ settings }: { settings: UserSettings }) {
     }
     return sortDietMeals(Array.from(map.values()));
   }, [dietDate, entryDate, mealLogs, monthlyMealLogs, periodMealLogs]);
+  const periodMealSlotCounts = useMemo(() => {
+    const map = new Map<DietMealSlot, number>();
+    for (const meal of periodMealLogs) {
+      if (!isDietMealSlot(meal.slot) || (meal.foods || []).length === 0) continue;
+      map.set(meal.slot, (map.get(meal.slot) || 0) + 1);
+    }
+    return map;
+  }, [periodMealLogs]);
 
   useEscapeToClose(goalDialogOpen, () => {
     setGoalDraft(dietGoal);
@@ -5613,7 +5629,7 @@ function DietView({ settings }: { settings: UserSettings }) {
     }
   }
 
-  function openDietEntryDialog(date = dietRange === "day" ? dietPeriod.start : dietDate, meal: DietMealSlot = "lunch") {
+  function openDietEntryDialog(date = dietRange === "day" ? dietPeriod.start : dietDate, meal: DietMealSlot = suggestedDietMealSlot(date)) {
     setEntryDate(date);
     setEntryMeal(meal);
     setEntryMenuHint("");
@@ -5639,15 +5655,41 @@ function DietView({ settings }: { settings: UserSettings }) {
     setReviewFoods([]);
     setReviewFeedback("");
     setAnalysisError("");
-    setAnalysisStatus("analyzing");
+    setAnalysisStatus("idle");
 
     try {
       const imageDataUrl = await prepareDietImageDataUrl(file);
       setReviewImage(imageDataUrl);
+      setAnalysisStatus("selected");
+    } catch (error) {
+      setAnalysisError(error instanceof Error ? error.message : "이미지를 준비하지 못했습니다. 다시 선택해 주세요.");
+      setAnalysisStatus("idle");
+    }
+  }
+
+  async function analyzeSelectedDietImage() {
+    if (!reviewImage) {
+      setAnalysisError("분석할 사진을 먼저 추가해 주세요.");
+      return;
+    }
+
+    const mealId = entryMeal;
+    const date = entryDate;
+    const menuHint = entryMenuHint.trim();
+
+    setReviewMeal(mealId);
+    setReviewDate(date);
+    setReviewMenuHint(menuHint);
+    setReviewFoods([]);
+    setReviewFeedback("");
+    setAnalysisError("");
+    setAnalysisStatus("analyzing");
+
+    try {
       const response = await appFetch("/api/diet/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUrl, mealSlot: mealId, menuHint }),
+        body: JSON.stringify({ imageDataUrl: reviewImage, mealSlot: mealId, menuHint }),
       }, DIET_ANALYZE_TIMEOUT_MS);
       const data = await readDietApiResponse(response);
 
@@ -5835,12 +5877,29 @@ function DietView({ settings }: { settings: UserSettings }) {
           <div className="min-w-0">
             <p className="text-sm font-medium text-[#7a7470]">{dietRange === "day" ? "선택일 식단 요약" : "선택 기간 식단 요약"}</p>
             <h2 className="mt-2 text-2xl font-semibold">{formatNumber(totals.calories)} kcal / 목표 {formatNumber(periodTargetCalories)} kcal</h2>
-            <p className="mt-1 text-sm font-semibold text-[#7a7470]">목표 대비 {calorieProgress}% · 기록 구간 {loggedCount}/4</p>
+            <p className="mt-1 text-sm font-semibold text-[#7a7470]">목표 대비 {calorieProgress}%</p>
           </div>
           <span className="shrink-0 rounded-full bg-[#edf8f1] px-3 py-2 text-xs font-bold text-[#2f8c63]">{Math.min(100, calorieProgress)}%</span>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#f8f4f0]">
           <div className="h-full rounded-full bg-[#2f8c63]" style={{ width: `${Math.min(100, calorieProgress)}%` }} />
+        </div>
+        <div className="mt-4 grid grid-cols-4 gap-1 rounded-[20px] bg-[#f8f4f0] p-1">
+          {DIET_MEALS.map(meal => {
+            const count = periodMealSlotCounts.get(meal.id) || 0;
+            const registered = count > 0;
+            return (
+              <span
+                key={meal.id}
+                className={`grid min-h-11 place-items-center rounded-[16px] px-1.5 py-1.5 text-center text-xs font-bold leading-tight ${
+                  registered ? "bg-[#edf8f1] text-[#2f6f51] ring-1 ring-[#b9dfc5]" : "text-[#9d958f]"
+                }`}
+              >
+                <span>{meal.label}</span>
+                {registered && <span className="mt-0.5 text-[10px]">{meal.id === "snack" ? `${count}개` : "등록"}</span>}
+              </span>
+            );
+          })}
         </div>
         <div className="mt-5 grid min-w-0 grid-cols-3 gap-2">
           <MacroBox label="탄수화물" value={`${totals.carbs}g`} />
@@ -5966,7 +6025,11 @@ function DietView({ settings }: { settings: UserSettings }) {
                   type="date"
                   className="h-12 rounded-full bg-[#f8f4f0] px-4 text-base font-semibold text-[#242124] outline-none ring-1 ring-[#eadfda]"
                   value={entryDate}
-                  onChange={event => setEntryDate(event.target.value || dietDate)}
+                  onChange={event => {
+                    const nextDate = event.target.value || dietDate;
+                    setEntryDate(nextDate);
+                    if (reviewMeal) setReviewDate(nextDate);
+                  }}
                 />
               </label>
 
@@ -5991,7 +6054,10 @@ function DietView({ settings }: { settings: UserSettings }) {
                                   ? "bg-[#edf8f1] text-[#2f6f51] ring-1 ring-[#b9dfc5]"
                                   : "text-[#7a7470]"
                           }`}
-                          onClick={() => setEntryMeal(meal.id)}
+                          onClick={() => {
+                            setEntryMeal(meal.id);
+                            if (reviewMeal) setReviewMeal(meal.id);
+                          }}
                         >
                           <span>{meal.label}</span>
                           {registered && (
@@ -6014,14 +6080,17 @@ function DietView({ settings }: { settings: UserSettings }) {
                 <input
                   className="h-12 rounded-full bg-[#f8f4f0] px-4 text-base font-semibold text-[#242124] outline-none ring-1 ring-[#eadfda]"
                   value={entryMenuHint}
-                  onChange={event => setEntryMenuHint(event.target.value)}
+                  onChange={event => {
+                    setEntryMenuHint(event.target.value);
+                    if (reviewImage && analysisStatus === "selected") setReviewMenuHint(event.target.value.trim());
+                  }}
                   placeholder="예: 김밥, 계란, 컵라면"
                 />
               </label>
 
               <div className="grid grid-cols-2 gap-2">
                 <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-center text-sm font-bold text-[#fffdfb] active:scale-[0.99]">
-                  사진 추가
+                  {reviewImage ? "사진 변경" : "사진 추가"}
                   <input
                     type="file"
                     accept="image/*"
@@ -6062,6 +6131,32 @@ function DietView({ settings }: { settings: UserSettings }) {
                   ) : (
                     <div className="grid aspect-[4/3] place-items-center rounded-[18px] bg-[#f8f4f0] p-6 text-center text-sm font-semibold leading-6 text-[#7a7470]">
                       {analysisStatus === "analyzing" ? "사진을 준비하고 있어요." : "음식 사진을 올리면 이곳에서 분석 결과를 확인합니다."}
+                    </div>
+                  )}
+
+                  {reviewImage && analysisStatus === "selected" && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-bold text-[#242124] ring-1 ring-[#eadfda]"
+                        onClick={() => {
+                          setReviewMeal(null);
+                          setReviewImage(undefined);
+                          setReviewFoods([]);
+                          setReviewFeedback("");
+                          setAnalysisError("");
+                          setAnalysisStatus("idle");
+                        }}
+                      >
+                        사진 삭제
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-full bg-[#242124] px-4 py-3 text-sm font-bold text-[#fffdfb]"
+                        onClick={() => void analyzeSelectedDietImage()}
+                      >
+                        AI 분석하기
+                      </button>
                     </div>
                   )}
 
@@ -6161,7 +6256,7 @@ function DietView({ settings }: { settings: UserSettings }) {
                 <p className="text-sm font-semibold text-[#7a7470]">식단 상세</p>
                 <h2 className="mt-1 text-2xl font-bold text-[#242124]">식단별 분석 결과</h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#7a7470]">
-                  {dietPeriodTitle} · {loggedCount}/4 구간 · {formatNumber(totals.calories)} kcal
+                  {dietPeriodTitle} · {formatNumber(totals.calories)} kcal
                 </p>
               </div>
               <button
