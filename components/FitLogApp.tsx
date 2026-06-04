@@ -4483,7 +4483,7 @@ function HistoryView({
   const [range, setRange] = useState<HistoryRange>("week");
   const [rangeCursor, setRangeCursor] = useState(() => parseDate(today()));
   const [bodyFilter, setBodyFilter] = useState<BodyFilter>("all");
-  const [calendarExpanded, setCalendarExpanded] = useState(false);
+  const [calendarExpanded, setCalendarExpanded] = useState(true);
   const [focusedSession, setFocusedSession] = useState<WorkoutSession | null>(null);
 
   const sessionsByDate = useMemo(() => {
@@ -4555,38 +4555,6 @@ function HistoryView({
         <EmptyState text="아직 저장된 운동 기록이 없어요. 첫 운동을 기록해 보세요." action="운동 기록하기" onClick={onStart} />
       ) : (
         <div className="grid gap-5">
-          <section className="mysun-card p-4 md:p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className={`text-sm font-medium ${UI.textMuted}`}>선택 기간</p>
-                <h2 className="mt-1 text-2xl font-semibold">{period.label}</h2>
-                <p className="mt-2 text-sm font-semibold text-[#4b4541]">
-                  {filteredStats.count}회 · {filteredStats.exercises}종목 · {filteredStats.minutes}분
-                </p>
-              </div>
-              <div className="flex shrink-0 gap-2">
-                <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(-1)} aria-label="이전 기간">
-                  ‹
-                </button>
-                <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(1)} aria-label="다음 기간">
-                  ›
-                </button>
-              </div>
-            </div>
-
-            <SegmentedControl
-              className="mt-5"
-              items={[
-                { id: "day", label: "일별" },
-                { id: "week", label: "주별" },
-                { id: "month", label: "월별" },
-                { id: "year", label: "년별" },
-              ]}
-              value={range}
-              onChange={value => chooseRange(value as HistoryRange)}
-            />
-          </section>
-
           <section className="mysun-card p-4 md:p-5">
             <button
               type="button"
@@ -4667,6 +4635,38 @@ function HistoryView({
                 </div>
               </div>
             )}
+          </section>
+
+          <section className="mysun-card p-4 md:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className={`text-sm font-medium ${UI.textMuted}`}>선택 기간</p>
+                <h2 className="mt-1 text-2xl font-semibold">{period.label}</h2>
+                <p className="mt-2 text-sm font-semibold text-[#4b4541]">
+                  {filteredStats.count}회 · {filteredStats.exercises}종목 · {filteredStats.minutes}분
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(-1)} aria-label="이전 기간">
+                  ‹
+                </button>
+                <button type="button" className={`grid h-10 w-10 place-items-center text-lg ${UI.secondaryButton}`} onClick={() => movePeriod(1)} aria-label="다음 기간">
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <SegmentedControl
+              className="mt-5"
+              items={[
+                { id: "day", label: "일별" },
+                { id: "week", label: "주별" },
+                { id: "month", label: "월별" },
+                { id: "year", label: "년별" },
+              ]}
+              value={range}
+              onChange={value => chooseRange(value as HistoryRange)}
+            />
           </section>
 
           <section className="grid gap-4">
