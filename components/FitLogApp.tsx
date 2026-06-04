@@ -5480,6 +5480,15 @@ function DietView({ settings }: { settings: UserSettings }) {
   }, [dietCalendarMonth, monthlyMealLogs]);
   const monthDietDays = useMemo(() => new Set(monthDietLogs.map(meal => meal.date)).size, [monthDietLogs]);
   const monthDietTotals = useMemo(() => dietTotals(monthDietLogs.flatMap(meal => meal.foods)), [monthDietLogs]);
+  const entryDateMeals = useMemo(() => {
+    const map = new Map<string, DietMealLog>();
+    for (const meal of [...monthlyMealLogs, ...periodMealLogs, ...mealLogs]) {
+      if ((meal.date || dietDate) !== entryDate || !isDietMealSlot(meal.slot)) continue;
+      const key = meal.id || `${meal.date || dietDate}-${meal.slot}-${meal.entryName || ""}`;
+      map.set(key, meal);
+    }
+    return sortDietMeals(Array.from(map.values()));
+  }, [dietDate, entryDate, mealLogs, monthlyMealLogs, periodMealLogs]);
 
   useEscapeToClose(goalDialogOpen, () => {
     setGoalDraft(dietGoal);
@@ -5608,6 +5617,14 @@ function DietView({ settings }: { settings: UserSettings }) {
     setEntryDate(date);
     setEntryMeal(meal);
     setEntryMenuHint("");
+    setReviewMeal(null);
+    setReviewDate(date);
+    setReviewMenuHint("");
+    setReviewImage(undefined);
+    setReviewFoods([]);
+    setReviewFeedback("");
+    setAnalysisError("");
+    setAnalysisStatus("idle");
     setEntryDialogOpen(true);
   }
 
@@ -5713,6 +5730,7 @@ function DietView({ settings }: { settings: UserSettings }) {
       setReviewFeedback("");
       setAnalysisError("");
       setAnalysisStatus("idle");
+      setEntryDialogOpen(false);
     } catch (error) {
       setAnalysisError(error instanceof Error ? error.message : "식단 기록 저장에 실패했습니다.");
     } finally {
@@ -5751,7 +5769,7 @@ function DietView({ settings }: { settings: UserSettings }) {
               목표
             </button>
             <button type="button" className="rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]" onClick={() => openDietEntryDialog()}>
-              + 사진
+              등록
             </button>
           </div>
         </div>
@@ -5911,74 +5929,6 @@ function DietView({ settings }: { settings: UserSettings }) {
         </div>
       </section>
 
-      <div className="grid min-w-0 gap-4 rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
-        <div>
-          <p className={`text-sm font-medium ${UI.textMuted}`}>AI 분석 결과</p>
-          <h2 className="mt-1 text-2xl font-semibold">
-            {reviewMeal ? `${reviewMealLabel} 분석 결과를 확인해요` : "사진을 추가하거나 직접 입력해보세요"}
-          </h2>
-          {reviewMeal && (
-            <p className="mt-2 text-sm font-semibold text-[#7a7470]">
-              {formatDate(reviewDate)}{reviewMenuHint ? ` · ${reviewMenuHint}` : ""}
-            </p>
-          )}
-        </div>
-        {reviewImage ? (
-          <img src={reviewImage} alt={`${reviewMealLabel} 식단 사진 미리보기`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
-        ) : (
-          <div className="grid aspect-[4/3] place-items-center rounded-[18px] bg-[#f8f4f0] p-6 text-center text-sm font-semibold leading-6 text-[#7a7470]">
-            음식 사진을 올리면 이곳에서 미리보고 분석 결과를 확인합니다.
-          </div>
-        )}
-        {analysisStatus === "analyzing" && (
-          <div className="rounded-[16px] bg-[#f8f4f0] p-4 text-sm font-semibold leading-6 text-[#4b4541]">
-            음식을 분석하고 있어요. 사진 속 음식과 분량을 확인하는 중이며, 최대 1분 정도 걸릴 수 있습니다.
-          </div>
-        )}
-        {analysisError && (
-          <div className="rounded-[16px] bg-[#fff5f2] p-4 text-sm font-semibold leading-6 text-[#9d3d35] ring-1 ring-[#f1c4bc]">
-            {analysisError}
-          </div>
-        )}
-        {reviewFeedback && !analysisError && (
-          <div className="rounded-[16px] bg-[#edf8f1] p-4 text-sm font-semibold leading-6 text-[#2f6f51]">
-            {reviewFeedback}
-          </div>
-        )}
-        {analysisStatus === "ready" && (
-          <div className="grid min-w-0 gap-3">
-            {reviewFoods.map(food => (
-              <div key={food.id} className="grid min-w-0 gap-2 rounded-[16px] bg-[#f8f4f0] p-3">
-                <div className="grid grid-cols-[minmax(0,1fr)_90px] gap-2">
-                  <input className="min-w-0 rounded-full bg-[#fffdfb] px-3 py-2 text-sm font-semibold outline-none ring-1 ring-[#eadfda]" value={food.name} onChange={event => updateReviewFood(food.id, "name", event.target.value)} aria-label="음식명" />
-                  <input className="min-w-0 rounded-full bg-[#fffdfb] px-3 py-2 text-sm font-semibold outline-none ring-1 ring-[#eadfda]" value={food.portion} onChange={event => updateReviewFood(food.id, "portion", event.target.value)} aria-label="분량" />
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <NutritionInput label="kcal" value={food.calories} onChange={value => updateReviewFood(food.id, "calories", value)} />
-                  <NutritionInput label="탄" value={food.carbs} onChange={value => updateReviewFood(food.id, "carbs", value)} />
-                  <NutritionInput label="단" value={food.protein} onChange={value => updateReviewFood(food.id, "protein", value)} />
-                  <NutritionInput label="지" value={food.fat} onChange={value => updateReviewFood(food.id, "fat", value)} />
-                </div>
-              </div>
-            ))}
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124]" onClick={() => setReviewFoods(foods => [...foods, emptyDietFood()])}>
-                음식 추가
-              </button>
-              <button type="button" className="rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] disabled:opacity-40" onClick={() => void saveReviewMeal()} disabled={savingDiet || reviewFoods.length === 0}>
-                {savingDiet ? "저장 중" : "저장"}
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="rounded-[16px] bg-[#f8f4f0] p-4">
-          <p className="text-xs font-semibold text-[#7a7470]">AI 정확도 안내</p>
-          <p className="mt-2 text-sm font-semibold leading-6 text-[#242124]">
-            사진 기반 추정값입니다. 실제 조리법과 분량에 따라 차이가 있을 수 있으니 저장 전 음식과 분량을 확인해 주세요.
-          </p>
-        </div>
-      </div>
-
       {entryDialogOpen && (
         <div
           className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6"
@@ -6024,14 +5974,34 @@ function DietView({ settings }: { settings: UserSettings }) {
                 <p className="text-sm font-semibold text-[#7a7470]">식사 구간</p>
                 <div className="grid grid-cols-4 gap-1 rounded-[22px] bg-[#f8f4f0] p-1">
                   {DIET_MEALS.map(meal => (
-                    <button
-                      key={meal.id}
-                      type="button"
-                      className={`h-11 rounded-[18px] text-sm font-bold transition ${entryMeal === meal.id ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
-                      onClick={() => setEntryMeal(meal.id)}
-                    >
-                      {meal.label}
-                    </button>
+                    (() => {
+                      const registeredCount = entryDateMeals.filter(log => log.slot === meal.id && (log.foods || []).length > 0).length;
+                      const registered = registeredCount > 0;
+                      const active = entryMeal === meal.id;
+                      return (
+                        <button
+                          key={meal.id}
+                          type="button"
+                          className={`grid min-h-12 rounded-[18px] px-1.5 py-2 text-sm font-bold leading-tight transition ${
+                            active && registered
+                              ? "bg-[#2f8c63] text-[#fffdfb]"
+                              : active
+                                ? "bg-[#242124] text-[#fffdfb]"
+                                : registered
+                                  ? "bg-[#edf8f1] text-[#2f6f51] ring-1 ring-[#b9dfc5]"
+                                  : "text-[#7a7470]"
+                          }`}
+                          onClick={() => setEntryMeal(meal.id)}
+                        >
+                          <span>{meal.label}</span>
+                          {registered && (
+                            <span className={`mt-0.5 text-[10px] font-bold ${active ? "text-[#fffdfb]" : "text-[#2f8c63]"}`}>
+                              {meal.id === "snack" ? `${registeredCount}개` : "저장됨"}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })()
                   ))}
                 </div>
                 <p className="text-xs font-semibold leading-5 text-[#7a7470]">
@@ -6057,7 +6027,6 @@ function DietView({ settings }: { settings: UserSettings }) {
                     accept="image/*"
                     className="sr-only"
                     onChange={event => {
-                      setEntryDialogOpen(false);
                       void openPhotoAnalysis(entryMeal, event.target.files, entryDate, entryMenuHint);
                       event.currentTarget.value = "";
                     }}
@@ -6067,13 +6036,88 @@ function DietView({ settings }: { settings: UserSettings }) {
                   type="button"
                   className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-bold text-[#242124] ring-1 ring-[#eadfda]"
                   onClick={() => {
-                    setEntryDialogOpen(false);
                     openManualEntry(entryMeal, entryDate, entryMenuHint);
                   }}
                 >
                   직접 입력
                 </button>
               </div>
+
+              {(reviewMeal || analysisStatus !== "idle" || analysisError) && (
+                <div className="grid min-w-0 gap-4 rounded-[22px] bg-[#fffdfb] p-4 ring-1 ring-[#eadfda]">
+                  <div>
+                    <p className={`text-sm font-medium ${UI.textMuted}`}>AI 분석 결과</p>
+                    <h3 className="mt-1 text-xl font-bold text-[#242124]">
+                      {reviewMeal ? `${reviewMealLabel} 분석 결과를 확인해요` : "사진을 추가하거나 직접 입력해보세요"}
+                    </h3>
+                    {reviewMeal && (
+                      <p className="mt-2 text-sm font-semibold text-[#7a7470]">
+                        {formatDate(reviewDate)}{reviewMenuHint ? ` · ${reviewMenuHint}` : ""}
+                      </p>
+                    )}
+                  </div>
+
+                  {reviewImage ? (
+                    <img src={reviewImage} alt={`${reviewMealLabel} 식단 사진 미리보기`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
+                  ) : (
+                    <div className="grid aspect-[4/3] place-items-center rounded-[18px] bg-[#f8f4f0] p-6 text-center text-sm font-semibold leading-6 text-[#7a7470]">
+                      {analysisStatus === "analyzing" ? "사진을 준비하고 있어요." : "음식 사진을 올리면 이곳에서 분석 결과를 확인합니다."}
+                    </div>
+                  )}
+
+                  {analysisStatus === "analyzing" && (
+                    <div className="rounded-[16px] bg-[#edf8f1] p-4 text-sm font-semibold leading-6 text-[#2f6f51] ring-1 ring-[#b9dfc5]">
+                      음식을 분석하고 있어요. 사진 속 음식과 분량을 확인하는 중이며, 최대 1분 정도 걸릴 수 있습니다.
+                    </div>
+                  )}
+
+                  {analysisError && (
+                    <div className="rounded-[16px] bg-[#fff5f2] p-4 text-sm font-semibold leading-6 text-[#9d3d35] ring-1 ring-[#f1c4bc]">
+                      {analysisError}
+                    </div>
+                  )}
+
+                  {reviewFeedback && !analysisError && (
+                    <div className="rounded-[16px] bg-[#edf8f1] p-4 text-sm font-semibold leading-6 text-[#2f6f51]">
+                      {reviewFeedback}
+                    </div>
+                  )}
+
+                  {analysisStatus === "ready" && (
+                    <div className="grid min-w-0 gap-3">
+                      {reviewFoods.map(food => (
+                        <div key={food.id} className="grid min-w-0 gap-2 rounded-[16px] bg-[#f8f4f0] p-3">
+                          <div className="grid grid-cols-[minmax(0,1fr)_90px] gap-2">
+                            <input className="min-w-0 rounded-full bg-[#fffdfb] px-3 py-2 text-sm font-semibold outline-none ring-1 ring-[#eadfda]" value={food.name} onChange={event => updateReviewFood(food.id, "name", event.target.value)} aria-label="음식명" />
+                            <input className="min-w-0 rounded-full bg-[#fffdfb] px-3 py-2 text-sm font-semibold outline-none ring-1 ring-[#eadfda]" value={food.portion} onChange={event => updateReviewFood(food.id, "portion", event.target.value)} aria-label="분량" />
+                          </div>
+                          <div className="grid grid-cols-4 gap-2">
+                            <NutritionInput label="kcal" value={food.calories} onChange={value => updateReviewFood(food.id, "calories", value)} />
+                            <NutritionInput label="탄" value={food.carbs} onChange={value => updateReviewFood(food.id, "carbs", value)} />
+                            <NutritionInput label="단" value={food.protein} onChange={value => updateReviewFood(food.id, "protein", value)} />
+                            <NutritionInput label="지" value={food.fat} onChange={value => updateReviewFood(food.id, "fat", value)} />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124]" onClick={() => setReviewFoods(foods => [...foods, emptyDietFood()])}>
+                          음식 추가
+                        </button>
+                        <button type="button" className="rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] disabled:opacity-40" onClick={() => void saveReviewMeal()} disabled={savingDiet || reviewFoods.length === 0}>
+                          {savingDiet ? "저장 중" : "저장"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="rounded-[16px] bg-[#f8f4f0] p-4">
+                    <p className="text-xs font-semibold text-[#7a7470]">AI 정확도 안내</p>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-[#242124]">
+                      사진 기반 추정값입니다. 실제 조리법과 분량에 따라 차이가 있을 수 있으니 저장 전 음식과 분량을 확인해 주세요.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
