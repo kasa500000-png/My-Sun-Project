@@ -5149,6 +5149,7 @@ type DietMealLog = {
   id?: string;
   date?: string;
   slot: DietMealSlot;
+  entryName?: string;
   imageUrl?: string;
   feedback?: string;
   foods: DietFoodItem[];
@@ -5281,6 +5282,54 @@ function isDietMealSlot(value: unknown): value is DietMealSlot {
   return typeof value === "string" && DIET_MEALS.some(meal => meal.id === value);
 }
 
+function dietMealOrder(slot: DietMealSlot) {
+  return DIET_MEALS.findIndex(meal => meal.id === slot);
+}
+
+function sortDietMeals(meals: DietMealLog[]) {
+  return meals.slice().sort((a, b) => {
+    const dateCompare = (a.date || "").localeCompare(b.date || "");
+    if (dateCompare !== 0) return dateCompare;
+    const slotCompare = dietMealOrder(a.slot) - dietMealOrder(b.slot);
+    if (slotCompare !== 0) return slotCompare;
+    return (a.id || "").localeCompare(b.id || "");
+  });
+}
+
+function replaceDietMealLog(logs: DietMealLog[], savedMeal: DietMealLog) {
+  const isSameRecord = (log: DietMealLog) => {
+    if (savedMeal.id && log.id === savedMeal.id) return true;
+    return savedMeal.slot !== "snack"
+      && log.date === savedMeal.date
+      && log.slot === savedMeal.slot;
+  };
+
+  return sortDietMeals([
+    ...logs.filter(log => !isSameRecord(log)),
+    savedMeal,
+  ]);
+}
+
+function groupDietMealsBySlot(meals: DietMealLog[]) {
+  const map = new Map<DietMealSlot, DietMealLog[]>();
+  for (const meal of meals) {
+    if (!isDietMealSlot(meal.slot)) continue;
+    map.set(meal.slot, [...(map.get(meal.slot) || []), meal]);
+  }
+  return map;
+}
+
+function loggedDietSlotCount(meals: DietMealLog[]) {
+  return new Set(meals.filter(meal => meal.foods.length > 0).map(meal => meal.slot)).size;
+}
+
+function inclusiveDayCount(start: string, end: string) {
+  const from = parseDate(start);
+  const to = parseDate(end);
+  const diff = Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
+  return Math.max(1, diff);
+}
+
 const DIET_GOAL_PRESETS: Record<string, { calorieDelta: number; calorieMultiplier: number; proteinPerKg: number }> = {
   fat_loss: { calorieDelta: 0, calorieMultiplier: 0.88, proteinPerKg: 1.6 },
   maintain: { calorieDelta: 0, calorieMultiplier: 1, proteinPerKg: 1.3 },
@@ -5354,7 +5403,8 @@ function activityLevelLabel(value: string) {
 }
 
 function DietView({ settings }: { settings: UserSettings }) {
-  const [mealLogs, setMealLogs] = useState<Partial<Record<DietMealSlot, DietMealLog>>>({});
+  const [mealLogs, setMealLogs] = useState<DietMealLog[]>([]);
+  const [periodMealLogs, setPeriodMealLogs] = useState<DietMealLog[]>([]);
   const [monthlyMealLogs, setMonthlyMealLogs] = useState<DietMealLog[]>([]);
   const [loadingDiet, setLoadingDiet] = useState(true);
   const [loadingDietMonth, setLoadingDietMonth] = useState(true);
@@ -5366,26 +5416,40 @@ function DietView({ settings }: { settings: UserSettings }) {
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [savingGoal, setSavingGoal] = useState(false);
   const [goalError, setGoalError] = useState("");
+  const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [entryDate, setEntryDate] = useState(today());
+  const [entryMeal, setEntryMeal] = useState<DietMealSlot>("lunch");
+  const [entryMenuHint, setEntryMenuHint] = useState("");
   const [reviewMeal, setReviewMeal] = useState<DietMealSlot | null>(null);
+  const [reviewDate, setReviewDate] = useState(today());
+  const [reviewMenuHint, setReviewMenuHint] = useState("");
   const [reviewImage, setReviewImage] = useState<string | undefined>();
   const [reviewFoods, setReviewFoods] = useState<DietFoodItem[]>([]);
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [analysisError, setAnalysisError] = useState("");
   const [analysisStatus, setAnalysisStatus] = useState<"idle" | "analyzing" | "ready">("idle");
   const [dietCalendarMonth, setDietCalendarMonth] = useState(() => startOfMonth(parseDate(today())));
+  const [dietRange, setDietRange] = useState<HistoryRange>("day");
+  const [dietRangeCursor, setDietRangeCursor] = useState(() => parseDate(today()));
   const [selectedDietDate, setSelectedDietDate] = useState<string | null>(null);
+  const dietDate = today();
+  const dietPeriod = useMemo(() => getHistoryPeriod(dietRange, dietRangeCursor), [dietRange, dietRangeCursor]);
+  const effectivePeriodEnd = dietPeriod.end > dietDate ? dietDate : dietPeriod.end;
+  const dietPeriodDays = inclusiveDayCount(dietPeriod.start, effectivePeriodEnd >= dietPeriod.start ? effectivePeriodEnd : dietPeriod.start);
   const fallbackGoal = defaultDietGoal(settings);
   const targetCalories = dietGoal.targetCalories || fallbackGoal.targetCalories || 1800;
   const targetProtein = dietGoal.targetProtein || fallbackGoal.targetProtein || 90;
-  const allFoods = Object.values(mealLogs).flatMap(log => log?.foods || []);
+  const periodTargetCalories = targetCalories * dietPeriodDays;
+  const periodTargetProtein = targetProtein * dietPeriodDays;
+  const allFoods = periodMealLogs.flatMap(log => log.foods || []);
   const totals = dietTotals(allFoods);
-  const calorieProgress = Math.min(140, Math.round((totals.calories / targetCalories) * 100));
-  const proteinProgress = Math.min(140, Math.round((totals.protein / targetProtein) * 100));
-  const loggedCount = Object.values(mealLogs).filter(log => log && log.foods.length > 0).length;
-  const feedback = dietFeedback(totals.calories, targetCalories, totals.protein, targetProtein);
+  const calorieProgress = Math.min(140, Math.round((totals.calories / periodTargetCalories) * 100));
+  const proteinProgress = Math.min(140, Math.round((totals.protein / periodTargetProtein) * 100));
+  const loggedCount = loggedDietSlotCount(periodMealLogs);
+  const feedback = dietFeedback(totals.calories, periodTargetCalories, totals.protein, periodTargetProtein);
   const reviewMealLabel = DIET_MEALS.find(meal => meal.id === reviewMeal)?.label || "식사";
-  const dietDate = today();
   const todayLabel = formatDate(dietDate);
+  const dietPeriodTitle = dietRange === "day" ? formatDate(dietPeriod.start) : dietPeriod.label;
   const hasPreciseDietProfile = hasCompleteDietGoalProfile(settings);
   const autoGoalPreview = calculatedDietGoal(settings, goalDraft.goalType || "healthy");
   const dietCalendarDays = useMemo(() => buildCalendarDays(dietCalendarMonth), [dietCalendarMonth]);
@@ -5396,11 +5460,21 @@ function DietView({ settings }: { settings: UserSettings }) {
       map.set(date, [...(map.get(date) || []), meal]);
     }
     for (const [date, meals] of map) {
-      map.set(date, meals.slice().sort((a, b) => DIET_MEALS.findIndex(meal => meal.id === a.slot) - DIET_MEALS.findIndex(meal => meal.id === b.slot)));
+      map.set(date, sortDietMeals(meals));
     }
     return map;
   }, [dietDate, monthlyMealLogs]);
   const selectedDietLogs = selectedDietDate ? dietMealsByDate.get(selectedDietDate) || [] : [];
+  const periodMealsByDate = useMemo(() => {
+    const map = new Map<string, DietMealLog[]>();
+    for (const meal of periodMealLogs) {
+      const date = meal.date || dietDate;
+      map.set(date, [...(map.get(date) || []), meal]);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, meals]) => ({ date, meals: sortDietMeals(meals) }));
+  }, [dietDate, periodMealLogs]);
   const monthDietLogs = useMemo(() => {
     const start = toDateKey(startOfMonth(dietCalendarMonth));
     const end = toDateKey(endOfMonth(dietCalendarMonth));
@@ -5413,6 +5487,7 @@ function DietView({ settings }: { settings: UserSettings }) {
     setGoalDraft(dietGoal);
     setGoalDialogOpen(false);
   });
+  useEscapeToClose(entryDialogOpen, () => setEntryDialogOpen(false));
   useEscapeToClose(summaryDialogOpen, () => setSummaryDialogOpen(false));
   useEscapeToClose(Boolean(selectedDietDate), () => setSelectedDietDate(null));
 
@@ -5456,23 +5531,22 @@ function DietView({ settings }: { settings: UserSettings }) {
   }
 
   useEffect(() => {
-    async function loadDietMeals() {
+    async function loadDietPeriod() {
       setLoadingDiet(true);
       setDietError("");
       try {
-        const response = await appFetch(`/api/diet-log?date=${encodeURIComponent(dietDate)}`, { cache: "no-store" });
+        const response = await appFetch(`/api/diet-log?start=${encodeURIComponent(dietPeriod.start)}&end=${encodeURIComponent(dietPeriod.end)}`, { cache: "no-store" });
         const data = await response.json() as DietLogResponse;
         assertApiResponse(response, data, "식단 기록을 불러오지 못했습니다.");
         if (data.setupRequired) {
           setDietError("식단 저장 테이블이 아직 준비되지 않았습니다. Supabase SQL을 실행해 주세요.");
-          setMealLogs({});
+          setMealLogs([]);
+          setPeriodMealLogs([]);
           return;
         }
-        const next: Partial<Record<DietMealSlot, DietMealLog>> = {};
-        for (const meal of data.meals || []) {
-          if (isDietMealSlot(meal.slot)) next[meal.slot] = meal;
-        }
-        setMealLogs(next);
+        const meals = sortDietMeals((data.meals || []).filter(meal => isDietMealSlot(meal.slot)));
+        setMealLogs(meals);
+        setPeriodMealLogs(meals);
       } catch (error) {
         setDietError(error instanceof Error ? error.message : "식단 기록을 불러오지 못했습니다.");
       } finally {
@@ -5480,8 +5554,8 @@ function DietView({ settings }: { settings: UserSettings }) {
       }
     }
 
-    void loadDietMeals();
-  }, [dietDate]);
+    void loadDietPeriod();
+  }, [dietPeriod.end, dietPeriod.start]);
 
   useEffect(() => {
     async function loadDietMonth() {
@@ -5532,11 +5606,20 @@ function DietView({ settings }: { settings: UserSettings }) {
     }
   }
 
-  async function openPhotoAnalysis(mealId: DietMealSlot, files: FileList | null) {
+  function openDietEntryDialog(date = dietRange === "day" ? dietPeriod.start : dietDate, meal: DietMealSlot = "lunch") {
+    setEntryDate(date);
+    setEntryMeal(meal);
+    setEntryMenuHint("");
+    setEntryDialogOpen(true);
+  }
+
+  async function openPhotoAnalysis(mealId: DietMealSlot, files: FileList | null, date = dietDate, menuHint = "") {
     const file = files?.[0];
     if (!file) return;
 
     setReviewMeal(mealId);
+    setReviewDate(date);
+    setReviewMenuHint(menuHint.trim());
     setReviewImage(undefined);
     setReviewFoods([]);
     setReviewFeedback("");
@@ -5549,7 +5632,7 @@ function DietView({ settings }: { settings: UserSettings }) {
       const response = await appFetch("/api/diet/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUrl, mealSlot: mealId }),
+        body: JSON.stringify({ imageDataUrl, mealSlot: mealId, menuHint }),
       }, DIET_ANALYZE_TIMEOUT_MS);
       const data = await readDietApiResponse(response);
 
@@ -5575,10 +5658,12 @@ function DietView({ settings }: { settings: UserSettings }) {
     }
   }
 
-  function openManualEntry(mealId: DietMealSlot) {
+  function openManualEntry(mealId: DietMealSlot, date = dietDate, menuHint = "") {
     setReviewMeal(mealId);
+    setReviewDate(date);
+    setReviewMenuHint(menuHint.trim());
     setReviewImage(undefined);
-    setReviewFoods([emptyDietFood()]);
+    setReviewFoods([{ ...emptyDietFood(), name: menuHint.trim() || "직접 입력 음식" }]);
     setReviewFeedback("");
     setAnalysisError("");
     setAnalysisStatus("ready");
@@ -5603,8 +5688,9 @@ function DietView({ settings }: { settings: UserSettings }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: dietDate,
+          date: reviewDate,
           slot: reviewMeal,
+          entryName: reviewMenuHint,
           imageUrl: reviewImage,
           feedback: reviewFeedback,
           foods: reviewFoods,
@@ -5615,15 +5701,15 @@ function DietView({ settings }: { settings: UserSettings }) {
       const savedMeal = data.meal;
       if (!savedMeal || !isDietMealSlot(savedMeal.slot)) throw new Error("저장된 식단 기록을 확인하지 못했습니다.");
 
-      setMealLogs(logs => ({
-        ...logs,
-        [savedMeal.slot]: savedMeal,
-      }));
-      setMonthlyMealLogs(logs => [
-        ...logs.filter(log => !(log.date === savedMeal.date && log.slot === savedMeal.slot)),
-        savedMeal,
-      ]);
+      setMealLogs(logs => replaceDietMealLog(logs, savedMeal));
+      setPeriodMealLogs(logs => (
+        savedMeal.date && savedMeal.date >= dietPeriod.start && savedMeal.date <= dietPeriod.end
+          ? replaceDietMealLog(logs, savedMeal)
+          : logs
+      ));
+      setMonthlyMealLogs(logs => replaceDietMealLog(logs, savedMeal));
       setReviewMeal(null);
+      setReviewMenuHint("");
       setReviewFoods([]);
       setReviewImage(undefined);
       setReviewFeedback("");
@@ -5636,23 +5722,19 @@ function DietView({ settings }: { settings: UserSettings }) {
     }
   }
 
-  async function deleteMeal(slot: DietMealSlot) {
-    const oldLog = mealLogs[slot];
+  async function deleteMeal(log: DietMealLog) {
     setDietError("");
 
     try {
-      const query = oldLog?.id
-        ? `id=${encodeURIComponent(oldLog.id)}`
-        : `date=${encodeURIComponent(dietDate)}&slot=${encodeURIComponent(slot)}`;
+      const query = log.id
+        ? `id=${encodeURIComponent(log.id)}`
+        : `date=${encodeURIComponent(log.date || dietDate)}&slot=${encodeURIComponent(log.slot)}`;
       const response = await appFetch(`/api/diet-log?${query}`, { method: "DELETE" });
       const data = await response.json() as DietLogResponse;
       assertApiResponse(response, data, "식단 기록 삭제에 실패했습니다.");
-      setMealLogs(logs => {
-        const next = { ...logs };
-        delete next[slot];
-        return next;
-      });
-      setMonthlyMealLogs(logs => logs.filter(log => oldLog?.id ? log.id !== oldLog.id : !(log.date === dietDate && log.slot === slot)));
+      setMealLogs(logs => logs.filter(item => log.id ? item.id !== log.id : !(item.date === log.date && item.slot === log.slot)));
+      setPeriodMealLogs(logs => logs.filter(item => log.id ? item.id !== log.id : !(item.date === log.date && item.slot === log.slot)));
+      setMonthlyMealLogs(logs => logs.filter(item => log.id ? item.id !== log.id : !(item.date === log.date && item.slot === log.slot)));
     } catch (error) {
       setDietError(error instanceof Error ? error.message : "식단 기록 삭제에 실패했습니다.");
     }
@@ -5671,10 +5753,9 @@ function DietView({ settings }: { settings: UserSettings }) {
             <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124] ring-1 ring-[#eadfda] active:scale-[0.99]" onClick={() => { setGoalDraft(dietGoal); setGoalDialogOpen(true); }}>
               목표
             </button>
-            <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
+            <button type="button" className="rounded-full bg-[#242124] px-4 py-3 text-sm font-semibold text-[#fffdfb] active:scale-[0.99]" onClick={() => openDietEntryDialog()}>
               + 사진
-              <input type="file" accept="image/*" className="sr-only" onChange={event => { void openPhotoAnalysis("lunch", event.target.files); event.currentTarget.value = ""; }} />
-            </label>
+            </button>
           </div>
         </div>
         <p className="mt-4 text-sm font-semibold text-[#7a7470]">{todayLabel} · 오늘</p>
@@ -5695,17 +5776,51 @@ function DietView({ settings }: { settings: UserSettings }) {
         )}
       </div>
 
+      <section className="mysun-card grid min-w-0 gap-4 p-4 md:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <button type="button" className={`grid h-10 w-10 place-items-center text-base ${UI.secondaryButton}`} onClick={() => setDietRangeCursor(current => addPeriod(current, dietRange, -1))} aria-label="이전 기간">
+            ‹
+          </button>
+          <div className="min-w-0 text-center">
+            <p className="text-xs font-bold text-[#7a7470]">선택 기간</p>
+            <p className="mt-1 truncate text-base font-bold text-[#242124]">{dietPeriodTitle}</p>
+          </div>
+          <button type="button" className={`grid h-10 w-10 place-items-center text-base ${UI.secondaryButton}`} onClick={() => setDietRangeCursor(current => addPeriod(current, dietRange, 1))} aria-label="다음 기간">
+            ›
+          </button>
+        </div>
+        <div className="grid grid-cols-4 gap-1 rounded-[22px] bg-[#f8f4f0] p-1">
+          {[
+            ["day", "일"],
+            ["week", "주"],
+            ["month", "월"],
+            ["year", "년"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`h-11 rounded-[18px] text-sm font-bold transition ${dietRange === value ? "bg-[#242124] text-[#fffdfb] shadow-[0_10px_22px_rgba(36,33,36,0.14)]" : "text-[#7a7470]"}`}
+              onClick={() => {
+                setDietRange(value as HistoryRange);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <button
         type="button"
         className="mysun-card w-full min-w-0 p-5 text-left transition active:scale-[0.995]"
         onClick={() => setSummaryDialogOpen(true)}
-        aria-label="오늘 식단 요약 상세 보기"
+        aria-label="식단 요약 상세 보기"
       >
         <div className="flex min-w-0 items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-[#7a7470]">오늘 식단 요약</p>
-            <h2 className="mt-2 text-2xl font-semibold">{formatNumber(totals.calories)} kcal / 목표 {formatNumber(targetCalories)} kcal</h2>
-            <p className="mt-1 text-sm font-semibold text-[#7a7470]">목표 대비 {calorieProgress}% · 식사 기록 {loggedCount}/4</p>
+            <p className="text-sm font-medium text-[#7a7470]">{dietRange === "day" ? "선택일 식단 요약" : "선택 기간 식단 요약"}</p>
+            <h2 className="mt-2 text-2xl font-semibold">{formatNumber(totals.calories)} kcal / 목표 {formatNumber(periodTargetCalories)} kcal</h2>
+            <p className="mt-1 text-sm font-semibold text-[#7a7470]">목표 대비 {calorieProgress}% · 기록 구간 {loggedCount}/4</p>
           </div>
           <span className="shrink-0 rounded-full bg-[#edf8f1] px-3 py-2 text-xs font-bold text-[#2f8c63]">{Math.min(100, calorieProgress)}%</span>
         </div>
@@ -5714,7 +5829,7 @@ function DietView({ settings }: { settings: UserSettings }) {
         </div>
         <div className="mt-5 grid min-w-0 grid-cols-3 gap-2">
           <MacroBox label="탄수화물" value={`${totals.carbs}g`} />
-          <MacroBox label="단백질" value={`${totals.protein}/${targetProtein}g`} />
+          <MacroBox label="단백질" value={`${totals.protein}/${periodTargetProtein}g`} />
           <MacroBox label="지방" value={`${totals.fat}g`} />
         </div>
         <p className="mt-3 text-sm font-semibold text-[#7a7470]">단백질 목표 {proteinProgress}% 달성</p>
@@ -5799,65 +5914,17 @@ function DietView({ settings }: { settings: UserSettings }) {
         </div>
       </section>
 
-      <div className="grid min-w-0 gap-3">
-        <div className="flex min-w-0 items-end justify-between gap-3">
-          <div className="min-w-0">
-            <p className={`text-sm font-medium ${UI.textMuted}`}>식사 기록</p>
-            <h2 className="mt-1 text-2xl font-semibold">아침부터 간식까지</h2>
-          </div>
-          <span className="text-sm font-semibold text-[#7a7470]">4개 구간</span>
-        </div>
-
-        <div className="grid min-w-0 gap-3">
-          {DIET_MEALS.map(meal => {
-            const log = mealLogs[meal.id];
-            const mealTotals = dietTotals(log?.foods || []);
-            return (
-            <article key={meal.id} className="min-w-0 rounded-[20px] bg-[#fffdfb] p-4 shadow-[0_12px_28px_rgba(58,48,50,0.05)] ring-1 ring-[#eadfda]">
-              <div className="grid min-w-0 gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xl font-semibold">{meal.label}</p>
-                    {log && <span className="rounded-full bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#2f8c63]">저장됨</span>}
-                  </div>
-                  {log ? (
-                    <div className="mt-2 min-w-0">
-                      <p className="truncate text-sm font-semibold text-[#242124]">{log.foods.map(food => food.name).join(", ")}</p>
-                      <p className="mt-1 text-sm font-medium text-[#7a7470]">
-                        {formatNumber(mealTotals.calories)} kcal · 탄 {mealTotals.carbs}g / 단 {mealTotals.protein}g / 지 {mealTotals.fat}g
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-1 truncate text-sm font-medium text-[#7a7470]">{meal.hint}</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-center text-sm font-semibold text-[#fffdfb] active:scale-[0.99]">
-                    사진 추가
-                    <input type="file" accept="image/*" className="sr-only" onChange={event => { void openPhotoAnalysis(meal.id, event.target.files); event.currentTarget.value = ""; }} />
-                  </label>
-                  <button type="button" className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-semibold text-[#242124]" onClick={() => openManualEntry(meal.id)}>
-                    직접 입력
-                  </button>
-                </div>
-                {log && (
-                  <button type="button" className="justify-self-start text-sm font-bold text-[#c84653]" onClick={() => void deleteMeal(meal.id)}>
-                    삭제
-                  </button>
-                )}
-              </div>
-            </article>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="grid min-w-0 gap-4 rounded-[22px] bg-[#fffdfb] p-5 shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
         <div>
           <p className={`text-sm font-medium ${UI.textMuted}`}>AI 분석 결과</p>
           <h2 className="mt-1 text-2xl font-semibold">
             {reviewMeal ? `${reviewMealLabel} 분석 결과를 확인해요` : "사진을 추가하거나 직접 입력해보세요"}
           </h2>
+          {reviewMeal && (
+            <p className="mt-2 text-sm font-semibold text-[#7a7470]">
+              {formatDate(reviewDate)}{reviewMenuHint ? ` · ${reviewMenuHint}` : ""}
+            </p>
+          )}
         </div>
         {reviewImage ? (
           <img src={reviewImage} alt={`${reviewMealLabel} 식단 사진 미리보기`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
@@ -5915,6 +5982,106 @@ function DietView({ settings }: { settings: UserSettings }) {
         </div>
       </div>
 
+      {entryDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="식단 기록 추가"
+          onClick={() => setEntryDialogOpen(false)}
+        >
+          <div
+            className="max-h-[86vh] w-full max-w-[520px] overflow-y-auto rounded-t-[28px] bg-[#fffdfb] p-5 shadow-[0_-18px_48px_rgba(36,33,36,0.22)] md:rounded-[28px]"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#7a7470]">식단 기록</p>
+                <h2 className="mt-1 text-2xl font-bold text-[#242124]">사진으로 식단을 남겨요</h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-[#7a7470]">
+                  날짜와 식사 구간을 먼저 고른 뒤 사진을 추가해 주세요.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#f8f4f0] text-lg font-bold text-[#242124]"
+                onClick={() => setEntryDialogOpen(false)}
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[#7a7470]">날짜</span>
+                <input
+                  type="date"
+                  className="h-12 rounded-full bg-[#f8f4f0] px-4 text-base font-semibold text-[#242124] outline-none ring-1 ring-[#eadfda]"
+                  value={entryDate}
+                  onChange={event => setEntryDate(event.target.value || dietDate)}
+                />
+              </label>
+
+              <div className="grid gap-2">
+                <p className="text-sm font-semibold text-[#7a7470]">식사 구간</p>
+                <div className="grid grid-cols-4 gap-1 rounded-[22px] bg-[#f8f4f0] p-1">
+                  {DIET_MEALS.map(meal => (
+                    <button
+                      key={meal.id}
+                      type="button"
+                      className={`h-11 rounded-[18px] text-sm font-bold transition ${entryMeal === meal.id ? "bg-[#242124] text-[#fffdfb]" : "text-[#7a7470]"}`}
+                      onClick={() => setEntryMeal(meal.id)}
+                    >
+                      {meal.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs font-semibold leading-5 text-[#7a7470]">
+                  아침, 점심, 저녁은 날짜별 1개만 저장되고 새 기록 저장 시 대체됩니다. 간식은 여러 개 저장할 수 있습니다.
+                </p>
+              </div>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[#7a7470]">메뉴 이름 또는 힌트</span>
+                <input
+                  className="h-12 rounded-full bg-[#f8f4f0] px-4 text-base font-semibold text-[#242124] outline-none ring-1 ring-[#eadfda]"
+                  value={entryMenuHint}
+                  onChange={event => setEntryMenuHint(event.target.value)}
+                  placeholder="예: 김밥, 계란, 컵라면"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-center text-sm font-bold text-[#fffdfb] active:scale-[0.99]">
+                  사진 추가
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={event => {
+                      setEntryDialogOpen(false);
+                      void openPhotoAnalysis(entryMeal, event.target.files, entryDate, entryMenuHint);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="rounded-full bg-[#f8f4f0] px-4 py-3 text-sm font-bold text-[#242124] ring-1 ring-[#eadfda]"
+                  onClick={() => {
+                    setEntryDialogOpen(false);
+                    openManualEntry(entryMeal, entryDate, entryMenuHint);
+                  }}
+                >
+                  직접 입력
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedDietDate && (
         <div
           className="fixed inset-0 z-50 grid place-items-end bg-[#242124]/48 p-0 backdrop-blur-sm md:place-items-center md:p-6"
@@ -5950,10 +6117,10 @@ function DietView({ settings }: { settings: UserSettings }) {
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-[#7a7470]">오늘 식단 상세</p>
+                <p className="text-sm font-semibold text-[#7a7470]">식단 상세</p>
                 <h2 className="mt-1 text-2xl font-bold text-[#242124]">식단별 분석 결과</h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#7a7470]">
-                  {todayLabel} · {loggedCount}/4 기록 · {formatNumber(totals.calories)} kcal
+                  {dietPeriodTitle} · {loggedCount}/4 구간 · {formatNumber(totals.calories)} kcal
                 </p>
               </div>
               <button
@@ -5973,91 +6140,81 @@ function DietView({ settings }: { settings: UserSettings }) {
             </div>
 
             <div className="mt-5 grid gap-3">
-              {DIET_MEALS.map(meal => {
-                const log = mealLogs[meal.id];
-                const mealTotals = dietTotals(log?.foods || []);
-
-                return (
-                  <article key={meal.id} className="min-w-0 rounded-[20px] bg-[#f8f4f0] p-4 ring-1 ring-[#eadfda]">
+              {periodMealLogs.length === 0 ? (
+                <article className="rounded-[20px] bg-[#f8f4f0] p-5 text-center ring-1 ring-[#eadfda]">
+                  <p className="text-base font-bold text-[#242124]">선택한 기간에는 식단 기록이 없어요.</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-[#7a7470]">사진을 추가하거나 직접 입력해서 식단을 남겨보세요.</p>
+                  <button
+                    type="button"
+                    className="mt-4 rounded-full bg-[#242124] px-5 py-3 text-sm font-bold text-[#fffdfb]"
+                    onClick={() => {
+                      setSummaryDialogOpen(false);
+                      openDietEntryDialog(dietRange === "day" ? dietPeriod.start : dietDate);
+                    }}
+                  >
+                    식단 추가
+                  </button>
+                </article>
+              ) : (
+                periodMealsByDate.map(({ date, meals }) => (
+                  <article key={date} className="min-w-0 rounded-[20px] bg-[#f8f4f0] p-4 ring-1 ring-[#eadfda]">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#7a7470]">{meal.label}</p>
+                        <p className="text-xs font-bold text-[#7a7470]">{formatDate(date)}</p>
                         <h3 className="mt-1 text-xl font-bold text-[#242124]">
-                          {log ? `${formatNumber(mealTotals.calories)} kcal` : "아직 기록이 없어요"}
+                          {formatNumber(dietTotals(meals.flatMap(meal => meal.foods)).calories)} kcal
                         </h3>
                       </div>
-                      {log && <span className="shrink-0 rounded-full bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#2f8c63]">저장됨</span>}
+                      <span className="shrink-0 rounded-full bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#2f8c63]">{meals.length}개</span>
                     </div>
 
-                    {log ? (
-                      <div className="mt-4 grid gap-3">
-                        {log.imageUrl && (
-                          <img
-                            src={log.imageUrl}
-                            alt={`${meal.label} 식단 사진`}
-                            className="aspect-[4/3] w-full rounded-[18px] object-cover"
-                          />
-                        )}
-
-                        <div className="grid grid-cols-3 gap-2">
-                          <MacroBox label="탄수화물" value={`${mealTotals.carbs}g`} />
-                          <MacroBox label="단백질" value={`${mealTotals.protein}g`} />
-                          <MacroBox label="지방" value={`${mealTotals.fat}g`} />
-                        </div>
-
-                        <div className="grid gap-2">
-                          {log.foods.map(food => (
-                            <div key={food.id} className="rounded-[16px] bg-[#fffdfb] p-3 ring-1 ring-[#eadfda]">
-                              <div className="flex min-w-0 items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-bold text-[#242124]">{food.name}</p>
-                                  <p className="mt-1 text-xs font-semibold text-[#7a7470]">{food.portion}</p>
-                                </div>
-                                <span className="shrink-0 text-sm font-bold text-[#242124]">{formatNumber(food.calories)} kcal</span>
+                    <div className="mt-4 grid gap-3">
+                      {meals.map(log => {
+                        const meal = DIET_MEALS.find(item => item.id === log.slot);
+                        const mealTotals = dietTotals(log.foods || []);
+                        return (
+                          <div key={log.id || `${log.date}-${log.slot}`} className="grid gap-3 rounded-[18px] bg-[#fffdfb] p-3 ring-1 ring-[#eadfda]">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-[#7a7470]">{meal?.label || "식사"}{log.entryName ? ` · ${log.entryName}` : ""}</p>
+                                <p className="mt-1 truncate text-sm font-bold text-[#242124]">{log.foods.map(food => food.name).join(", ")}</p>
+                                <p className="mt-1 text-xs font-semibold text-[#7a7470]">
+                                  {formatNumber(mealTotals.calories)} kcal · 탄 {mealTotals.carbs}g · 단 {mealTotals.protein}g · 지 {mealTotals.fat}g
+                                </p>
                               </div>
-                              <p className="mt-2 text-xs font-semibold text-[#7a7470]">
-                                탄 {food.carbs}g · 단 {food.protein}g · 지 {food.fat}g
-                              </p>
+                              <button type="button" className="shrink-0 text-xs font-bold text-[#c84653]" onClick={() => void deleteMeal(log)}>
+                                삭제
+                              </button>
                             </div>
-                          ))}
-                        </div>
-
-                        {log.feedback && (
-                          <p className="rounded-[16px] bg-[#fffdfb] p-4 text-sm font-semibold leading-6 text-[#4b4541] ring-1 ring-[#eadfda]">
-                            {log.feedback}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        <label className="cursor-pointer rounded-full bg-[#242124] px-4 py-3 text-center text-sm font-bold text-[#fffdfb] active:scale-[0.99]">
-                          사진 추가
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="sr-only"
-                            onChange={event => {
-                              setSummaryDialogOpen(false);
-                              void openPhotoAnalysis(meal.id, event.target.files);
-                              event.currentTarget.value = "";
-                            }}
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className="rounded-full bg-[#fffdfb] px-4 py-3 text-sm font-bold text-[#242124] ring-1 ring-[#eadfda]"
-                          onClick={() => {
-                            setSummaryDialogOpen(false);
-                            openManualEntry(meal.id);
-                          }}
-                        >
-                          직접 입력
-                        </button>
-                      </div>
-                    )}
+                            {log.imageUrl && <img src={log.imageUrl} alt={`${meal?.label || "식사"} 식단 사진`} className="aspect-[4/3] w-full rounded-[16px] object-cover" />}
+                            <div className="grid gap-2">
+                              {log.foods.map(food => (
+                                <div key={food.id} className="rounded-[14px] bg-[#f8f4f0] p-3">
+                                  <div className="flex min-w-0 items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-bold text-[#242124]">{food.name}</p>
+                                      <p className="mt-1 text-xs font-semibold text-[#7a7470]">{food.portion}</p>
+                                    </div>
+                                    <span className="shrink-0 text-sm font-bold text-[#242124]">{formatNumber(food.calories)} kcal</span>
+                                  </div>
+                                  <p className="mt-2 text-xs font-semibold text-[#7a7470]">
+                                    탄 {food.carbs}g · 단 {food.protein}g · 지 {food.fat}g
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                            {log.feedback && (
+                              <p className="rounded-[14px] bg-[#f8f4f0] p-3 text-sm font-semibold leading-6 text-[#4b4541]">
+                                {log.feedback}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </article>
-                );
-              })}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -6748,7 +6905,7 @@ function DietMacroStrip({ totals }: { totals: { calories: number; carbs: number;
 
 function DietDayDetail({ date, meals, onClose }: { date: string; meals: DietMealLog[]; onClose: () => void }) {
   const totals = dietTotals(meals.flatMap(meal => meal.foods));
-  const mealsBySlot = new Map(meals.map(meal => [meal.slot, meal]));
+  const mealsBySlot = groupDietMealsBySlot(meals);
 
   return (
     <>
@@ -6781,8 +6938,8 @@ function DietDayDetail({ date, meals, onClose }: { date: string; meals: DietMeal
 
       <div className="mt-5 grid gap-3">
         {DIET_MEALS.map(meal => {
-          const log = mealsBySlot.get(meal.id);
-          const mealTotals = dietTotals(log?.foods || []);
+          const slotLogs = mealsBySlot.get(meal.id) || [];
+          const mealTotals = dietTotals(slotLogs.flatMap(log => log.foods || []));
 
           return (
             <article key={meal.id} className="rounded-[20px] bg-[#f8f4f0] p-4 ring-1 ring-[#eadfda]">
@@ -6790,43 +6947,47 @@ function DietDayDetail({ date, meals, onClose }: { date: string; meals: DietMeal
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-[#7a7470]">{meal.label}</p>
                   <h3 className="mt-1 text-xl font-bold text-[#242124]">
-                    {log ? `${formatNumber(mealTotals.calories)} kcal` : "기록 없음"}
+                    {slotLogs.length > 0 ? `${formatNumber(mealTotals.calories)} kcal` : "기록 없음"}
                   </h3>
                 </div>
                 <i className={`h-3 w-3 shrink-0 rounded-full ${DIET_MEAL_COLORS[meal.id]}`} />
               </div>
 
-              {log ? (
+              {slotLogs.length > 0 ? (
                 <div className="mt-4 grid gap-3">
-                  {log.imageUrl && (
-                    <img src={log.imageUrl} alt={`${meal.label} 식단 사진`} className="aspect-[4/3] w-full rounded-[18px] object-cover" />
-                  )}
                   <div className="grid grid-cols-3 gap-2">
                     <MacroBox label="탄수화물" value={`${mealTotals.carbs}g`} />
                     <MacroBox label="단백질" value={`${mealTotals.protein}g`} />
                     <MacroBox label="지방" value={`${mealTotals.fat}g`} />
                   </div>
-                  <div className="grid gap-2">
-                    {log.foods.map(food => (
-                      <div key={food.id} className="rounded-[16px] bg-[#fffdfb] p-3 ring-1 ring-[#eadfda]">
-                        <div className="flex min-w-0 items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-[#242124]">{food.name}</p>
-                            <p className="mt-1 text-xs font-semibold text-[#7a7470]">{food.portion}</p>
+                  {slotLogs.map(log => (
+                    <div key={log.id || `${log.date}-${log.slot}`} className="grid gap-3 rounded-[16px] bg-[#fffdfb] p-3 ring-1 ring-[#eadfda]">
+                      {log.imageUrl && (
+                        <img src={log.imageUrl} alt={`${meal.label} 식단 사진`} className="aspect-[4/3] w-full rounded-[16px] object-cover" />
+                      )}
+                      <div className="grid gap-2">
+                        {log.foods.map(food => (
+                          <div key={food.id} className="rounded-[14px] bg-[#f8f4f0] p-3">
+                            <div className="flex min-w-0 items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-bold text-[#242124]">{food.name}</p>
+                                <p className="mt-1 text-xs font-semibold text-[#7a7470]">{food.portion}</p>
+                              </div>
+                              <span className="shrink-0 text-sm font-bold text-[#242124]">{formatNumber(food.calories)} kcal</span>
+                            </div>
+                            <p className="mt-2 text-xs font-semibold text-[#7a7470]">
+                              탄 {food.carbs}g · 단 {food.protein}g · 지 {food.fat}g
+                            </p>
                           </div>
-                          <span className="shrink-0 text-sm font-bold text-[#242124]">{formatNumber(food.calories)} kcal</span>
-                        </div>
-                        <p className="mt-2 text-xs font-semibold text-[#7a7470]">
-                          탄 {food.carbs}g · 단 {food.protein}g · 지 {food.fat}g
-                        </p>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  {log.feedback && (
-                    <p className="rounded-[16px] bg-[#fffdfb] p-4 text-sm font-semibold leading-6 text-[#4b4541] ring-1 ring-[#eadfda]">
-                      {log.feedback}
-                    </p>
-                  )}
+                      {log.feedback && (
+                        <p className="rounded-[14px] bg-[#f8f4f0] p-3 text-sm font-semibold leading-6 text-[#4b4541]">
+                          {log.feedback}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p className="mt-3 text-sm font-semibold text-[#7a7470]">이 구간은 아직 등록된 식단이 없습니다.</p>

@@ -45,12 +45,12 @@ CREATE TABLE IF NOT EXISTS fit_diet_meal_logs (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   meal_date DATE NOT NULL,
   meal_slot TEXT NOT NULL,
+  entry_name TEXT,
   image_url TEXT,
   ai_feedback TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT fit_diet_meal_slot_valid CHECK (meal_slot IN ('morning', 'lunch', 'afternoon', 'snack')),
-  CONSTRAINT fit_diet_meal_unique UNIQUE (user_id, meal_date, meal_slot)
+  CONSTRAINT fit_diet_meal_slot_valid CHECK (meal_slot IN ('morning', 'lunch', 'afternoon', 'snack'))
 );
 
 CREATE TABLE IF NOT EXISTS fit_diet_food_items (
@@ -172,6 +172,16 @@ CREATE INDEX IF NOT EXISTS idx_fit_sets_user_session
 
 CREATE INDEX IF NOT EXISTS idx_fit_diet_meals_user_date
   ON fit_diet_meal_logs(user_id, meal_date DESC);
+
+ALTER TABLE fit_diet_meal_logs
+  ADD COLUMN IF NOT EXISTS entry_name TEXT;
+
+ALTER TABLE fit_diet_meal_logs
+  DROP CONSTRAINT IF EXISTS fit_diet_meal_unique;
+
+CREATE UNIQUE INDEX IF NOT EXISTS fit_diet_meal_unique_regular
+  ON fit_diet_meal_logs(user_id, meal_date, meal_slot)
+  WHERE meal_slot <> 'snack';
 
 CREATE INDEX IF NOT EXISTS idx_fit_diet_food_items_meal
   ON fit_diet_food_items(meal_log_id, sort_order);

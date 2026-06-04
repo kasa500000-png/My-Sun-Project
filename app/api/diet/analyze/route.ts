@@ -102,7 +102,7 @@ function sanitizeFoods(value: unknown): FoodEstimate[] {
   });
 }
 
-function buildPayload(model: string, imageDataUrl: string, mealSlot: string) {
+function buildPayload(model: string, imageDataUrl: string, mealSlot: string, menuHint: string) {
   return {
     model,
     temperature: 0.1,
@@ -129,6 +129,7 @@ function buildPayload(model: string, imageDataUrl: string, mealSlot: string) {
             type: "text",
             text: [
               `Meal slot: ${mealSlot}.`,
+              menuHint ? `User-provided menu hint: ${menuHint}. Use it as context, but verify against the image.` : "",
               "사진 속 음식을 한국어로 분석해 주세요.",
               "음식별 추정치를 분리해서 주세요.",
               "컵라면, 소시지, 계란처럼 포장/완제품이 보이면 일반적인 1회 제공량 기준으로 추정해 주세요.",
@@ -141,7 +142,7 @@ function buildPayload(model: string, imageDataUrl: string, mealSlot: string) {
   };
 }
 
-async function callXai(apiKey: string, model: string, imageDataUrl: string, mealSlot: string) {
+async function callXai(apiKey: string, model: string, imageDataUrl: string, mealSlot: string, menuHint: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), XAI_TIMEOUT_MS);
 
@@ -152,7 +153,7 @@ async function callXai(apiKey: string, model: string, imageDataUrl: string, meal
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(buildPayload(model, imageDataUrl, mealSlot)),
+      body: JSON.stringify(buildPayload(model, imageDataUrl, mealSlot, menuHint)),
       signal: controller.signal,
     });
 
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { imageDataUrl?: unknown; mealSlot?: unknown };
+  let body: { imageDataUrl?: unknown; mealSlot?: unknown; menuHint?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -181,6 +182,7 @@ export async function POST(request: NextRequest) {
 
   const imageDataUrl = typeof body.imageDataUrl === "string" ? body.imageDataUrl : "";
   const mealSlot = asText(body.mealSlot, "meal");
+  const menuHint = asText(body.menuHint, "", 200);
 
   if (!imageDataUrl.startsWith("data:image/")) {
     return NextResponse.json({ error: "분석할 이미지가 필요합니다." }, { status: 400 });
@@ -194,7 +196,7 @@ export async function POST(request: NextRequest) {
   const canFallback = !process.env.XAI_VISION_MODEL && requestedModel !== VISION_FALLBACK_MODEL;
 
   try {
-    let result = await callXai(apiKey, requestedModel, imageDataUrl, mealSlot);
+    let result = await callXai(apiKey, requestedModel, imageDataUrl, mealSlot, menuHint);
     let usedModel = requestedModel;
 
     if (!result.response.ok) {
@@ -204,7 +206,7 @@ export async function POST(request: NextRequest) {
 
     if (!result.content && canFallback) {
       console.warn("[diet-analyze] empty content from model, retrying vision fallback", requestedModel);
-      result = await callXai(apiKey, VISION_FALLBACK_MODEL, imageDataUrl, mealSlot);
+      result = await callXai(apiKey, VISION_FALLBACK_MODEL, imageDataUrl, mealSlot, menuHint);
       usedModel = VISION_FALLBACK_MODEL;
     }
 

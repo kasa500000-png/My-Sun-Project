@@ -30,6 +30,7 @@ type MealRow = {
   id: string;
   meal_date: string | null;
   meal_slot: string | null;
+  entry_name: string | null;
   image_url: string | null;
   ai_feedback: string | null;
   fit_diet_food_items?: FoodRow[] | null;
@@ -84,6 +85,7 @@ function mapMeal(row: MealRow) {
     id: row.id,
     date: asDate(row.meal_date),
     slot: row.meal_slot || "lunch",
+    entryName: row.entry_name || undefined,
     imageUrl: row.image_url || undefined,
     feedback: row.ai_feedback || undefined,
     foods: (row.fit_diet_food_items || [])
@@ -170,21 +172,71 @@ export async function POST(req: NextRequest) {
     user_id: userId,
     meal_date: date,
     meal_slot: slot,
+    entry_name: asText(body.entryName, 120),
     image_url: asImageUrl(body.imageUrl),
     ai_feedback: asText(body.feedback, 1000),
     updated_at: new Date().toISOString(),
   };
 
-  const { data: meal, error: mealError } = await sb
-    .from("fit_diet_meal_logs")
-    .upsert(mealPayload, { onConflict: "user_id,meal_date,meal_slot" })
-    .select("*")
-    .single();
+  const requestedId = asText(body.id, 64);
+  let meal: MealRow | null = null;
+  let mealError: unknown = null;
+
+  if (requestedId) {
+    const result = await sb
+      .from("fit_diet_meal_logs")
+      .update(mealPayload)
+      .eq("id", requestedId)
+      .eq("user_id", userId)
+      .select("*")
+      .single();
+    meal = result.data as MealRow | null;
+    mealError = result.error;
+  } else if (slot !== "snack") {
+    const existing = await sb
+      .from("fit_diet_meal_logs")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("meal_date", date)
+      .eq("meal_slot", slot)
+      .maybeSingle();
+
+    if (existing.error) {
+      mealError = existing.error;
+    } else if (existing.data?.id) {
+      const result = await sb
+        .from("fit_diet_meal_logs")
+        .update(mealPayload)
+        .eq("id", existing.data.id)
+        .eq("user_id", userId)
+        .select("*")
+        .single();
+      meal = result.data as MealRow | null;
+      mealError = result.error;
+    } else {
+      const result = await sb
+        .from("fit_diet_meal_logs")
+        .insert(mealPayload)
+        .select("*")
+        .single();
+      meal = result.data as MealRow | null;
+      mealError = result.error;
+    }
+  } else {
+    const result = await sb
+      .from("fit_diet_meal_logs")
+      .insert(mealPayload)
+      .select("*")
+      .single();
+    meal = result.data as MealRow | null;
+    mealError = result.error;
+  }
 
   if (mealError) {
     if (isMissingTable(mealError)) return userError("식단 저장 테이블이 아직 준비되지 않았습니다. Supabase SQL을 먼저 실행해 주세요.", 500);
     return serverError(mealError, "식단 기록 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
   }
+  if (!meal) return userError("저장할 식단 기록을 확인하지 못했습니다.", 500);
 
   const { error: deleteError } = await sb
     .from("fit_diet_food_items")
