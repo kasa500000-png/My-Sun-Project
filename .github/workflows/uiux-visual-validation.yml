@@ -1,0 +1,112 @@
+name: UIUX visual validation
+
+on:
+  push:
+    branches:
+      - codex/uiux-30-stage-improvement
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "tests/e2e/uiux/**"
+      - "playwright.uiux.config.mjs"
+      - "scripts/uiux-generate-diffs.mjs"
+      - ".github/workflows/uiux-visual-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uiux-visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-validation:
+    name: Chromium before and after matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UIUX_VISUAL_TEST: "true"
+      UIUX_VISUAL_TOKEN: "uiux-local-ci"
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "uiux-ci-placeholder-key"
+    steps:
+      - name: Checkout improved branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install application and browser tooling
+        run: |
+          npm ci
+          npm install --no-save @playwright/test@1.55.0 @axe-core/playwright@4.10.2 pixelmatch@6.0.0 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+
+      - name: Prepare baseline worktree
+        run: |
+          git worktree add ../uiux-before main
+          mkdir -p ../uiux-before/app/uiux-visual/error ../uiux-before/app/uiux-visual/loading ../uiux-before/lib
+          cp app/uiux-visual/page.tsx ../uiux-before/app/uiux-visual/page.tsx
+          cp app/uiux-visual/error/page.tsx ../uiux-before/app/uiux-visual/error/page.tsx
+          cp app/uiux-visual/loading/page.tsx ../uiux-before/app/uiux-visual/loading/page.tsx
+          cp lib/uiux-visual-gate.ts ../uiux-before/lib/uiux-visual-gate.ts
+          ln -s "$GITHUB_WORKSPACE/node_modules" ../uiux-before/node_modules
+          mkdir -p artifacts/uiux/runtime/before artifacts/uiux/runtime/after artifacts/uiux/runtime/diff artifacts/uiux/runtime/reports
+
+      - name: Build baseline
+        working-directory: ../uiux-before
+        run: npm run build
+
+      - name: Capture baseline screens
+        run: |
+          (cd ../uiux-before && npm run start -- -p 3100 > "$GITHUB_WORKSPACE/artifacts/uiux/runtime/before-server.log" 2>&1 & echo $! > /tmp/uiux-before.pid)
+          trap 'kill $(cat /tmp/uiux-before.pid) 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl --silent --fail --header "x-uiux-visual-token: $UIUX_VISUAL_TOKEN" http://127.0.0.1:3100/uiux-visual >/dev/null; then break; fi
+            sleep 1
+          done
+          UIUX_MODE=before \
+          UIUX_BASE_URL=http://127.0.0.1:3100 \
+          UIUX_EVIDENCE_DIR=artifacts/uiux/runtime/before \
+          UIUX_PW_OUTPUT_DIR=test-results/uiux-before \
+          npx playwright test -c playwright.uiux.config.mjs
+
+      - name: Build improved branch
+        run: npm run build
+
+      - name: Capture improved screens
+        run: |
+          (npm run start -- -p 3200 > artifacts/uiux/runtime/after-server.log 2>&1 & echo $! > /tmp/uiux-after.pid)
+          trap 'kill $(cat /tmp/uiux-after.pid) 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl --silent --fail --header "x-uiux-visual-token: $UIUX_VISUAL_TOKEN" http://127.0.0.1:3200/uiux-visual >/dev/null; then break; fi
+            sleep 1
+          done
+          UIUX_MODE=after \
+          UIUX_BASE_URL=http://127.0.0.1:3200 \
+          UIUX_EVIDENCE_DIR=artifacts/uiux/runtime/after \
+          UIUX_PW_OUTPUT_DIR=test-results/uiux-after \
+          npx playwright test -c playwright.uiux.config.mjs
+
+      - name: Generate pixel diffs
+        if: always()
+        run: node scripts/uiux-generate-diffs.mjs artifacts/uiux/runtime
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uiux-visual-evidence-${{ github.sha }}
+          path: |
+            artifacts/uiux/runtime
+            test-results/uiux-before
+            test-results/uiux-after
+          if-no-files-found: warn
+          retention-days: 14
