@@ -61,10 +61,16 @@ test("cross-device verification matrix stays explicit", () => {
 });
 
 test("each completed stage has an auditable log", () => {
-  for (let stage = 1; stage <= 29; stage += 1) {
+  for (let stage = 1; stage <= 30; stage += 1) {
     const id = String(stage).padStart(2, "0");
     assert.ok(exists(path.join(".logs", "uiux", `stage-${id}.md`)), `stage-${id}.md must exist`);
   }
+});
+
+test("final report and release checklist are present", () => {
+  assert.ok(exists("docs/uiux/final-report.md"));
+  assert.ok(exists("docs/uiux/release-checklist.md"));
+  assert.match(read("docs/uiux/final-report.md"), /## 18\. 최종 배포 판정/);
 });
 
 test("validate includes every repository quality gate", () => {
