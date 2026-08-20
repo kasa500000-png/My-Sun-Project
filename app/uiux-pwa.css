@@ -1,0 +1,49 @@
+/* PWA connection recovery and offline safety messaging. */
+
+.mysun-offline-recovery {
+  display: grid;
+  width: min(100%, 24rem);
+  gap: var(--mysun-space-3);
+}
+
+.mysun-offline-recovery .mysun-primary-action {
+  width: 100%;
+}
+
+.mysun-offline-status {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mysun-line);
+  border-radius: var(--mysun-radius-card);
+  background: var(--mysun-warning-surface);
+  color: #70460f;
+  font-size: var(--mysun-type-sm);
+  font-weight: 600;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.mysun-offline-status[data-online="true"] {
+  border-color: #b9dfc5;
+  background: var(--mysun-success-surface);
+  color: #1f6848;
+}
+
+.mysun-state-actions > .mysun-offline-recovery {
+  flex: 1 1 100%;
+}
+
+@media (max-width: 389px) {
+  .mysun-offline-recovery {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .mysun-offline-status,
+  .mysun-offline-status[data-online="true"] {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}

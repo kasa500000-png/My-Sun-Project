@@ -1,5 +1,7 @@
-const CACHE_NAME = "mysun-fit-log-v4";
+const CACHE_NAME = "mysun-fit-log-v5";
+const PUBLIC_NAVIGATION_PATHS = new Set(["/login", "/offline"]);
 const PRECACHE_URLS = [
+  "/login",
   "/offline",
   "/manifest.webmanifest",
   "/icons/mysun-192.png",
@@ -38,11 +40,20 @@ self.addEventListener("fetch", event => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => null);
+          if (response.ok && PUBLIC_NAVIGATION_PATHS.has(url.pathname)) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(url.pathname, copy)).catch(() => null);
+          }
           return response;
         })
-        .catch(() => caches.match(request).then(cached => cached || caches.match("/offline")).then(response => response || Response.error()))
+        .catch(() => {
+          if (PUBLIC_NAVIGATION_PATHS.has(url.pathname)) {
+            return caches.match(url.pathname)
+              .then(cached => cached || caches.match("/offline"))
+              .then(response => response || Response.error());
+          }
+          return caches.match("/offline").then(response => response || Response.error());
+        })
     );
     return;
   }
@@ -52,8 +63,10 @@ self.addEventListener("fetch", event => {
       caches.match(request).then(cached => {
         const refresh = fetch(request)
           .then(response => {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => null);
+            if (response.ok) {
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => null);
+            }
             return response;
           })
           .catch(() => cached || Response.error());
