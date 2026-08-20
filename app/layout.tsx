@@ -4,6 +4,7 @@ import "./uiux-foundation.css";
 import "./uiux-accessibility.css";
 import "./uiux-responsive.css";
 import "./uiux-components.css";
+import "./uiux-navigation.css";
 import ServiceWorkerBridge from "@/components/ServiceWorkerBridge";
 
 export const metadata: Metadata = {
@@ -64,7 +65,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ServiceWorkerBridge />
-        {children}
+        <a className="mysun-skip-link" href="#app-content">
+          본문으로 건너뛰기
+        </a>
+        <div id="app-content" data-app-content tabIndex={-1}>
+          {children}
+        </div>
       </body>
     </html>
   );

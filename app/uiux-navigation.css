@@ -1,0 +1,57 @@
+/* Keyboard entry and predictable navigation affordances. */
+
+[data-app-content] {
+  min-height: 100svh;
+  outline: none;
+}
+
+.mysun-skip-link {
+  position: fixed;
+  top: max(0.5rem, var(--mysun-safe-top));
+  left: max(0.5rem, var(--mysun-safe-left));
+  z-index: 9999;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--mysun-ink);
+  border-radius: var(--mysun-radius-pill);
+  background: var(--mysun-canvas);
+  color: var(--mysun-ink);
+  box-shadow: var(--mysun-shadow-panel);
+  font-size: var(--mysun-type-sm);
+  font-weight: 800;
+  line-height: 1.25;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1.5rem));
+  transition: transform var(--mysun-motion-fast) var(--mysun-ease-standard);
+}
+
+.mysun-skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+nav[aria-label="하단 메뉴"] :where(button, a) {
+  position: relative;
+}
+
+nav[aria-label="하단 메뉴"] :where([aria-current="page"], [aria-selected="true"])::after {
+  position: absolute;
+  right: 25%;
+  bottom: 0.15rem;
+  left: 25%;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+@media (forced-colors: active) {
+  .mysun-skip-link {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  nav[aria-label="하단 메뉴"] :where([aria-current="page"], [aria-selected="true"])::after {
+    background: Highlight;
+  }
+}
