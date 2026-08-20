@@ -17,8 +17,8 @@ div[class*="rounded-[14px]"][class*="ring-[#eadfda]"] > p[class*="text-lg"][clas
 }
 
 section[class*="max-w-[960px]"]:has(button[aria-label="이전 달"]) button[aria-label*="운동 기록"] {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 44px;
+  min-height: 44px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -79,9 +79,17 @@ th {
     font-size: 0.875rem;
   }
 
-  section[class*="max-w-[960px]"]:has(button[aria-label="이전 달"]) button[aria-label*="운동 기록"] {
-    min-width: 0;
-    min-height: 38px;
+  :where(
+    div:has(> button[aria-label*="운동 기록"]),
+    div:has(> button[aria-label*="식단 기록"])
+  ) {
+    gap: 2px;
+  }
+
+  section[class*="max-w-[960px]"]:has(button[aria-label="이전 달"]) button[aria-label*="운동 기록"],
+  button[aria-label*="식단 기록"] {
+    min-width: 44px;
+    min-height: 44px;
     border-radius: 0.625rem;
     font-size: 0.8125rem;
   }
