@@ -1,0 +1,135 @@
+/* Color, focus and platform accessibility safeguards. */
+
+:where(input, textarea)::placeholder {
+  color: #756b66;
+}
+
+:where(input, select, textarea) {
+  accent-color: var(--mysun-focus);
+}
+
+:where(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+  outline: 3px solid var(--mysun-focus);
+  outline-offset: 3px;
+  box-shadow: var(--mysun-shadow-focus);
+}
+
+:where([aria-current="page"], [aria-selected="true"], [aria-pressed="true"]) {
+  text-decoration-skip-ink: auto;
+}
+
+.mysun-status[data-tone] {
+  border-inline-start-width: 4px;
+}
+
+.mysun-status[data-tone="success"]::before,
+.mysun-status[data-tone="danger"]::before,
+.mysun-status[data-tone="warning"]::before,
+.mysun-status[data-tone="info"]::before {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  content: "";
+  margin-top: 0.125rem;
+}
+
+.mysun-status[data-tone="success"]::before {
+  background: radial-gradient(circle at center, currentColor 0 32%, transparent 36%);
+}
+
+.mysun-status[data-tone="danger"]::before {
+  border-radius: 0.35rem;
+  background: linear-gradient(45deg, transparent 43%, currentColor 44% 56%, transparent 57%);
+}
+
+.mysun-status[data-tone="warning"]::before {
+  border-radius: 0.25rem 0.25rem 0.6rem 0.6rem;
+  background: linear-gradient(to top, currentColor 0 22%, transparent 23%);
+}
+
+.mysun-status[data-tone="info"]::before {
+  background: linear-gradient(to bottom, currentColor 0 18%, transparent 19% 50%, currentColor 51% 100%);
+  background-size: 2px 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+main a:not([class]) {
+  color: var(--mysun-focus);
+  text-decoration: underline;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --mysun-muted: #625a56;
+    --mysun-line: #a79d97;
+    --mysun-line-strong: #7f756f;
+  }
+
+  :where(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+    outline-width: 4px;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  .mysun-card,
+  .mysun-panel,
+  .mysun-status,
+  .mysun-exercise-row,
+  .mysun-bottom-sheet {
+    border-width: 2px;
+    box-shadow: none;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    forced-color-adjust: auto;
+  }
+
+  :where(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 3px;
+    box-shadow: none;
+  }
+
+  .mysun-status,
+  .mysun-card,
+  .mysun-panel,
+  .mysun-exercise-row,
+  .mysun-bottom-sheet {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .mysun-status[data-tone] {
+    border-inline-start-width: 5px;
+  }
+
+  .mysun-primary-action,
+  .mysun-tab-active {
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  .mysun-status[data-tone]::before {
+    border-color: currentColor;
+    background: none;
+  }
+}
+
+@media print {
+  :where(button, nav, [role="dialog"]) {
+    break-inside: avoid;
+  }
+
+  :where(button, input, select, textarea, a) {
+    box-shadow: none !important;
+  }
+}
