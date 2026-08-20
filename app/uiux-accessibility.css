@@ -8,6 +8,20 @@
   accent-color: var(--mysun-focus);
 }
 
+/* Legacy utility colors are normalized to AA-safe semantic values. */
+[class~="text-[#7a7470]"],
+[class~="text-[#9d958f]"] {
+  color: #6d6662 !important;
+}
+
+[class~="text-[#2f8c63]"] {
+  color: #1f6848 !important;
+}
+
+[class~="text-[#c84653]"] {
+  color: #9b3140 !important;
+}
+
 :where(button, input, select, textarea, a[href], [tabindex]):focus-visible {
   outline: 3px solid var(--mysun-focus);
   outline-offset: 3px;
