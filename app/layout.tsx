@@ -15,6 +15,7 @@ import "./uiux-goals.css";
 import "./uiux-forms.css";
 import "./uiux-data.css";
 import "./uiux-pwa.css";
+import "./uiux-settings.css";
 import ServiceWorkerBridge from "@/components/ServiceWorkerBridge";
 
 export const metadata: Metadata = {
