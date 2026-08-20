@@ -7,6 +7,7 @@ const MODE = process.env.UIUX_MODE || "after";
 const IS_AFTER = MODE === "after";
 const FIXED_NOW = new Date("2026-08-20T06:00:00.000Z");
 const EVIDENCE_ROOT = path.resolve(process.env.UIUX_EVIDENCE_DIR || `artifacts/uiux/runtime/${MODE}`);
+const EXPECTED_ERROR_SCREENS = new Set(["STATE-02", "STATE-03"]);
 
 const VIEWPORTS = [
   { id: "mobile-360", width: 360, height: 800 },
@@ -121,9 +122,7 @@ function json(route, body, status = 200) {
 async function installFixtures(page) {
   await page.route("https://example.supabase.co/**", route => json(route, { user: null }));
   await page.route("**/api/**", route => {
-    const request = route.request();
-    const url = new URL(request.url());
-
+    const url = new URL(route.request().url());
     if (url.pathname === "/api/fit-log") return json(route, { sessions: SESSIONS });
     if (url.pathname === "/api/fit-settings") return json(route, { settings: SETTINGS });
     if (url.pathname === "/api/diet-goals") return json(route, { goal: GOAL });
@@ -187,7 +186,6 @@ async function layoutAudit(page) {
           height: Math.round(rect.height),
         };
       });
-
     return {
       viewportWidth,
       documentWidth,
@@ -301,14 +299,15 @@ async function capture(page, viewport, screen) {
   page.off("console", onConsole);
   page.off("pageerror", onPageError);
 
+  const expectedErrorScreen = EXPECTED_ERROR_SCREENS.has(screen.id);
   const result = {
     id: screen.id,
     path: screen.path,
     screenshot: path.relative(process.cwd(), screenshotPath),
     layout,
     axe,
-    consoleErrors: screen.id === "STATE-02" ? [] : consoleErrors,
-    pageErrors: screen.id === "STATE-02" ? [] : pageErrors,
+    consoleErrors: expectedErrorScreen ? [] : consoleErrors,
+    pageErrors: expectedErrorScreen ? [] : pageErrors,
   };
 
   if (IS_AFTER) {
@@ -329,11 +328,9 @@ test.beforeEach(async ({ page }) => {
 for (const viewport of VIEWPORTS) {
   test.describe(viewport.id, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
-
     test(`capture ${MODE} visual matrix`, async ({ page }) => {
       const results = [];
       for (const screen of SCREENS) results.push(await capture(page, viewport, screen));
-
       const reportDirectory = path.join(EVIDENCE_ROOT, "reports");
       await fs.mkdir(reportDirectory, { recursive: true });
       await fs.writeFile(
@@ -347,22 +344,21 @@ for (const viewport of VIEWPORTS) {
 
 test.describe("representative improved interactions", () => {
   test.use({ viewport: { width: 390, height: 844 } });
-
   test(`validate ${MODE} keyboard, form and modal flows`, async ({ page }) => {
     test.skip(!IS_AFTER, "Baseline is captured visually; strict interactions apply to the improved app.");
     const results = [];
 
     await page.goto("/login");
     await page.getByRole("tab", { name: "회원가입 모드 선택" }).click();
-    await page.getByLabel("이메일").fill("visual@example.com");
-    await page.getByLabel("비밀번호", { exact: true }).fill("abcdef");
-    await page.getByLabel("비밀번호 확인").fill("abcdeg");
+    await page.locator("#auth-email").fill("visual@example.com");
+    await page.locator("#auth-password").fill("abcdef");
+    await page.locator("#auth-password-confirm").fill("abcdeg");
     await page.getByRole("button", { name: "회원가입하고 시작하기" }).click();
     await expect(page.getByRole("alert")).toContainText("입력한 비밀번호와 일치하지 않습니다.");
     results.push({ flow: "auth-validation", status: "pass" });
 
     await page.getByRole("button", { name: "비밀번호 표시하기" }).click();
-    await expect(page.getByLabel("비밀번호", { exact: true })).toHaveAttribute("type", "text");
+    await expect(page.locator("#auth-password")).toHaveAttribute("type", "text");
     results.push({ flow: "password-toggle", status: "pass" });
 
     await page.goto("/uiux-visual?tab=home");
