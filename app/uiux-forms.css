@@ -1,0 +1,102 @@
+/* Mobile-first record forms, keyboard safety and validation states. */
+
+[role="dialog"] :where(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+[role="dialog"] :where(input[inputmode="numeric"], input[inputmode="decimal"], input[type="number"]) {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+[role="dialog"] :where(input, select) {
+  min-height: var(--mysun-control-height);
+}
+
+[role="dialog"] textarea {
+  min-height: 9rem;
+  line-height: 1.6;
+  scroll-padding-bottom: 5rem;
+}
+
+[role="dialog"] :where(input, select, textarea):user-invalid {
+  border-color: var(--mysun-danger);
+}
+
+[role="dialog"] :where(input, select, textarea):disabled {
+  background: color-mix(in srgb, var(--mysun-surface) 82%, var(--mysun-canvas));
+  color: var(--mysun-disabled);
+}
+
+[role="dialog"] > div {
+  overscroll-behavior: contain;
+}
+
+[role="dialog"] > div > div[class*="overflow-y-auto"] {
+  scroll-padding-block: var(--mysun-space-4) calc(5.5rem + var(--mysun-safe-bottom));
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+[role="dialog"][aria-label$="운동 입력"] .mysun-sheet-footer,
+[role="dialog"][aria-label="운동 메모 입력"] .mysun-sheet-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+[role="dialog"][aria-label$="운동 입력"] button:disabled,
+[role="dialog"] button[aria-busy="true"] {
+  box-shadow: none;
+  filter: saturate(0.56);
+}
+
+[role="dialog"] :where(.mysun-field-error, [role="alert"]) {
+  scroll-margin-top: var(--mysun-space-4);
+}
+
+@media (max-width: 389px) {
+  [role="dialog"][aria-label$="운동 입력"] div[class*="grid-cols-2"],
+  [role="dialog"] div[class*="grid-cols-4"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [role="dialog"] div[class*="grid-cols-3"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [role="dialog"] div[class*="grid-cols-5"] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  [role="dialog"] div[class*="grid-cols-5"] button {
+    min-width: 0;
+    padding-inline: 0.25rem;
+  }
+
+  [role="dialog"] :where(input, select, textarea) {
+    font-size: 16px;
+  }
+
+  [role="dialog"] > div > div[class*="p-5"] {
+    padding-inline: 1rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  [role="dialog"] textarea {
+    min-height: 6rem;
+  }
+
+  [role="dialog"] > div > div[class*="overflow-y-auto"] {
+    scroll-padding-bottom: calc(4.5rem + var(--mysun-safe-bottom));
+  }
+}
+
+@media (forced-colors: active) {
+  [role="dialog"] :where(input, select, textarea):user-invalid,
+  [role="dialog"] :where(input, select, textarea)[aria-invalid="true"] {
+    border: 2px solid Mark;
+  }
+}
