@@ -122,6 +122,7 @@ jobs:
           npx playwright test -c playwright.uiux.config.mjs tests/e2e/uiux/interactions-validation.pw.mjs
 
       - name: Capture detailed accessibility findings
+        if: always()
         run: |
           UIUX_MODE=after \
           UIUX_BASE_URL=http://127.0.0.1:3200 \
