@@ -8,6 +8,7 @@ const read = relativePath => fs.readFileSync(path.join(root, relativePath), "utf
 
 const layout = read("app/layout.tsx");
 const login = read("app/login/page.tsx");
+const foundationCss = read("app/uiux-foundation.css");
 const accessibilityCss = read("app/uiux-accessibility.css");
 const responsiveCss = read("app/uiux-responsive.css");
 const loadingCss = read("app/uiux-loading.css");
@@ -62,12 +63,13 @@ test("shared state pages provide labelled headings and actions", () => {
   assert.match(notFoundPage, /저장된 운동·식단 데이터에는 영향을 주지 않았습니다/);
 });
 
-test("focus, contrast and motion preferences are represented", () => {
+test("focus, contrast, safe areas and motion preferences are represented", () => {
   assert.match(accessibilityCss, /:focus-visible/);
   assert.match(accessibilityCss, /prefers-contrast:\s*more/);
   assert.match(accessibilityCss, /forced-colors:\s*active/);
   assert.match(loadingCss, /prefers-reduced-motion:\s*reduce/);
-  assert.match(responsiveCss, /safe-area-inset-bottom/);
+  assert.match(foundationCss, /safe-area-inset-bottom/);
+  assert.match(responsiveCss, /var\(--mysun-safe-bottom\)/);
   assert.match(responsiveCss, /font-size:\s*16px/);
 });
 
