@@ -177,6 +177,7 @@ export default function LoginPage() {
   const passwordType = showPassword ? "text" : "password";
   const passwordHintId = fieldError === "password" ? "password-error" : "password-hint";
   const confirmHintId = fieldError === "passwordConfirm" ? "password-confirm-error" : "password-confirm-hint";
+  const activeTabId = mode === "login" ? "auth-login-tab" : "auth-signup-tab";
 
   return (
     <main className="mysun-auth-page">
@@ -202,7 +203,7 @@ export default function LoginPage() {
         </section>
 
         <section className="mysun-auth-form-region" aria-labelledby="auth-title">
-          <form className="mysun-auth-card" onSubmit={submit} aria-describedby="auth-description">
+          <form className="mysun-auth-card mysun-card" onSubmit={submit} aria-describedby="auth-description">
             <header className="mysun-auth-header">
               <p className="mysun-auth-product">마이썬 운동일지</p>
               <h1 id="auth-title" className="mysun-page-title">
@@ -215,24 +216,30 @@ export default function LoginPage() {
               </p>
             </header>
 
-            <div className="mysun-auth-tabs" role="tablist" aria-label="인증 방식">
+            <div className="mysun-auth-tabs mysun-tabbar" role="tablist" aria-label="인증 방식">
               <button
+                id="auth-login-tab"
                 type="button"
                 role="tab"
                 className="mysun-auth-tab"
+                aria-label="로그인 모드 선택"
                 aria-selected={mode === "login"}
                 aria-controls="auth-fields"
+                tabIndex={mode === "login" ? 0 : -1}
                 disabled={loading}
                 onClick={() => switchMode("login")}
               >
                 로그인
               </button>
               <button
+                id="auth-signup-tab"
                 type="button"
                 role="tab"
                 className="mysun-auth-tab"
+                aria-label="회원가입 모드 선택"
                 aria-selected={mode === "signup"}
                 aria-controls="auth-fields"
+                tabIndex={mode === "signup" ? 0 : -1}
                 disabled={loading}
                 onClick={() => switchMode("signup")}
               >
@@ -240,7 +247,7 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <div id="auth-fields" className="mysun-auth-fields" role="tabpanel">
+            <div id="auth-fields" className="mysun-auth-fields" role="tabpanel" aria-labelledby={activeTabId}>
               <label className="mysun-auth-field" htmlFor="auth-email">
                 <span className="mysun-label">이메일</span>
                 <input
@@ -294,7 +301,8 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="mysun-password-toggle"
-                    aria-controls="auth-password auth-password-confirm"
+                    aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 표시하기"}
+                    aria-controls={mode === "signup" ? "auth-password auth-password-confirm" : "auth-password"}
                     aria-pressed={showPassword}
                     disabled={loading}
                     onClick={() => setShowPassword(current => !current)}
