@@ -1,0 +1,79 @@
+/* Goal, calculated-value and workload presentation. */
+
+[role="dialog"][aria-label="식단 목표 설정"] > div {
+  width: min(100%, 34rem);
+}
+
+[role="dialog"][aria-label="식단 목표 설정"] :where(input[type="number"], select) {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+[role="dialog"][aria-label="식단 목표 설정"] input[type="number"] {
+  min-width: 0;
+  text-align: right;
+}
+
+[role="dialog"][aria-label="식단 목표 설정"] input[type="number"] + span {
+  min-width: 2.5rem;
+  padding-left: 0.5rem;
+  text-align: right;
+}
+
+[role="dialog"][aria-label="식단 목표 설정"] div[class*="bg-[#f8f4f0]"][class*="leading-6"] {
+  border-inline-start: 4px solid var(--mysun-info);
+  background: var(--mysun-info-surface);
+  color: #254b59;
+}
+
+[role="dialog"][aria-label="식단 목표 설정"] div[class*="bg-[#fffdfb]"][class*="ring-1"] {
+  border: 1px solid var(--mysun-line);
+  box-shadow: none;
+}
+
+[role="dialog"][aria-label="식단 목표 설정"] div[class*="grid-cols-2"] > button:first-child {
+  border: 1px solid var(--mysun-line-strong);
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child div[class*="h-2"] {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--mysun-success) 16%, var(--mysun-line));
+  background: color-mix(in srgb, var(--mysun-success-surface) 72%, var(--mysun-surface));
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child div[class*="h-2"] > div {
+  background: linear-gradient(90deg, #2f8c63, #58a77d);
+  transition: width 360ms var(--mysun-ease-standard);
+}
+
+@media (max-width: 389px) {
+  [role="dialog"][aria-label="식단 목표 설정"] div[class*="grid-cols-2"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [role="dialog"][aria-label="식단 목표 설정"] div[class*="grid-cols-2"] > :where(label, button) {
+    width: 100%;
+  }
+
+  [role="dialog"][aria-label="식단 목표 설정"] input[type="number"] {
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child div[class*="h-2"] > div {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  [role="dialog"][aria-label="식단 목표 설정"] div[class*="bg-[#f8f4f0]"][class*="leading-6"] {
+    border-inline-start-color: Highlight;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child div[class*="h-2"] > div {
+    background: Highlight;
+  }
+}
