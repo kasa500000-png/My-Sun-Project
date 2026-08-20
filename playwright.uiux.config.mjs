@@ -5,7 +5,7 @@ const token = process.env.UIUX_VISUAL_TOKEN || "uiux-local-ci";
 
 export default defineConfig({
   testDir: "./tests/e2e/uiux",
-  testMatch: /visual-validation\.pw\.mjs/,
+  testMatch: /runtime-validation\.pw\.mjs/,
   timeout: 120_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
