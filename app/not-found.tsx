@@ -1,21 +1,33 @@
 import Link from "next/link";
+import AppStatePage from "@/components/ui/AppStatePage";
 
 export default function NotFound() {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#fffdfb] px-5 text-[#242124]">
-      <section className="w-full max-w-sm rounded-[24px] bg-[#fffdfb] p-6 text-center shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
-        <p className="text-sm font-semibold text-[#7a7470]">페이지를 찾지 못했어요</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight">다시 운동일지로 돌아갈게요</h1>
-        <p className="mt-4 text-sm leading-6 text-[#4b4541]">
-          주소가 바뀌었거나 사용할 수 없는 화면입니다.
-        </p>
-        <Link
-          className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb]"
-          href="/"
-        >
-          홈으로 이동
+    <AppStatePage
+      eyebrow="404"
+      title="요청한 화면을 찾지 못했어요"
+      icon={
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="5.75" stroke="currentColor" strokeWidth="1.8" />
+          <path d="m15 15 4 4M8.2 10.5h4.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      }
+      description={
+        <>
+          <p>주소가 바뀌었거나 지금은 사용할 수 없는 화면입니다.</p>
+          <p>저장된 운동·식단 데이터에는 영향을 주지 않았습니다.</p>
+        </>
+      }
+      primaryAction={
+        <Link className="mysun-primary-action" href="/">
+          운동일지 홈으로 이동
         </Link>
-      </section>
-    </main>
+      }
+      secondaryAction={
+        <Link className="mysun-secondary-action" href="/login">
+          로그인 화면으로 이동
+        </Link>
+      }
+    />
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import AppStatePage from "@/components/ui/AppStatePage";
+
 export default function Error({
   error,
   reset,
@@ -8,23 +11,33 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#fffdfb] px-5 text-[#242124]">
-      <section className="w-full max-w-sm rounded-[24px] bg-[#fffdfb] p-6 text-center shadow-[0_14px_36px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]">
-        <p className="text-sm font-semibold text-[#7a7470]">잠시 멈췄어요</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight">화면을 다시 불러와 주세요</h1>
-        <p className="mt-4 text-sm leading-6 text-[#4b4541]">
-          네트워크가 불안정하거나 앱 화면을 불러오는 중 문제가 생겼습니다.
-        </p>
-        {error?.digest && (
-          <p className="mt-3 text-xs font-medium text-[#7a7470]">오류 코드: {error.digest}</p>
-        )}
-        <button
-          className="mt-6 h-12 w-full rounded-full bg-[#242124] text-base font-semibold text-[#fffdfb]"
-          onClick={reset}
-        >
-          다시 시도
+    <AppStatePage
+      eyebrow="화면 오류"
+      title="기록을 불러오는 중 잠시 멈췄어요"
+      icon={
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+          <path d="M12 8v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="12" cy="16.5" r="1" fill="currentColor" />
+          <path d="M10.3 4.7 3.2 17a2 2 0 0 0 1.7 3h14.2a2 2 0 0 0 1.7-3L13.7 4.7a2 2 0 0 0-3.4 0Z" stroke="currentColor" strokeWidth="1.7" />
+        </svg>
+      }
+      description={
+        <>
+          <p>네트워크가 불안정하거나 화면 데이터를 처리하는 중 문제가 발생했습니다.</p>
+          <p>저장 버튼을 누른 직후였다면 같은 기록을 다시 입력하기 전에 홈이나 일지에서 저장 여부를 먼저 확인해 주세요.</p>
+        </>
+      }
+      primaryAction={
+        <button type="button" className="mysun-primary-action" onClick={reset}>
+          화면 다시 불러오기
         </button>
-      </section>
-    </main>
+      }
+      secondaryAction={
+        <Link className="mysun-secondary-action" href="/">
+          홈으로 이동
+        </Link>
+      }
+      details={error?.digest ? <p>고객 지원이나 오류 확인에 사용할 코드: {error.digest}</p> : undefined}
+    />
   );
 }
