@@ -44,6 +44,7 @@ test("authentication, workout and settings flows remain usable", async ({ page }
   await expect(page).toHaveURL(/tab=train/);
   results.push({ flow: "home-to-workout", status: "pass" });
 
+  await page.getByRole("button", { name: "하체", exact: true }).first().click();
   const search = page.getByLabel("운동 검색");
   await search.fill("스쿼트");
   const squatButton = page.getByRole("button", { name: /스쿼트/ }).first();
@@ -55,7 +56,7 @@ test("authentication, workout and settings flows remain usable", async ({ page }
   await expect(exerciseDialog.getByLabel("세트 수")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(exerciseDialog).toBeHidden();
-  results.push({ flow: "workout-search-open-close", status: "pass" });
+  results.push({ flow: "workout-scope-search-open-close", status: "pass" });
 
   await page.goto("/uiux-visual?tab=member");
   await expect(page.getByRole("heading", { name: "운동 설정" })).toBeVisible();
