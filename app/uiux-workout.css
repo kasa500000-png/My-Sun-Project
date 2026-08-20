@@ -1,0 +1,99 @@
+/* Exercise discovery and mobile recording affordances. */
+
+.mysun-sticky-actions {
+  max-width: 100%;
+  padding: 0.625rem 0.75rem;
+}
+
+.mysun-sticky-actions :where(button) {
+  min-height: 40px;
+}
+
+.mysun-tabbar,
+.mysun-subtabbar {
+  scroll-snap-type: x proximity;
+}
+
+.mysun-tabbar > *,
+.mysun-subtabbar > * {
+  scroll-snap-align: start;
+}
+
+.mysun-exercise-row {
+  min-height: 80px;
+  scroll-margin-block: calc(var(--mysun-header-height) + 5rem);
+  border-color: var(--mysun-line);
+  box-shadow: 0 4px 14px rgba(58, 48, 50, 0.035);
+}
+
+.mysun-exercise-row:focus-visible {
+  border-color: var(--mysun-focus);
+  box-shadow: var(--mysun-shadow-focus);
+}
+
+.mysun-exercise-row-active {
+  border-color: #a9d6b7;
+  box-shadow: 0 6px 18px rgba(47, 140, 99, 0.1);
+}
+
+.mysun-exercise-row-active::after {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 2px solid var(--mysun-canvas);
+  border-radius: 999px;
+  background: var(--mysun-success);
+  box-shadow: 0 0 0 1px var(--mysun-success);
+  content: "";
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mysun-exercise-row:not(:disabled):hover {
+    border-color: var(--mysun-line-strong);
+    background: var(--mysun-surface);
+    box-shadow: var(--mysun-shadow-card);
+  }
+
+  .mysun-exercise-row-active:not(:disabled):hover {
+    border-color: var(--mysun-success);
+    background: var(--mysun-success-surface);
+  }
+}
+
+@media (max-width: 389px) {
+  .mysun-sticky-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.625rem;
+  }
+
+  .mysun-sticky-actions > :last-child {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  }
+
+  .mysun-sticky-actions > :last-child > button:last-child {
+    width: 100%;
+  }
+
+  .mysun-exercise-row {
+    min-height: 86px;
+    gap: 0.625rem;
+    padding: 0.75rem;
+  }
+
+  .mysun-exercise-row > :last-child {
+    padding-inline: 0.75rem;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .mysun-exercise-row-active {
+    border-width: 2px;
+    border-color: var(--mysun-success);
+  }
+}
