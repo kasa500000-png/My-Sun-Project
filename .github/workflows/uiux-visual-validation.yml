@@ -1,6 +1,17 @@
 name: UIUX visual validation
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "tests/e2e/uiux/**"
+      - "playwright.uiux.config.mjs"
+      - "scripts/uiux-generate-diffs.mjs"
+      - ".github/workflows/uiux-visual-validation.yml"
   push:
     branches:
       - codex/uiux-30-stage-improvement
