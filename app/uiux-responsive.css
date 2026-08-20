@@ -1,0 +1,144 @@
+/* Responsive, viewport and safe-area safeguards shared by every screen. */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  min-height: 100svh;
+  padding-inline: var(--mysun-safe-left) var(--mysun-safe-right);
+}
+
+.mysun-page {
+  min-height: 100svh;
+  max-width: 100%;
+  overflow-x: clip;
+  isolation: isolate;
+}
+
+.mysun-section {
+  width: min(100%, 90rem);
+  padding-inline: clamp(1rem, 2vw, 2rem);
+  scroll-padding-top: calc(var(--mysun-header-height) + var(--mysun-space-4));
+  scroll-padding-bottom: calc(6.5rem + var(--mysun-safe-bottom));
+}
+
+:where(h1, h2, h3, [role="heading"], input, textarea, select, button, a[href]) {
+  scroll-margin-top: calc(var(--mysun-header-height) + var(--mysun-space-4));
+}
+
+:where([role="dialog"], [aria-modal="true"]) {
+  overscroll-behavior: contain;
+}
+
+.mysun-bottom-sheet {
+  width: min(100%, 36rem);
+  max-height: calc(100svh - max(0.75rem, var(--mysun-safe-top)));
+}
+
+.mysun-sheet-footer {
+  padding-bottom: calc(var(--mysun-space-4) + var(--mysun-safe-bottom));
+}
+
+.mysun-sticky-actions {
+  top: calc(var(--mysun-header-height) + var(--mysun-safe-top) + var(--mysun-space-2));
+}
+
+.mysun-tabbar,
+.mysun-subtabbar {
+  max-width: 100%;
+  scroll-padding-inline: var(--mysun-space-2);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mysun-tab {
+  min-width: max-content;
+}
+
+nav[aria-label="하단 메뉴"] {
+  min-height: calc(4rem + var(--mysun-safe-bottom));
+  padding-bottom: var(--mysun-safe-bottom);
+}
+
+@supports (height: 100dvh) {
+  body,
+  .mysun-page {
+    min-height: 100dvh;
+  }
+
+  .mysun-bottom-sheet {
+    max-height: calc(100dvh - max(0.75rem, var(--mysun-safe-top)));
+  }
+}
+
+@media (max-width: 767px) {
+  :where(input, select, textarea) {
+    font-size: 16px;
+  }
+
+  .mysun-section {
+    padding-top: var(--mysun-space-5);
+  }
+
+  :where([role="dialog"], [aria-modal="true"]) {
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 389px) {
+  :root {
+    --mysun-screen-x: 14px;
+    --mysun-section-gap: 20px;
+  }
+
+  .mysun-section {
+    padding-inline: 0.875rem;
+  }
+
+  .mysun-sheet-footer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mysun-sheet-footer > :where(button, a) {
+    width: 100%;
+  }
+
+  .mysun-tab {
+    padding-inline: 1rem;
+  }
+
+  .mysun-status {
+    padding: 0.875rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .mysun-section {
+    padding-block: 2rem 4rem;
+  }
+
+  .mysun-bottom-sheet {
+    margin: auto;
+    border-radius: var(--mysun-radius-sheet);
+  }
+}
+
+@media (min-width: 1280px) {
+  .mysun-section {
+    padding-inline: 2.5rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .mysun-bottom-sheet {
+    max-height: calc(100dvh - 0.5rem);
+  }
+
+  .mysun-section {
+    padding-top: var(--mysun-space-4);
+  }
+}
