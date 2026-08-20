@@ -165,6 +165,19 @@ async function stabilize(page) {
   await page.waitForTimeout(100);
 }
 
+async function primeFullPage(page) {
+  await page.evaluate(async () => {
+    const step = Math.max(Math.floor(window.innerHeight * 0.8), 400);
+    const maximum = document.documentElement.scrollHeight;
+    for (let y = 0; y < maximum; y += step) {
+      window.scrollTo(0, y);
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
+    window.scrollTo(0, 0);
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+}
+
 async function layoutAudit(page) {
   return page.evaluate(() => {
     const viewportWidth = window.innerWidth;
@@ -276,6 +289,7 @@ async function capture(page, viewport, screen) {
   await stabilize(page);
   if (IS_AFTER && screen.afterReady) await screen.afterReady(page);
   else await expect(page.locator("main").first()).toBeVisible();
+  await primeFullPage(page);
 
   const layout = await layoutAudit(page);
   let axe = null;
@@ -354,7 +368,7 @@ test.describe("representative improved interactions", () => {
     await page.locator("#auth-password").fill("abcdef");
     await page.locator("#auth-password-confirm").fill("abcdeg");
     await page.getByRole("button", { name: "회원가입하고 시작하기" }).click();
-    await expect(page.getByRole("alert")).toContainText("입력한 비밀번호와 일치하지 않습니다.");
+    await expect(page.locator("#password-confirm-error")).toContainText("입력한 비밀번호와 일치하지 않습니다.");
     results.push({ flow: "auth-validation", status: "pass" });
 
     await page.getByRole("button", { name: "비밀번호 표시하기" }).click();
