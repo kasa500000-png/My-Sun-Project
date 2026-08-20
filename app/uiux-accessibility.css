@@ -22,6 +22,19 @@
   color: #9b3140 !important;
 }
 
+/* Existing h-9 pills and compact icon actions keep a 44px touch target. */
+:where(button, a[href])[class~="h-9"] {
+  min-height: 44px;
+}
+
+button:is(
+  [aria-label="이전 달"],
+  [aria-label="다음 달"],
+  [aria-label="기록 더보기"]
+) {
+  min-width: 44px;
+}
+
 :where(button, input, select, textarea, a[href], [tabindex]):focus-visible {
   outline: 3px solid var(--mysun-focus);
   outline-offset: 3px;
