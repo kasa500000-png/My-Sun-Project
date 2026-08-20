@@ -39,8 +39,14 @@ jobs:
       - name: ESLint
         run: npm run lint
 
-      - name: Node tests
-        run: npm test
+      - name: Accessibility contracts
+        run: node --test tests/uiux-accessibility.test.mjs
+
+      - name: Performance contracts
+        run: node --test tests/uiux-performance.test.mjs
+
+      - name: Regression contracts
+        run: node --test tests/uiux-regression.test.mjs
 
       - name: Repository quality checks
         run: npm run quality
