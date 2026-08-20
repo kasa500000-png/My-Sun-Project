@@ -68,8 +68,11 @@ jobs:
           cp app/uiux-visual/error/page.tsx ../uiux-before/app/uiux-visual/error/page.tsx
           cp app/uiux-visual/loading/page.tsx ../uiux-before/app/uiux-visual/loading/page.tsx
           cp lib/uiux-visual-gate.ts ../uiux-before/lib/uiux-visual-gate.ts
-          ln -s "$GITHUB_WORKSPACE/node_modules" ../uiux-before/node_modules
           mkdir -p artifacts/uiux/runtime/before artifacts/uiux/runtime/after artifacts/uiux/runtime/diff artifacts/uiux/runtime/reports
+
+      - name: Install baseline dependencies
+        working-directory: ../uiux-before
+        run: npm ci
 
       - name: Build baseline
         working-directory: ../uiux-before
