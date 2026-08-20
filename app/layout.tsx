@@ -19,6 +19,7 @@ import "./uiux-settings.css";
 import "./uiux-motion.css";
 import "./uiux-performance.css";
 import ServiceWorkerBridge from "@/components/ServiceWorkerBridge";
+import ScrollableRegionAccessBridge from "@/components/ScrollableRegionAccessBridge";
 
 const PRETENDARD_STYLESHEET = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css";
 
@@ -81,6 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ServiceWorkerBridge />
+        <ScrollableRegionAccessBridge />
         <a className="mysun-skip-link" href="#app-content">
           본문으로 건너뛰기
         </a>
