@@ -1,0 +1,128 @@
+/* Route loading skeleton that mirrors the home information hierarchy. */
+
+.mysun-loading-page {
+  min-height: 100svh;
+  padding:
+    calc(1rem + var(--mysun-safe-top))
+    max(1rem, var(--mysun-safe-right))
+    calc(2rem + var(--mysun-safe-bottom))
+    max(1rem, var(--mysun-safe-left));
+  background: var(--mysun-canvas);
+  color: var(--mysun-ink);
+}
+
+.mysun-loading-shell {
+  display: grid;
+  width: min(100%, 75rem);
+  margin-inline: auto;
+  gap: var(--mysun-space-4);
+}
+
+.mysun-loading-header,
+.mysun-loading-hero,
+.mysun-loading-card {
+  border: 1px solid var(--mysun-line);
+  background: var(--mysun-canvas);
+  box-shadow: var(--mysun-shadow-card);
+}
+
+.mysun-loading-header {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mysun-space-4);
+  border-radius: var(--mysun-radius-pill);
+  padding: 0.75rem 1rem;
+}
+
+.mysun-loading-hero {
+  display: grid;
+  min-height: clamp(18rem, 44svh, 28rem);
+  align-content: end;
+  gap: var(--mysun-space-3);
+  border-radius: var(--mysun-radius-sheet);
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  background:
+    linear-gradient(135deg, rgba(247, 221, 226, 0.62), rgba(248, 244, 240, 0.78)),
+    var(--mysun-surface);
+}
+
+.mysun-loading-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mysun-space-3);
+}
+
+.mysun-loading-card {
+  display: grid;
+  min-height: 8rem;
+  align-content: start;
+  gap: var(--mysun-space-3);
+  border-radius: var(--mysun-radius-panel);
+  padding: var(--mysun-space-4);
+}
+
+.mysun-skeleton {
+  display: block;
+  border-radius: var(--mysun-radius-pill);
+  background: linear-gradient(90deg, #eee7e2 0%, #f8f4f0 46%, #eee7e2 100%);
+  background-size: 220% 100%;
+  animation: mysun-skeleton-shift 1.6s var(--mysun-ease-standard) infinite;
+}
+
+.mysun-loading-logo { width: 8.5rem; height: 1.25rem; }
+.mysun-loading-action { width: 5.25rem; height: 2.25rem; }
+.mysun-loading-kicker { width: 5rem; height: 0.75rem; }
+.mysun-loading-title { width: min(80%, 24rem); height: 2.4rem; }
+.mysun-loading-copy { width: min(92%, 34rem); height: 1rem; }
+.mysun-loading-button { width: 8.5rem; height: 3rem; margin-top: 0.25rem; }
+.mysun-loading-card-label { width: 5rem; height: 0.75rem; }
+.mysun-loading-card-value { width: 8rem; height: 1.8rem; }
+.mysun-loading-card-copy { width: 70%; height: 0.75rem; }
+
+.mysun-loading-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mysun-space-2);
+  margin: var(--mysun-space-5) auto 0;
+  color: var(--mysun-muted);
+  font-size: var(--mysun-type-sm);
+  font-weight: 700;
+}
+
+.mysun-loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--mysun-line-strong);
+  border-top-color: var(--mysun-focus);
+  border-radius: 999px;
+  animation: mysun-loading-spin 0.8s linear infinite;
+}
+
+@keyframes mysun-skeleton-shift {
+  from { background-position: 100% 0; }
+  to { background-position: -120% 0; }
+}
+
+@keyframes mysun-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 389px) {
+  .mysun-loading-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mysun-loading-title {
+    width: 92%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mysun-skeleton,
+  .mysun-loading-spinner {
+    animation: none;
+  }
+}
