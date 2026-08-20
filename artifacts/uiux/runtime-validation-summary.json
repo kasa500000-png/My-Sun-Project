@@ -1,0 +1,94 @@
+{
+  "validated_at": "2026-08-20T08:19:28Z",
+  "branch": "codex/uiux-30-stage-improvement",
+  "head_sha": "d9156b76decb3a39d6128f013937b3de56a7b9bf",
+  "quality_workflow": {
+    "run_id": 32347900483,
+    "conclusion": "success",
+    "checks": [
+      "npm ci",
+      "typescript",
+      "eslint",
+      "accessibility contracts",
+      "performance contracts",
+      "regression contracts",
+      "repository quality checks",
+      "next production build"
+    ]
+  },
+  "visual_workflow": {
+    "run_id": 32347900482,
+    "conclusion": "success",
+    "artifact_id": 9398835039,
+    "artifact_name": "uiux-visual-evidence-9c7fc3e37cb0bd2e5af2e40c7aa4b99cd866f0d4",
+    "artifact_digest": "sha256:68e3e3f152df92cfdcd27a292b6f823fb97a6501d708c8d730d394d2084cbf13"
+  },
+  "runtime": {
+    "browser": "Chromium",
+    "server": "Next.js production server",
+    "data": "deterministic non-production fixtures",
+    "service_workers": "blocked during visual tests",
+    "color_scheme": "light",
+    "reduced_motion": true,
+    "locale": "ko-KR",
+    "timezone": "Asia/Seoul"
+  },
+  "matrix": {
+    "screens": 12,
+    "viewports": 6,
+    "before_screenshots": 72,
+    "after_screenshots": 72,
+    "diff_screenshots": 72,
+    "viewports_px": [
+      "360x800",
+      "390x844",
+      "412x915",
+      "768x1024",
+      "1280x800",
+      "1440x900"
+    ]
+  },
+  "before": {
+    "horizontal_overflow_cases": 2,
+    "horizontal_overflow_details": [
+      { "screen": "APP-02", "viewport": "360x800", "pixels": 40 },
+      { "screen": "APP-02", "viewport": "390x844", "pixels": 10 }
+    ],
+    "sub_40px_interactive_targets": 154,
+    "axe_violation_groups": 8,
+    "axe_serious_groups": 8,
+    "console_errors": 0,
+    "page_errors": 0
+  },
+  "after": {
+    "horizontal_overflow_cases": 0,
+    "sub_40px_interactive_targets": 0,
+    "axe_violation_groups": 0,
+    "axe_serious_groups": 0,
+    "axe_critical_groups": 0,
+    "console_errors": 0,
+    "page_errors": 0
+  },
+  "representative_interactions": [
+    { "id": "auth-validation", "status": "pass" },
+    { "id": "password-toggle", "status": "pass" },
+    { "id": "home-to-workout", "status": "pass" },
+    { "id": "workout-scope-search-open-close", "status": "pass" },
+    { "id": "settings-backdrop-and-escape", "status": "pass" }
+  ],
+  "vercel": {
+    "deployment_status": "success",
+    "inspector_url": "https://vercel.com/medium-size-ship-commissioning/my-sun-project/5cfjDrXDYQKVn7USbDKu4mypsMZw",
+    "preview_body_verified": false,
+    "reason": "The connected Vercel permission could confirm deployment success but could not open the protected preview body."
+  },
+  "remaining_manual_checks": [
+    "real Supabase test account login and session restoration",
+    "real backend create, update and delete smoke test",
+    "installed PWA service-worker v4 to v5 migration",
+    "Android system back and software keyboard on a device",
+    "VoiceOver or TalkBack manual review",
+    "protected Vercel Preview body review"
+  ],
+  "release_assessment": "READY_WITH_MINOR_RISKS"
+}
