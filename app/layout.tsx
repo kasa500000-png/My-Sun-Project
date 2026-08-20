@@ -16,6 +16,7 @@ import "./uiux-forms.css";
 import "./uiux-data.css";
 import "./uiux-pwa.css";
 import "./uiux-settings.css";
+import "./uiux-motion.css";
 import ServiceWorkerBridge from "@/components/ServiceWorkerBridge";
 
 export const metadata: Metadata = {
