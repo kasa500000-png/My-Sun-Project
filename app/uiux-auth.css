@@ -1,0 +1,284 @@
+/* Authentication layout and form hierarchy. */
+
+.mysun-auth-page {
+  min-height: 100svh;
+  background: var(--mysun-canvas);
+  color: var(--mysun-ink);
+}
+
+.mysun-auth-layout {
+  display: grid;
+  min-height: 100svh;
+}
+
+.mysun-auth-hero {
+  position: relative;
+  min-height: clamp(18rem, 38svh, 26rem);
+  overflow: hidden;
+  background: var(--mysun-ink);
+  color: var(--mysun-canvas);
+}
+
+.mysun-auth-hero-image,
+.mysun-auth-hero-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.mysun-auth-hero-image {
+  background-position: center 44%;
+  background-size: cover;
+  transform: scale(1.01);
+}
+
+.mysun-auth-hero-overlay {
+  background:
+    linear-gradient(to top, rgba(36, 33, 36, 0.9), rgba(36, 33, 36, 0.12) 70%),
+    linear-gradient(135deg, rgba(143, 75, 90, 0.14), transparent 60%);
+}
+
+.mysun-auth-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: inherit;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: min(100%, 46rem);
+  padding:
+    clamp(1.5rem, 5vw, 3rem)
+    max(1.25rem, var(--mysun-safe-right))
+    clamp(1.5rem, 5vw, 3rem)
+    max(1.25rem, var(--mysun-safe-left));
+}
+
+.mysun-auth-eyebrow,
+.mysun-auth-product {
+  margin: 0;
+  font-size: var(--mysun-type-sm);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.mysun-auth-eyebrow {
+  color: #fffdfb;
+}
+
+.mysun-auth-brand-title {
+  max-width: 17ch;
+  margin: var(--mysun-space-3) 0 0;
+  color: #fffdfb;
+  font-size: clamp(1.6rem, 1.25rem + 1.5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.04em;
+}
+
+.mysun-auth-benefits {
+  display: grid;
+  margin: var(--mysun-space-5) 0 0;
+  padding: 0;
+  gap: var(--mysun-space-2);
+  list-style: none;
+  color: rgba(255, 253, 251, 0.9);
+  font-size: var(--mysun-type-sm);
+  line-height: 1.5;
+}
+
+.mysun-auth-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mysun-space-2);
+}
+
+.mysun-auth-benefits li span {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  margin-top: 0.05rem;
+  border: 1px solid rgba(255, 253, 251, 0.46);
+  border-radius: 999px;
+  font-size: 0.7rem;
+}
+
+.mysun-auth-form-region {
+  display: grid;
+  place-items: center;
+  padding:
+    clamp(1.25rem, 4vw, 3rem)
+    max(1rem, var(--mysun-safe-right))
+    calc(clamp(1.5rem, 4vw, 3rem) + var(--mysun-safe-bottom))
+    max(1rem, var(--mysun-safe-left));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(247, 221, 226, 0.3), transparent 26rem),
+    var(--mysun-canvas);
+}
+
+.mysun-auth-card {
+  display: grid;
+  width: min(100%, var(--mysun-content-form));
+  gap: var(--mysun-space-5);
+  border: 1px solid var(--mysun-line);
+  border-radius: var(--mysun-radius-panel);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: color-mix(in srgb, var(--mysun-canvas) 96%, transparent);
+  box-shadow: var(--mysun-shadow-panel);
+}
+
+.mysun-auth-header {
+  display: grid;
+  gap: var(--mysun-space-2);
+}
+
+.mysun-auth-product {
+  color: var(--mysun-focus);
+}
+
+.mysun-auth-description {
+  margin: 0;
+  color: var(--mysun-body);
+  font-size: var(--mysun-type-sm);
+  line-height: 1.6;
+}
+
+.mysun-auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--mysun-line);
+  border-radius: var(--mysun-radius-pill);
+  background: var(--mysun-surface);
+}
+
+.mysun-auth-tab {
+  min-height: 42px;
+  border: 0;
+  border-radius: var(--mysun-radius-pill);
+  background: transparent;
+  color: var(--mysun-muted);
+  font-size: var(--mysun-type-sm);
+  font-weight: 700;
+}
+
+.mysun-auth-tab[aria-selected="true"] {
+  background: var(--mysun-ink);
+  color: var(--mysun-canvas);
+  box-shadow: 0 6px 18px rgba(58, 48, 50, 0.13);
+}
+
+.mysun-auth-fields,
+.mysun-auth-field {
+  display: grid;
+}
+
+.mysun-auth-fields {
+  gap: var(--mysun-space-4);
+}
+
+.mysun-auth-field {
+  gap: var(--mysun-space-2);
+}
+
+.mysun-password-field {
+  position: relative;
+  display: block;
+}
+
+.mysun-password-field .nike-input {
+  padding-right: 5.25rem;
+}
+
+.mysun-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  min-width: 4.25rem;
+  min-height: 42px;
+  border: 0;
+  border-radius: var(--mysun-radius-pill);
+  background: var(--mysun-surface);
+  color: var(--mysun-body);
+  font-size: var(--mysun-type-sm);
+  font-weight: 700;
+  transform: translateY(-50%);
+}
+
+.mysun-password-toggle:not(:disabled):active {
+  transform: translateY(-50%) scale(0.98);
+}
+
+.mysun-auth-submit {
+  width: 100%;
+  margin-top: var(--mysun-space-1);
+  font-size: var(--mysun-type-base);
+}
+
+.mysun-auth-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 253, 251, 0.46);
+  border-top-color: var(--mysun-canvas);
+  border-radius: 999px;
+  animation: mysun-loading-spin 0.8s linear infinite;
+}
+
+.mysun-auth-footnote {
+  margin: 0;
+  color: var(--mysun-muted);
+  font-size: var(--mysun-type-sm);
+  line-height: 1.55;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .mysun-auth-layout {
+    grid-template-columns: minmax(0, 1.02fr) minmax(26.25rem, 0.98fr);
+  }
+
+  .mysun-auth-hero {
+    min-height: 100svh;
+  }
+
+  .mysun-auth-hero-overlay {
+    background:
+      linear-gradient(to right, rgba(36, 33, 36, 0.82), rgba(36, 33, 36, 0.08) 78%),
+      linear-gradient(to top, rgba(36, 33, 36, 0.28), transparent 55%);
+  }
+
+  .mysun-auth-hero-content {
+    min-height: 100svh;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 389px) {
+  .mysun-auth-hero {
+    min-height: 17rem;
+  }
+
+  .mysun-auth-benefits {
+    display: none;
+  }
+
+  .mysun-auth-form-region {
+    padding-inline: 0;
+    padding-bottom: 0;
+  }
+
+  .mysun-auth-card {
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: var(--mysun-radius-sheet) var(--mysun-radius-sheet) 0 0;
+    box-shadow: 0 -14px 34px rgba(58, 48, 50, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mysun-auth-spinner {
+    animation: none;
+  }
+}

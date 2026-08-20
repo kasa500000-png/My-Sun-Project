@@ -6,6 +6,7 @@ import "./uiux-responsive.css";
 import "./uiux-components.css";
 import "./uiux-navigation.css";
 import "./uiux-loading.css";
+import "./uiux-auth.css";
 import ServiceWorkerBridge from "@/components/ServiceWorkerBridge";
 
 export const metadata: Metadata = {

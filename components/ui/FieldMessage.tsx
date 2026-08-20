@@ -7,8 +7,15 @@ type FieldMessageProps = {
 };
 
 export default function FieldMessage({ id, children, tone = "hint" }: FieldMessageProps) {
+  const isError = tone === "error";
+
   return (
-    <p id={id} className={tone === "error" ? "mysun-field-error" : "mysun-field-hint"}>
+    <p
+      id={id}
+      className={isError ? "mysun-field-error" : "mysun-field-hint"}
+      role={isError ? "alert" : undefined}
+      aria-live={isError ? "assertive" : undefined}
+    >
       {children}
     </p>
   );
