@@ -1,0 +1,163 @@
+:root {
+  color-scheme: light;
+  --mysun-danger-surface: #fff0f1;
+  --mysun-warning: #8a5a14;
+  --mysun-warning-surface: #fff6df;
+  --mysun-info: #315f70;
+  --mysun-info-surface: #eef7f9;
+  --mysun-disabled: #a49b96;
+  --mysun-overlay: rgba(36, 33, 36, 0.48);
+  --mysun-shadow-focus: 0 0 0 4px color-mix(in srgb, var(--mysun-focus) 18%, transparent);
+  --mysun-space-1: 0.25rem;
+  --mysun-space-2: 0.5rem;
+  --mysun-space-3: 0.75rem;
+  --mysun-space-4: 1rem;
+  --mysun-space-5: 1.25rem;
+  --mysun-space-6: 1.5rem;
+  --mysun-space-8: 2rem;
+  --mysun-space-10: 2.5rem;
+  --mysun-content-form: 35rem;
+  --mysun-content-reading: 48rem;
+  --mysun-content-dashboard: 75rem;
+  --mysun-safe-top: env(safe-area-inset-top, 0px);
+  --mysun-safe-right: env(safe-area-inset-right, 0px);
+  --mysun-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mysun-safe-left: env(safe-area-inset-left, 0px);
+  --mysun-motion-fast: 120ms;
+  --mysun-motion-normal: 180ms;
+  --mysun-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  overflow-wrap: anywhere;
+}
+
+:where(main, section, article, nav, header, footer, form, fieldset, div) {
+  min-width: 0;
+}
+
+:where(button, input, select, textarea, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, input, select, textarea):disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+:where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--mysun-danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mysun-danger) 14%, transparent);
+}
+
+:where(input, textarea)::placeholder {
+  color: #958b86;
+  opacity: 1;
+}
+
+.mysun-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.mysun-content-form {
+  width: min(100%, var(--mysun-content-form));
+  margin-inline: auto;
+}
+
+.mysun-content-reading {
+  width: min(100%, var(--mysun-content-reading));
+  margin-inline: auto;
+}
+
+.mysun-content-dashboard {
+  width: min(100%, var(--mysun-content-dashboard));
+  margin-inline: auto;
+}
+
+.mysun-status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mysun-space-3);
+  border: 1px solid var(--mysun-line);
+  border-radius: var(--mysun-radius-card);
+  padding: var(--mysun-space-4);
+  background: var(--mysun-surface);
+  color: var(--mysun-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.mysun-status[data-tone="success"] {
+  border-color: color-mix(in srgb, var(--mysun-success) 34%, white);
+  background: var(--mysun-success-surface);
+  color: #1f6848;
+}
+
+.mysun-status[data-tone="danger"] {
+  border-color: color-mix(in srgb, var(--mysun-danger) 34%, white);
+  background: var(--mysun-danger-surface);
+  color: #9b3140;
+}
+
+.mysun-status[data-tone="warning"] {
+  border-color: color-mix(in srgb, var(--mysun-warning) 34%, white);
+  background: var(--mysun-warning-surface);
+  color: #70460f;
+}
+
+.mysun-status[data-tone="info"] {
+  border-color: color-mix(in srgb, var(--mysun-info) 30%, white);
+  background: var(--mysun-info-surface);
+  color: #254b59;
+}
+
+.mysun-field-hint,
+.mysun-field-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.mysun-field-hint {
+  color: var(--mysun-muted);
+}
+
+.mysun-field-error {
+  color: var(--mysun-danger);
+  font-weight: 600;
+}
+
+.mysun-icon-button {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mysun-radius-pill);
+}
+
+.mysun-divider {
+  height: 1px;
+  border: 0;
+  background: var(--mysun-line);
+}
+
+@supports not (color: color-mix(in srgb, black 50%, white)) {
+  .mysun-status[data-tone="success"] { border-color: #b9dfc5; }
+  .mysun-status[data-tone="danger"] { border-color: #efc1c7; }
+  .mysun-status[data-tone="warning"] { border-color: #e8cf9e; }
+  .mysun-status[data-tone="info"] { border-color: #bfd7df; }
+}
