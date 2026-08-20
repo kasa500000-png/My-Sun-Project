@@ -10,6 +10,7 @@ import "./uiux-auth.css";
 import "./uiux-dashboard.css";
 import "./uiux-workout.css";
 import "./uiux-search.css";
+import "./uiux-analysis.css";
 import ServiceWorkerBridge from "@/components/ServiceWorkerBridge";
 
 export const metadata: Metadata = {
