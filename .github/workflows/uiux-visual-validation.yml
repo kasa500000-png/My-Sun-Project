@@ -90,28 +90,54 @@ jobs:
           UIUX_BASE_URL=http://127.0.0.1:3100 \
           UIUX_EVIDENCE_DIR=artifacts/uiux/runtime/before \
           UIUX_PW_OUTPUT_DIR=test-results/uiux-before \
-          npx playwright test -c playwright.uiux.config.mjs
+          npx playwright test -c playwright.uiux.config.mjs tests/e2e/uiux/runtime-validation.pw.mjs --grep "capture"
 
       - name: Build improved branch
         run: npm run build
 
-      - name: Capture improved screens
+      - name: Start improved server
         run: |
           (npm run start -- -p 3200 > artifacts/uiux/runtime/after-server.log 2>&1 & echo $! > /tmp/uiux-after.pid)
-          trap 'kill $(cat /tmp/uiux-after.pid) 2>/dev/null || true' EXIT
           for attempt in {1..60}; do
-            if curl --silent --fail --header "x-uiux-visual-token: $UIUX_VISUAL_TOKEN" http://127.0.0.1:3200/uiux-visual >/dev/null; then break; fi
+            if curl --silent --fail --header "x-uiux-visual-token: $UIUX_VISUAL_TOKEN" http://127.0.0.1:3200/uiux-visual >/dev/null; then exit 0; fi
             sleep 1
           done
+          echo "Improved server did not become ready" >&2
+          exit 1
+
+      - name: Capture improved screens
+        run: |
           UIUX_MODE=after \
           UIUX_BASE_URL=http://127.0.0.1:3200 \
           UIUX_EVIDENCE_DIR=artifacts/uiux/runtime/after \
           UIUX_PW_OUTPUT_DIR=test-results/uiux-after \
-          npx playwright test -c playwright.uiux.config.mjs
+          npx playwright test -c playwright.uiux.config.mjs tests/e2e/uiux/runtime-validation.pw.mjs --grep "capture"
+
+      - name: Validate representative interactions
+        run: |
+          UIUX_MODE=after \
+          UIUX_BASE_URL=http://127.0.0.1:3200 \
+          UIUX_EVIDENCE_DIR=artifacts/uiux/runtime/after \
+          UIUX_PW_OUTPUT_DIR=test-results/uiux-after-interactions \
+          npx playwright test -c playwright.uiux.config.mjs tests/e2e/uiux/interactions-validation.pw.mjs
+
+      - name: Capture detailed accessibility findings
+        run: |
+          UIUX_MODE=after \
+          UIUX_BASE_URL=http://127.0.0.1:3200 \
+          UIUX_EVIDENCE_DIR=artifacts/uiux/runtime/after \
+          UIUX_PW_OUTPUT_DIR=test-results/uiux-after-axe \
+          npx playwright test -c playwright.uiux.config.mjs tests/e2e/uiux/axe-detail.pw.mjs
 
       - name: Generate pixel diffs
         if: always()
         run: node scripts/uiux-generate-diffs.mjs artifacts/uiux/runtime
+
+      - name: Stop local servers
+        if: always()
+        run: |
+          kill $(cat /tmp/uiux-before.pid) 2>/dev/null || true
+          kill $(cat /tmp/uiux-after.pid) 2>/dev/null || true
 
       - name: Upload visual evidence
         if: always()
@@ -122,5 +148,7 @@ jobs:
             artifacts/uiux/runtime
             test-results/uiux-before
             test-results/uiux-after
+            test-results/uiux-after-interactions
+            test-results/uiux-after-axe
           if-no-files-found: warn
           retention-days: 14
