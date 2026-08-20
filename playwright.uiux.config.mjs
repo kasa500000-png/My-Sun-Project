@@ -21,6 +21,8 @@ export default defineConfig({
     colorScheme: "light",
     reducedMotion: "reduce",
     serviceWorkers: "block",
+    navigationTimeout: 5_000,
+    actionTimeout: 10_000,
     trace: "retain-on-failure",
     video: "off",
     screenshot: "off",
