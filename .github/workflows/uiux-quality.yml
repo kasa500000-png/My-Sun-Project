@@ -33,5 +33,17 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Validate application
-        run: npm run validate
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Node tests
+        run: npm test
+
+      - name: Repository quality checks
+        run: npm run quality
+
+      - name: Production build
+        run: npm run build
