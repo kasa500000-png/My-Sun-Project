@@ -1,0 +1,123 @@
+/* Shared visual contracts for state pages and reusable UI primitives. */
+
+.mysun-status-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mysun-state-page {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding:
+    calc(2rem + var(--mysun-safe-top))
+    max(1rem, var(--mysun-safe-right))
+    calc(2rem + var(--mysun-safe-bottom))
+    max(1rem, var(--mysun-safe-left));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(247, 221, 226, 0.46), transparent 34rem),
+    var(--mysun-canvas);
+}
+
+.mysun-state-card {
+  width: min(100%, 34rem);
+  border: 1px solid var(--mysun-line);
+  border-radius: var(--mysun-radius-panel);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  background: color-mix(in srgb, var(--mysun-canvas) 94%, transparent);
+  box-shadow: var(--mysun-shadow-panel);
+  text-align: center;
+}
+
+.mysun-state-icon {
+  display: inline-flex;
+  width: 3.5rem;
+  height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--mysun-space-5);
+  border: 1px solid var(--mysun-line);
+  border-radius: 999px;
+  background: var(--mysun-surface);
+  color: var(--mysun-ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.mysun-state-eyebrow {
+  margin: 0 0 var(--mysun-space-2);
+  color: var(--mysun-focus);
+  font-size: var(--mysun-type-xs);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mysun-state-description {
+  margin-top: var(--mysun-space-4);
+  color: var(--mysun-body);
+  font-size: var(--mysun-type-base);
+  line-height: 1.65;
+}
+
+.mysun-state-description > :first-child {
+  margin-top: 0;
+}
+
+.mysun-state-description > :last-child {
+  margin-bottom: 0;
+}
+
+.mysun-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--mysun-space-2);
+  margin-top: var(--mysun-space-6);
+}
+
+.mysun-state-actions > :where(a, button) {
+  min-width: min(100%, 10rem);
+}
+
+.mysun-state-details {
+  margin-top: var(--mysun-space-5);
+  padding-top: var(--mysun-space-4);
+  border-top: 1px solid var(--mysun-line);
+  color: var(--mysun-muted);
+  font-size: var(--mysun-type-xs);
+  line-height: 1.55;
+  text-align: left;
+}
+
+.mysun-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mysun-space-2);
+}
+
+@media (max-width: 389px) {
+  .mysun-state-page {
+    align-items: end;
+    padding-inline: 0;
+    padding-bottom: 0;
+  }
+
+  .mysun-state-card {
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: var(--mysun-radius-sheet) var(--mysun-radius-sheet) 0 0;
+    padding-bottom: calc(1.5rem + var(--mysun-safe-bottom));
+  }
+
+  .mysun-state-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mysun-state-actions > :where(a, button) {
+    width: 100%;
+  }
+}

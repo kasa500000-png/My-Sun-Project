@@ -1,0 +1,20 @@
+{
+  "sources": ["deployed", "local"],
+  "viewports": [
+    { "id": "mobile-360", "width": 360, "height": 800 },
+    { "id": "mobile-390", "width": 390, "height": 844 },
+    { "id": "mobile-412", "width": 412, "height": 915 },
+    { "id": "tablet-768", "width": 768, "height": 1024 },
+    { "id": "desktop-1280", "width": 1280, "height": 800 },
+    { "id": "desktop-1440", "width": 1440, "height": 900 }
+  ],
+  "publicScreens": ["AUTH-01", "AUTH-02", "STATE-02", "STATE-03", "STATE-04"],
+  "authenticatedScreens": ["APP-01", "APP-02", "APP-03", "APP-04", "APP-05", "APP-06"],
+  "states": ["default", "empty", "error", "offline", "long-korean", "large-numbers", "keyboard-open"],
+  "mask": ["email", "user-id", "dynamic-date-time", "personal-records"],
+  "output": {
+    "before": "artifacts/uiux/before/{screen-id}/{viewport}-{source}.png",
+    "after": "artifacts/uiux/after/{screen-id}/{viewport}-{source}.png",
+    "diff": "artifacts/uiux/diff/{screen-id}/{viewport}-{source}.png"
+  }
+}

@@ -1,0 +1,70 @@
+/* Profile, settings and account-management safeguards. */
+
+section[class*="max-w-[960px]"]:has([aria-label="내 정보 설정"]) > div[class*="grid"] > div:first-child {
+  border-inline-start: 4px solid var(--mysun-focus);
+}
+
+section[class*="max-w-[960px]"]:has([aria-label="내 정보 설정"]) > div[class*="grid"] > div[class*="md:grid-cols-3"] > button {
+  min-height: 13rem;
+  border: 1px solid var(--mysun-line);
+  transition:
+    border-color var(--mysun-motion-normal) var(--mysun-ease-standard),
+    transform var(--mysun-motion-fast) var(--mysun-ease-standard),
+    box-shadow var(--mysun-motion-normal) var(--mysun-ease-standard);
+}
+
+section[class*="max-w-[960px]"]:has([aria-label="내 정보 설정"]) > div[class*="grid"] > div[class*="md:grid-cols-3"] > button:focus-visible {
+  border-color: var(--mysun-focus);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  section[class*="max-w-[960px]"]:has([aria-label="내 정보 설정"]) > div[class*="grid"] > div[class*="md:grid-cols-3"] > button:hover {
+    border-color: var(--mysun-line-strong);
+    box-shadow: var(--mysun-shadow-panel);
+    transform: translateY(-2px);
+  }
+}
+
+/* Form settings close only through the explicit close action or Escape. */
+[role="dialog"][aria-label="내 정보 설정"] {
+  pointer-events: none;
+}
+
+[role="dialog"][aria-label="내 정보 설정"] > div {
+  pointer-events: auto;
+}
+
+[role="dialog"][aria-label="내 정보 설정"] > div > div[class*="overflow-y-auto"] {
+  scroll-padding-bottom: calc(5rem + var(--mysun-safe-bottom));
+}
+
+[role="dialog"][aria-label="내 정보 설정"] button[class*="mt-6"][class*="w-full"] {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -0.75rem 1rem var(--mysun-canvas);
+}
+
+[role="dialog"][aria-label="내 정보 설정"] button[class*="ring-1"] {
+  border: 1px solid var(--mysun-line);
+}
+
+[role="dialog"][aria-label="내 정보 설정"] button[class*="bg-[#edf8f1]"] {
+  border-color: var(--mysun-success);
+}
+
+@media (max-width: 389px) {
+  section[class*="max-w-[960px]"]:has([aria-label="내 정보 설정"]) > div[class*="grid"] > div[class*="md:grid-cols-3"] > button {
+    min-height: 10rem;
+  }
+
+  [role="dialog"][aria-label="내 정보 설정"] > div {
+    max-height: calc(100dvh - max(0.5rem, var(--mysun-safe-top)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  section[class*="max-w-[960px]"]:has([aria-label="내 정보 설정"]) > div[class*="grid"] > div[class*="md:grid-cols-3"] > button {
+    transition: none;
+  }
+}

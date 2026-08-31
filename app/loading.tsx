@@ -1,14 +1,38 @@
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-[#fffdfb] px-4 py-6 text-[#242124]" role="status" aria-live="polite">
-      <div className="mx-auto grid max-w-[520px] animate-pulse gap-4">
-        <div className="h-12 rounded-full bg-[#f8f4f0] shadow-[0_10px_28px_rgba(58,48,50,0.04)] ring-1 ring-[#eadfda]" />
-        <div className="h-[42svh] rounded-[24px] bg-[#f8f4f0] shadow-[0_18px_44px_rgba(58,48,50,0.06)] ring-1 ring-[#eadfda]" />
-        <div className="grid grid-cols-2 gap-3">
-          <div className="h-28 rounded-[18px] bg-[#f8f4f0] shadow-[0_10px_28px_rgba(58,48,50,0.04)] ring-1 ring-[#eadfda]" />
-          <div className="h-28 rounded-[18px] bg-[#f8f4f0] shadow-[0_10px_28px_rgba(58,48,50,0.04)] ring-1 ring-[#eadfda]" />
+    <main className="mysun-loading-page" role="status" aria-live="polite" aria-busy="true">
+      <p className="mysun-visually-hidden">마이썬 운동일지와 최근 운동 기록을 불러오는 중입니다.</p>
+
+      <div className="mysun-loading-shell" aria-hidden="true">
+        <div className="mysun-loading-header">
+          <span className="mysun-skeleton mysun-loading-logo" />
+          <span className="mysun-skeleton mysun-loading-action" />
         </div>
-        <p className="text-center text-sm font-semibold text-[#7a7470]">마이썬 운동일지를 불러오는 중입니다.</p>
+
+        <section className="mysun-loading-hero">
+          <span className="mysun-skeleton mysun-loading-kicker" />
+          <span className="mysun-skeleton mysun-loading-title" />
+          <span className="mysun-skeleton mysun-loading-copy" />
+          <span className="mysun-skeleton mysun-loading-button" />
+        </section>
+
+        <div className="mysun-loading-grid">
+          <section className="mysun-loading-card">
+            <span className="mysun-skeleton mysun-loading-card-label" />
+            <span className="mysun-skeleton mysun-loading-card-value" />
+            <span className="mysun-skeleton mysun-loading-card-copy" />
+          </section>
+          <section className="mysun-loading-card">
+            <span className="mysun-skeleton mysun-loading-card-label" />
+            <span className="mysun-skeleton mysun-loading-card-value" />
+            <span className="mysun-skeleton mysun-loading-card-copy" />
+          </section>
+        </div>
+      </div>
+
+      <div className="mysun-loading-caption" aria-hidden="true">
+        <span className="mysun-loading-spinner" />
+        기록을 준비하고 있어요
       </div>
     </main>
   );

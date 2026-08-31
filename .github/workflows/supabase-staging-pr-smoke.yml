@@ -1,0 +1,51 @@
+name: Supabase staging PR smoke
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/api/diet/**"
+      - "app/api/diet-log/**"
+      - "lib/diet-image-storage.ts"
+      - "scripts/staging-crud-smoke.mjs"
+      - "supabase/**"
+      - "tests/security-storage.test.mjs"
+      - ".github/workflows/supabase-staging-pr-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mysun-staging-pr-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 15
+    env:
+      SUPABASE_STAGING_URL: ${{ secrets.SUPABASE_STAGING_URL }}
+      SUPABASE_STAGING_ANON_KEY: ${{ secrets.SUPABASE_STAGING_ANON_KEY }}
+      SUPABASE_STAGING_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY }}
+      FIT_DIET_IMAGE_BUCKET: fit-diet-images
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Verify isolated staging secrets
+        shell: bash
+        run: |
+          test -n "$SUPABASE_STAGING_URL" || { echo "SUPABASE_STAGING_URL is missing"; exit 1; }
+          test -n "$SUPABASE_STAGING_ANON_KEY" || { echo "SUPABASE_STAGING_ANON_KEY is missing"; exit 1; }
+          test -n "$SUPABASE_STAGING_SERVICE_ROLE_KEY" || { echo "SUPABASE_STAGING_SERVICE_ROLE_KEY is missing"; exit 1; }
+          case "$SUPABASE_STAGING_URL" in
+            *pkrpvwoikccaaqwlqsnr*) echo "Refusing to run against the connected kis-analyzer project"; exit 1 ;;
+          esac
+      - run: npm ci
+      - name: Run isolated staging CRUD smoke
+        run: npm run smoke:staging

@@ -1,0 +1,120 @@
+/* Analysis and chart readability. Scoped to the current 1080px analysis surface. */
+
+section[class*="max-w-[1080px]"] {
+  --analysis-card-gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+section[class*="max-w-[1080px]"] > div:first-child {
+  display: grid;
+  gap: 0.25rem;
+  max-width: var(--mysun-content-reading);
+}
+
+section[class*="max-w-[1080px]"] > div:first-child h1 {
+  margin: 0;
+  font-size: var(--mysun-type-display);
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+
+section[class*="max-w-[1080px]"] .mysun-card {
+  border-color: var(--mysun-line);
+}
+
+section[class*="max-w-[1080px]"] details {
+  transition:
+    border-color var(--mysun-motion-normal) var(--mysun-ease-standard),
+    background-color var(--mysun-motion-normal) var(--mysun-ease-standard);
+}
+
+section[class*="max-w-[1080px]"] details[open] {
+  border-color: var(--mysun-line-strong);
+  background: color-mix(in srgb, var(--mysun-surface) 54%, var(--mysun-canvas));
+}
+
+section[class*="max-w-[1080px]"] details summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mysun-space-3);
+  margin: -0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--mysun-radius-card);
+}
+
+section[class*="max-w-[1080px]"] details summary::after {
+  flex: 0 0 auto;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  content: "";
+  transform: rotate(45deg) translateY(-0.15rem);
+  transition: transform var(--mysun-motion-fast) var(--mysun-ease-standard);
+}
+
+section[class*="max-w-[1080px]"] details[open] summary::after {
+  transform: rotate(225deg) translate(-0.1rem, -0.05rem);
+}
+
+section[class*="max-w-[1080px]"] [style*="conic-gradient"] {
+  border: 1px solid var(--mysun-line-strong);
+  box-shadow:
+    inset 0 0 0 5px var(--mysun-canvas),
+    0 10px 28px rgba(58, 48, 50, 0.06);
+}
+
+section[class*="max-w-[1080px]"] i[style*="background"] {
+  border: 1px solid color-mix(in srgb, currentColor 22%, var(--mysun-line-strong));
+  box-shadow: 0 0 0 2px var(--mysun-canvas);
+}
+
+section[class*="max-w-[1080px]"] :where([class*="grid-cols-2"]) > div[class*="rounded-[16px]"] {
+  min-width: 0;
+}
+
+section[class*="max-w-[1080px]"] :where([class*="grid-cols-2"]) > div[class*="rounded-[16px]"] p:last-child {
+  font-variant-numeric: tabular-nums lining-nums;
+  overflow-wrap: normal;
+}
+
+@media (max-width: 389px) {
+  section[class*="max-w-[1080px]"] {
+    gap: 1.125rem;
+  }
+
+  section[class*="max-w-[1080px]"] > div:first-child h1 {
+    font-size: 1.85rem;
+  }
+
+  section[class*="max-w-[1080px]"] details {
+    border-radius: var(--mysun-radius-panel);
+    padding: 1rem;
+  }
+}
+
+@media (prefers-contrast: more) {
+  section[class*="max-w-[1080px]"] [style*="conic-gradient"] {
+    border-width: 2px;
+    box-shadow: inset 0 0 0 5px var(--mysun-canvas);
+  }
+
+  section[class*="max-w-[1080px]"] i[style*="background"] {
+    border-width: 2px;
+    box-shadow: none;
+  }
+}
+
+@media (forced-colors: active) {
+  section[class*="max-w-[1080px]"] [style*="conic-gradient"] {
+    background: Canvas !important;
+    border: 3px double CanvasText;
+    box-shadow: none;
+  }
+
+  section[class*="max-w-[1080px]"] i[style*="background"] {
+    background: CanvasText !important;
+    border: 1px solid Canvas;
+  }
+}

@@ -1,6 +1,27 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./uiux-foundation.css";
+import "./uiux-accessibility.css";
+import "./uiux-responsive.css";
+import "./uiux-components.css";
+import "./uiux-navigation.css";
+import "./uiux-loading.css";
+import "./uiux-auth.css";
+import "./uiux-dashboard.css";
+import "./uiux-workout.css";
+import "./uiux-search.css";
+import "./uiux-analysis.css";
+import "./uiux-goals.css";
+import "./uiux-forms.css";
+import "./uiux-data.css";
+import "./uiux-pwa.css";
+import "./uiux-settings.css";
+import "./uiux-motion.css";
+import "./uiux-performance.css";
 import ServiceWorkerBridge from "@/components/ServiceWorkerBridge";
+import ScrollableRegionAccessBridge from "@/components/ScrollableRegionAccessBridge";
+
+const PRETENDARD_STYLESHEET = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://my-sun-project.vercel.app"),
@@ -57,10 +78,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        <link rel="preload" as="style" href={PRETENDARD_STYLESHEET} crossOrigin="anonymous" />
       </head>
       <body>
         <ServiceWorkerBridge />
-        {children}
+        <ScrollableRegionAccessBridge />
+        <a className="mysun-skip-link" href="#app-content">
+          본문으로 건너뛰기
+        </a>
+        <div id="app-content" data-app-content tabIndex={-1}>
+          {children}
+        </div>
       </body>
     </html>
   );

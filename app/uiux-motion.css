@@ -1,0 +1,126 @@
+/* Purposeful interaction feedback. No decorative or repeating motion. */
+
+:where(
+  .mysun-primary-action,
+  .mysun-secondary-action,
+  .mysun-icon-button,
+  .mysun-auth-tab,
+  .mysun-tab,
+  .mysun-exercise-row,
+  .mysun-password-toggle
+) {
+  transition:
+    color var(--mysun-motion-fast) var(--mysun-ease-standard),
+    background-color var(--mysun-motion-fast) var(--mysun-ease-standard),
+    border-color var(--mysun-motion-fast) var(--mysun-ease-standard),
+    box-shadow var(--mysun-motion-normal) var(--mysun-ease-standard),
+    opacity var(--mysun-motion-fast) var(--mysun-ease-standard),
+    transform var(--mysun-motion-fast) var(--mysun-ease-standard);
+}
+
+:where(
+  .mysun-primary-action,
+  .mysun-secondary-action,
+  .mysun-icon-button,
+  .mysun-auth-tab,
+  .mysun-tab,
+  .mysun-exercise-row,
+  .mysun-password-toggle
+):not(:disabled):active {
+  transform: scale(0.985);
+}
+
+:where(button, a)[aria-busy="true"] {
+  cursor: progress;
+}
+
+:where(button, a)[aria-busy="true"] > :not(.mysun-auth-spinner) {
+  opacity: 0.88;
+}
+
+main > div[role="status"][class~="fixed"] {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 253, 251, 0.22);
+  border-radius: var(--mysun-radius-card);
+  padding: 0.875rem 1rem;
+  background: rgba(36, 33, 36, 0.96);
+  box-shadow: 0 16px 36px rgba(36, 33, 36, 0.2);
+  line-height: 1.5;
+  text-wrap: pretty;
+  animation: mysun-toast-enter var(--mysun-motion-normal) var(--mysun-ease-standard) both;
+}
+
+@keyframes mysun-toast-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mysun-primary-action:not(:disabled):hover {
+    box-shadow: 0 10px 26px rgba(36, 33, 36, 0.16);
+    transform: translateY(-1px);
+  }
+
+  .mysun-secondary-action:not(:disabled):hover {
+    border-color: var(--mysun-line-strong);
+    background: var(--mysun-surface);
+  }
+}
+
+@media (max-width: 389px) {
+  main > div[role="status"][class~="fixed"] {
+    width: calc(100vw - 1.75rem);
+    max-width: none;
+    padding-inline: 0.875rem;
+    font-size: 0.8125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    .mysun-primary-action,
+    .mysun-secondary-action,
+    .mysun-icon-button,
+    .mysun-auth-tab,
+    .mysun-tab,
+    .mysun-exercise-row,
+    .mysun-password-toggle
+  ) {
+    transition: none;
+  }
+
+  :where(
+    .mysun-primary-action,
+    .mysun-secondary-action,
+    .mysun-icon-button,
+    .mysun-auth-tab,
+    .mysun-tab,
+    .mysun-exercise-row,
+    .mysun-password-toggle
+  ):not(:disabled):active,
+  .mysun-primary-action:not(:disabled):hover {
+    transform: none;
+  }
+
+  main > div[role="status"][class~="fixed"] {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  main > div[role="status"][class~="fixed"] {
+    border: 2px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+}

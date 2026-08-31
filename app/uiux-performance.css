@@ -1,0 +1,51 @@
+/* Conservative rendering optimizations for long record and analysis pages. */
+
+@supports (content-visibility: auto) {
+  .mysun-section > :where(
+    .mysun-card,
+    .mysun-panel,
+    article,
+    details,
+    section:not(:first-child)
+  ) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 18rem;
+  }
+
+  .mysun-section > :where(.mysun-card, .mysun-panel)[class*="min-h"] {
+    contain-intrinsic-size: auto 24rem;
+  }
+}
+
+.mysun-exercise-row,
+.mysun-card,
+.mysun-panel {
+  backface-visibility: hidden;
+}
+
+@media (max-width: 389px), (prefers-reduced-transparency: reduce) {
+  .mysun-sticky-actions {
+    background: var(--mysun-canvas);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-data: reduce) {
+  section:has(> [style*="mysun-home-hero.webp"]) > [style*="mysun-home-hero.webp"],
+  .mysun-auth-hero-image {
+    background-image: none !important;
+  }
+
+  section:has(> [style*="mysun-home-hero.webp"]),
+  .mysun-auth-hero {
+    background: linear-gradient(135deg, #3a3032, #242124);
+  }
+}
+
+@media print {
+  .mysun-section > * {
+    content-visibility: visible !important;
+    contain-intrinsic-size: none !important;
+  }
+}

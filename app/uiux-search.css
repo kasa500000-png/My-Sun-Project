@@ -1,0 +1,61 @@
+/* Search, filtering and favorite-state polish. */
+
+.nike-input {
+  min-width: 0;
+}
+
+input[placeholder*="운동 이름"] {
+  padding-left: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237a7470' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 1rem center;
+  background-size: 1.125rem;
+}
+
+input[placeholder*="운동 이름"]:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238f4b5a' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+}
+
+.mysun-exercise-row b {
+  max-width: min(48vw, 8rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where(.mysun-tabbar, .mysun-subtabbar) button[aria-pressed="true"] {
+  position: relative;
+}
+
+:where(.mysun-tabbar, .mysun-subtabbar) button[aria-pressed="true"]::after {
+  position: absolute;
+  right: 28%;
+  bottom: 0.15rem;
+  left: 28%;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+@media (max-width: 389px) {
+  input[placeholder*="운동 이름"] {
+    padding-left: 2.5rem;
+    background-position-x: 0.875rem;
+  }
+
+  .mysun-exercise-row b {
+    max-width: 7rem;
+  }
+}
+
+@media (forced-colors: active) {
+  input[placeholder*="운동 이름"] {
+    background-image: none;
+    padding-left: 1rem;
+  }
+
+  :where(.mysun-tabbar, .mysun-subtabbar) button[aria-pressed="true"]::after {
+    background: Highlight;
+  }
+}

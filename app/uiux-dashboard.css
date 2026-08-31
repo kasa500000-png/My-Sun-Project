@@ -1,0 +1,79 @@
+/* Home dashboard polish without changing workout calculations or data. */
+
+section:has(> [style*="mysun-home-hero.webp"]) {
+  min-height: clamp(14rem, 28svh, 22rem);
+  background: var(--mysun-ink);
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) > [style*="mysun-home-hero.webp"] {
+  background-position: center 42%;
+  transform: scale(1.01);
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) > [style*="mysun-home-hero.webp"] + div {
+  background:
+    linear-gradient(to top, rgba(36, 33, 36, 0.46), transparent 52%),
+    linear-gradient(to right, rgba(36, 33, 36, 0.08), transparent 48%);
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section {
+  gap: clamp(1.125rem, 2vw, 1.75rem);
+  padding-top: clamp(1rem, 2vw, 1.5rem);
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child {
+  position: relative;
+  overflow: hidden;
+  border-top: 3px solid color-mix(in srgb, var(--mysun-success) 72%, white);
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child::before {
+  position: absolute;
+  top: -5rem;
+  right: -4rem;
+  width: 11rem;
+  height: 11rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(237, 248, 241, 0.92), transparent 68%);
+  content: "";
+  pointer-events: none;
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child > * {
+  position: relative;
+}
+
+section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section .mysun-card {
+  transition:
+    border-color var(--mysun-motion-normal) var(--mysun-ease-standard),
+    box-shadow var(--mysun-motion-normal) var(--mysun-ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section .mysun-card:hover {
+    border-color: var(--mysun-line-strong);
+    box-shadow: var(--mysun-shadow-panel);
+  }
+}
+
+@media (min-width: 768px) {
+  section:has(> [style*="mysun-home-hero.webp"]) {
+    min-height: clamp(20rem, 30vw, 26rem);
+  }
+}
+
+@media (max-width: 389px) {
+  section:has(> [style*="mysun-home-hero.webp"]) {
+    min-height: 13rem;
+  }
+
+  section:has(> [style*="mysun-home-hero.webp"]) + .mysun-section > .mysun-card:first-child {
+    border-top-width: 2px;
+  }
+}
+
+@supports not selector(:has(*)) {
+  [style*="mysun-home-hero.webp"] {
+    background-position: center 42% !important;
+  }
+}
