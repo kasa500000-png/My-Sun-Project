@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import {
+  DietImageInputError,
+  prepareDietImage,
+  removeDietImage,
+  signedDietImageUrls,
+  type StoredDietImageState,
+} from "@/lib/diet-image-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -32,13 +39,15 @@ type MealRow = {
   meal_slot: string | null;
   entry_name: string | null;
   image_url: string | null;
+  image_path: string | null;
   ai_feedback: string | null;
   fit_diet_food_items?: FoodRow[] | null;
 };
 
+type ExistingMealRow = Pick<MealRow, "id" | "image_url" | "image_path">;
+
 const MEAL_SLOTS = new Set(["morning", "lunch", "afternoon", "snack"]);
 const MAX_FOODS_PER_MEAL = 30;
-const MAX_IMAGE_URL_LENGTH = 1_000_000;
 
 function todayKst() {
   const now = new Date();
@@ -72,21 +81,13 @@ function asFoods(value: unknown) {
   return (Array.isArray(value) ? value as FoodPayload[] : []).slice(0, MAX_FOODS_PER_MEAL);
 }
 
-function asImageUrl(value: unknown) {
-  const text = asText(value, MAX_IMAGE_URL_LENGTH);
-  if (!text) return null;
-  if (text.startsWith("data:image/")) return text;
-  if (text.startsWith("https://")) return text;
-  return null;
-}
-
-function mapMeal(row: MealRow) {
+function mapMeal(row: MealRow, signedImageUrl?: string) {
   return {
     id: row.id,
     date: asDate(row.meal_date),
     slot: row.meal_slot || "lunch",
     entryName: row.entry_name || undefined,
-    imageUrl: row.image_url || undefined,
+    imageUrl: signedImageUrl || row.image_url || undefined,
     feedback: row.ai_feedback || undefined,
     foods: (row.fit_diet_food_items || [])
       .slice()
@@ -104,25 +105,37 @@ function mapMeal(row: MealRow) {
 }
 
 function userError(message: string, status = 400) {
-  return NextResponse.json({ error: message }, { status });
+  return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 }
 
 function serverError(error: unknown, fallback: string) {
   console.error("[diet-log]", error);
-  return NextResponse.json({ error: fallback }, { status: 500 });
+  return NextResponse.json({ error: fallback }, { status: 500, headers: { "Cache-Control": "no-store" } });
 }
 
 function isMissingTable(error: unknown) {
   if (typeof error !== "object" || error === null) return false;
   const code = "code" in error ? error.code : "";
   const message = "message" in error ? error.message : "";
-  return code === "42P01" || String(message || "").includes("fit_diet_");
+  return code === "42P01" || code === "42703" || String(message || "").includes("fit_diet_");
 }
 
 async function currentUserId() {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   return user?.id || null;
+}
+
+function existingImageState(row: ExistingMealRow | null): StoredDietImageState {
+  return {
+    imagePath: row?.image_path || null,
+    legacyImageUrl: row?.image_url || null,
+  };
+}
+
+async function mealResponse(sb: ReturnType<typeof getServiceClient>, row: MealRow) {
+  const signed = await signedDietImageUrls(sb, [row]);
+  return mapMeal(row, row.image_path ? signed.get(row.image_path) : undefined);
 }
 
 export async function GET(req: NextRequest) {
@@ -153,11 +166,16 @@ export async function GET(req: NextRequest) {
     return serverError(error, "식단 기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
   }
 
-  return NextResponse.json({ meals: (data || []).map(mapMeal) });
+  const rows = (data || []) as MealRow[];
+  const signed = await signedDietImageUrls(sb, rows);
+  return NextResponse.json(
+    { meals: rows.map(row => mapMeal(row, row.image_path ? signed.get(row.image_path) : undefined)) },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const userId = await currentUserId();
   if (!userId) return userError("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.", 401);
 
@@ -168,60 +186,69 @@ export async function POST(req: NextRequest) {
   if (foods.length === 0) return userError("저장할 음식 정보를 하나 이상 입력해 주세요.");
 
   const sb = getServiceClient();
+  const requestedId = asText(body.id, 64);
+  let existing: ExistingMealRow | null = null;
+  let existingError: unknown = null;
+
+  if (requestedId) {
+    const result = await sb
+      .from("fit_diet_meal_logs")
+      .select("id, image_url, image_path")
+      .eq("id", requestedId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    existing = result.data as ExistingMealRow | null;
+    existingError = result.error;
+  } else if (slot !== "snack") {
+    const result = await sb
+      .from("fit_diet_meal_logs")
+      .select("id, image_url, image_path")
+      .eq("user_id", userId)
+      .eq("meal_date", date)
+      .eq("meal_slot", slot)
+      .maybeSingle();
+    existing = result.data as ExistingMealRow | null;
+    existingError = result.error;
+  }
+
+  if (existingError) {
+    if (isMissingTable(existingError)) return userError("식단 저장 테이블이 아직 준비되지 않았습니다. Supabase SQL을 먼저 실행해 주세요.", 500);
+    return serverError(existingError, "기존 식단 기록을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  }
+  if (requestedId && !existing) return userError("수정할 식단 기록을 찾을 수 없습니다.", 404);
+
+  let preparedImage;
+  try {
+    preparedImage = await prepareDietImage(sb, userId, date, body.imageUrl, existingImageState(existing));
+  } catch (error) {
+    if (error instanceof DietImageInputError) return userError(error.message, error.status);
+    return serverError(error, error instanceof Error ? error.message : "식단 사진 저장에 실패했습니다.");
+  }
+
   const mealPayload = {
     user_id: userId,
     meal_date: date,
     meal_slot: slot,
     entry_name: asText(body.entryName, 120),
-    image_url: asImageUrl(body.imageUrl),
+    image_url: preparedImage.legacyImageUrl,
+    image_path: preparedImage.imagePath,
     ai_feedback: asText(body.feedback, 1000),
     updated_at: new Date().toISOString(),
   };
 
-  const requestedId = asText(body.id, 64);
   let meal: MealRow | null = null;
   let mealError: unknown = null;
 
-  if (requestedId) {
+  if (existing) {
     const result = await sb
       .from("fit_diet_meal_logs")
       .update(mealPayload)
-      .eq("id", requestedId)
+      .eq("id", existing.id)
       .eq("user_id", userId)
       .select("*")
       .single();
     meal = result.data as MealRow | null;
     mealError = result.error;
-  } else if (slot !== "snack") {
-    const existing = await sb
-      .from("fit_diet_meal_logs")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("meal_date", date)
-      .eq("meal_slot", slot)
-      .maybeSingle();
-
-    if (existing.error) {
-      mealError = existing.error;
-    } else if (existing.data?.id) {
-      const result = await sb
-        .from("fit_diet_meal_logs")
-        .update(mealPayload)
-        .eq("id", existing.data.id)
-        .eq("user_id", userId)
-        .select("*")
-        .single();
-      meal = result.data as MealRow | null;
-      mealError = result.error;
-    } else {
-      const result = await sb
-        .from("fit_diet_meal_logs")
-        .insert(mealPayload)
-        .select("*")
-        .single();
-      meal = result.data as MealRow | null;
-      mealError = result.error;
-    }
   } else {
     const result = await sb
       .from("fit_diet_meal_logs")
@@ -232,11 +259,11 @@ export async function POST(req: NextRequest) {
     mealError = result.error;
   }
 
-  if (mealError) {
+  if (mealError || !meal) {
+    await removeDietImage(sb, preparedImage.uploadedPath);
     if (isMissingTable(mealError)) return userError("식단 저장 테이블이 아직 준비되지 않았습니다. Supabase SQL을 먼저 실행해 주세요.", 500);
     return serverError(mealError, "식단 기록 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
   }
-  if (!meal) return userError("저장할 식단 기록을 확인하지 못했습니다.", 500);
 
   const { error: deleteError } = await sb
     .from("fit_diet_food_items")
@@ -269,7 +296,12 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return serverError(error, "저장된 식단 기록을 다시 불러오지 못했습니다. 새로고침 후 확인해 주세요.");
-  return NextResponse.json({ meal: mapMeal(data) });
+
+  await removeDietImage(sb, preparedImage.oldPathToDelete);
+  return NextResponse.json(
+    { meal: await mealResponse(sb, data as MealRow) },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
 
 export async function DELETE(req: NextRequest) {
@@ -280,16 +312,25 @@ export async function DELETE(req: NextRequest) {
   const id = asText(searchParams.get("id"), 64);
   const date = asDate(searchParams.get("date"));
   const slot = asMealSlot(searchParams.get("slot"));
+  if (!id && slot === "snack") return userError("간식 기록은 삭제할 항목 ID가 필요합니다.");
 
   const sb = getServiceClient();
-  let query = sb.from("fit_diet_meal_logs").delete().eq("user_id", userId).select("id");
-  if (id) query = query.eq("id", id);
-  else if (slot) query = query.eq("meal_date", date).eq("meal_slot", slot);
+  let lookup = sb.from("fit_diet_meal_logs").select("id, image_url, image_path").eq("user_id", userId);
+  if (id) lookup = lookup.eq("id", id);
+  else if (slot) lookup = lookup.eq("meal_date", date).eq("meal_slot", slot);
   else return userError("삭제할 식단 기록 정보를 확인할 수 없습니다.");
 
-  const { data, error } = await query.maybeSingle();
-  if (error) return serverError(error, "식단 기록 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.");
-  if (!data) return userError("삭제할 식단 기록을 찾을 수 없습니다.", 404);
+  const { data: existing, error: lookupError } = await lookup.maybeSingle();
+  if (lookupError) return serverError(lookupError, "삭제할 식단 기록을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  if (!existing) return userError("삭제할 식단 기록을 찾을 수 없습니다.", 404);
 
-  return NextResponse.json({ ok: true });
+  const { error } = await sb
+    .from("fit_diet_meal_logs")
+    .delete()
+    .eq("id", existing.id)
+    .eq("user_id", userId);
+  if (error) return serverError(error, "식단 기록 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+
+  await removeDietImage(sb, existing.image_path);
+  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }

@@ -10,7 +10,9 @@
     "quality": "node scripts/quality-check.mjs",
     "validate": "npm run typecheck && npm run lint && npm test && npm run quality && npm run build",
     "start": "next start",
-    "db:migrate": "node scripts/run-supabase-sql.mjs supabase/migration-fit-log.sql",
+    "db:migrate": "node scripts/run-supabase-sql.mjs supabase/migration-fit-log.sql && node scripts/run-supabase-sql.mjs supabase/migration-ai-storage-security.sql",
+    "migrate:diet-images": "node scripts/migrate-diet-images-to-storage.mjs",
+    "smoke:staging": "node scripts/staging-crud-smoke.mjs",
     "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {
